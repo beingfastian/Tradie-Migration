@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.processors.document_processor import process_document
 from backend.vector.embeddings import embed_text, embed_texts
-from backend.vector.search import similarity_search, store_chunks
+from backend.vector.search import similarity_search, store_chunks, cross_candidate_search
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +87,88 @@ async def process_and_store_document(
         "candidate_id": candidate_id,
         "source_document_id": source_document_id,
         "chunk_count": stored,
+    }
+
+
+# ── Flow 3 — Global Candidate Search ─────────────────────────────────────────
+
+async def search_candidates_by_content(
+    db: AsyncSession,
+    search_term: str,
+    top_k: int = 10,
+    document_type: str | None = None,
+) -> dict:
+    """
+    Semantic search across ALL candidates' ingested documents.
+
+    Embeds the search_term and performs a cross-candidate pgvector similarity
+    search, then enriches each hit with the candidate's profile fields
+    (name, trade, experience, nationality, country_of_residence).
+
+    Returns a ranked list of candidates whose documents best match the term.
+    """
+    import uuid as _uuid
+    from sqlalchemy import select as _select
+    from backend.db.models.models import CandidateProfile, ApplicantDocument
+
+    # Embed the search term
+    if USE_STUB_EMBEDDINGS:
+        query_vector = [0.0] * 1536
+    else:
+        query_vector = await embed_text(search_term)
+
+    # Cross-candidate vector search
+    hits = await cross_candidate_search(
+        db=db,
+        query_embedding=query_vector,
+        top_k=top_k,
+        document_type=document_type,
+    )
+
+    if not hits:
+        return {
+            "search_term": search_term,
+            "results": [],
+            "total": 0,
+            "status": "no_matches",
+            "message": "No ingested documents matched the search term. Ingest candidate documents first.",
+        }
+
+    # Enrich hits with candidate profile data
+    candidate_ids = [_uuid.UUID(h["candidate_id"]) for h in hits]
+    profiles_res = await db.execute(
+        _select(CandidateProfile).where(CandidateProfile.id.in_(candidate_ids))
+    )
+    profiles = {str(p.id): p for p in profiles_res.scalars().all()}
+
+    results = []
+    for hit in hits:
+        profile = profiles.get(hit["candidate_id"])
+        results.append({
+            "candidate_id":   hit["candidate_id"],
+            "relevance_score": round(1 - hit["distance"], 4),   # cosine similarity (higher = better)
+            "match_excerpt":  hit["chunk_text"][:300] + "..." if len(hit["chunk_text"]) > 300 else hit["chunk_text"],
+            "matched_document": {
+                "document_id":   hit["source_document_id"],
+                "document_type": hit["document_type"],
+                "file_name":     hit["file_name"],
+            },
+            "candidate": {
+                "full_name":            profile.full_name          if profile else None,
+                "trade_category":       profile.trade_category     if profile else None,
+                "nationality":          profile.nationality        if profile else None,
+                "country_of_residence": profile.country_of_residence if profile else None,
+                "years_experience":     profile.years_experience   if profile else None,
+                "is_electrical_worker": profile.is_electrical_worker if profile else None,
+                "published":            profile.published          if profile else None,
+            },
+        })
+
+    return {
+        "search_term": search_term,
+        "results":     results,
+        "total":       len(results),
+        "status":      "success",
     }
 
 

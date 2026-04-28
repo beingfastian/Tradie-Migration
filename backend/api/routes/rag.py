@@ -21,7 +21,7 @@ from slowapi.util import get_remote_address
 from backend.db.setup import get_db
 from backend.api.dependencies.rbac import require_roles
 from backend.db.models.models import TextChunk, CandidateProfile, ApplicantDocument, User
-from backend.services.rag_service import process_and_store_document, answer_question
+from backend.services.rag_service import process_and_store_document, answer_question, search_candidates_by_content
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -35,6 +35,15 @@ class RAGQuery(BaseModel):
     candidate_id: str
     question: str = Field(..., min_length=3, max_length=1000)
     top_k: int = Field(default=5, ge=1, le=20)
+
+
+class DocumentSearchQuery(BaseModel):
+    search_term: str = Field(..., min_length=2, max_length=500,
+                             description="Natural-language search term, e.g. 'electrician trade certificate Australia' or 'licensed plumber 5 years experience'")
+    top_k: int = Field(default=10, ge=1, le=50,
+                       description="Max number of candidates to return")
+    document_type: Optional[str] = Field(None,
+                                         description="Optional filter: trade_certificate | resume | passport | safety_certificate | english_test | reference_letter")
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -81,6 +90,53 @@ async def ask_question(
         raise HTTPException(
             status_code=500,
             detail="An error occurred while processing your question. Please try again later."
+        )
+
+
+@router.post("/search")
+@limiter.limit("30/minute")
+async def search_documents(
+    request: Request,
+    payload: DocumentSearchQuery,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_roles(*RAG_ROLES)),
+):
+    """
+    **Global semantic document search across all candidates.**
+
+    Use a natural-language search term to find candidates whose ingested
+    documents (resumes, trade certificates, credentials) are most relevant.
+
+    Examples:
+    - `"licensed electrician with high voltage experience"`
+    - `"trade certificate Pakistan electrical"`
+    - `"5 years commercial electrical work"`
+    - `"IELTS English test score"`
+
+    Returns candidates ranked by relevance, each with:
+    - Candidate profile details (name, trade, experience, nationality)
+    - The matching document type and file name
+    - A short excerpt of the matching text
+    - A relevance score (0–1, higher = better match)
+
+    Documents must be ingested first via `POST /rag/ingest/{candidate_id}/{doc_id}`.
+
+    Access: admin, company_admin, migration_agent.
+    """
+    try:
+        result = await search_candidates_by_content(
+            db=db,
+            search_term=payload.search_term,
+            top_k=payload.top_k,
+            document_type=payload.document_type,
+        )
+        return result
+    except Exception as exc:
+        import logging as _logging
+        _logging.getLogger(__name__).exception("RAG search error: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred during document search. Please try again later."
         )
 
 
