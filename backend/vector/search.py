@@ -119,6 +119,107 @@ async def similarity_search(
         ]
 
 
+# ── Cross-Candidate Search ────────────────────────────────────────────────────
+
+async def cross_candidate_search(
+    db: AsyncSession,
+    query_embedding: List[float],
+    top_k: int = 10,
+    document_type: str | None = None,
+) -> List[dict]:
+    """
+    Search text_chunks across ALL candidates (not filtered by candidate_id).
+
+    Returns the best-matching chunk per candidate, sorted by cosine similarity.
+    Used for the global talent / credential search feature.
+
+    Args:
+        db:              Async database session.
+        query_embedding: 1536-dim float list from the OpenAI embedder.
+        top_k:           Max number of distinct candidates to return.
+        document_type:   Optional filter (e.g. "trade_certificate", "resume").
+
+    Returns:
+        List of dicts — one entry per matched candidate, ordered by best distance.
+        Keys: candidate_id, chunk_id, chunk_text, source_document_id, document_type,
+              file_name, distance.
+    """
+    if _pgvector_enabled():
+        vector_literal = "[" + ",".join(str(v) for v in query_embedding) + "]"
+
+        # Pull top_k * 5 raw chunks across all candidates, then keep best per candidate
+        doc_filter = ""
+        params: dict = {"vec": vector_literal, "k": top_k * 5}
+        if document_type:
+            doc_filter = "AND ad.document_type = :doc_type"
+            params["doc_type"] = document_type
+
+        stmt = text(
+            f"""
+            SELECT
+                tc.candidate_id,
+                tc.id                   AS chunk_id,
+                tc.chunk_text,
+                tc.source_document_id,
+                ad.document_type,
+                ad.file_name,
+                tc.embedding <=> CAST(:vec AS vector) AS distance
+            FROM text_chunks tc
+            LEFT JOIN applicant_documents ad ON ad.id = tc.source_document_id
+            WHERE tc.embedding IS NOT NULL
+            {doc_filter}
+            ORDER BY distance ASC
+            LIMIT :k
+            """
+        )
+        result = await db.execute(stmt, params)
+        rows = result.fetchall()
+
+        # Keep best (lowest distance) chunk per candidate
+        seen: dict = {}
+        for row in rows:
+            cid = str(row.candidate_id)
+            if cid not in seen or row.distance < seen[cid]["distance"]:
+                seen[cid] = {
+                    "candidate_id":     cid,
+                    "chunk_id":         str(row.chunk_id),
+                    "chunk_text":       row.chunk_text,
+                    "source_document_id": str(row.source_document_id),
+                    "document_type":    row.document_type,
+                    "file_name":        row.file_name,
+                    "distance":         float(row.distance),
+                }
+
+        # Return sorted by distance, limited to top_k unique candidates
+        return sorted(seen.values(), key=lambda x: x["distance"])[:top_k]
+
+    else:
+        # Fallback without pgvector — return most recent chunks per distinct candidate
+        from sqlalchemy import func
+        import uuid as _uuid
+        stmt_fb = (
+            select(TextChunk)
+            .order_by(TextChunk.created_at.desc())
+            .limit(top_k * 3)
+        )
+        result = await db.execute(stmt_fb)
+        chunks = result.scalars().all()
+        seen: dict = {}
+        for c in chunks:
+            cid = str(c.candidate_id)
+            if cid not in seen:
+                seen[cid] = {
+                    "candidate_id":     cid,
+                    "chunk_id":         str(c.id),
+                    "chunk_text":       c.chunk_text,
+                    "source_document_id": str(c.source_document_id),
+                    "document_type":    None,
+                    "file_name":        None,
+                    "distance":         0.0,
+                }
+        return list(seen.values())[:top_k]
+
+
 # ── Store Chunks ──────────────────────────────────────────────────────────────
 
 async def store_chunks(
