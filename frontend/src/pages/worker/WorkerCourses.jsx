@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { WorkerLayout } from './WorkerLayout'
 import { getToken, getMe, getCandidateProfile, getCourses } from '../../services/api'
+import { MOCK_USER } from './mockData'
 
 const font = "'Urbanist', sans-serif"
 
@@ -117,7 +118,7 @@ export function WorkerCourses() {
 
   useEffect(() => {
     const token = getToken()
-    if (!token) { navigate('/login', { replace:true }); return }
+    if (!token) { setUser(MOCK_USER); setCourses(FALLBACK_COURSES); setLoading(false); return }
     getMe(token)
       .then(u => {
         setUser(u)

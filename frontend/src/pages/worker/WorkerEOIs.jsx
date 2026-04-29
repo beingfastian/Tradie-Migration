@@ -9,6 +9,7 @@ import {
   getToken, getMe,
   getReceivedEois, markEoiRead,
 } from '../../services/api'
+import { MOCK_USER, MOCK_EOIS } from './mockData'
 
 const font = "'Urbanist', sans-serif"
 
@@ -84,20 +85,22 @@ export function WorkerEOIs() {
 
   useEffect(() => {
     const token = getToken()
-    if (!token) { navigate('/login', { replace:true }); return }
+    function applyEois(u, list) {
+      setUser(u); setEois(list)
+      if (list.length > 0) {
+        setSelected(list[0])
+        setMessages(getMockMessages(list[0].id))
+      }
+    }
+    if (!token) { applyEois(MOCK_USER, MOCK_EOIS); setLoading(false); return }
     getMe(token)
       .then(u => { setUser(u); return getReceivedEois(token) })
       .then(data => {
         const list = Array.isArray(data) ? data : (data.items || [])
-        setEois(list)
-        if (list.length > 0) {
-          setSelected(list[0])
-          setMessages(getMockMessages(list[0].id))
-          // mark first as read
-          markEoiRead(list[0].id, getToken()).catch(() => {})
-        }
+        applyEois(MOCK_USER, list.length > 0 ? list : MOCK_EOIS)
+        if (list.length > 0) markEoiRead(list[0].id, token).catch(() => {})
       })
-      .catch(() => {})
+      .catch(() => applyEois(MOCK_USER, MOCK_EOIS))
       .finally(() => setLoading(false))
   }, [navigate])
 

@@ -9,6 +9,7 @@ import {
   getToken, getMe,
   getCandidateProfile, createCandidateProfile, updateCandidateProfile,
 } from '../../services/api'
+import { MOCK_USER, MOCK_PROFILE } from './mockData'
 
 const font = "'Urbanist', sans-serif"
 
@@ -250,22 +251,23 @@ export function WorkerSetup() {
 
   useEffect(() => {
     const token = getToken()
-    if (!token) { navigate('/login', { replace:true }); return }
+    function applyProfile(u, p) {
+      setUser(u)
+      setFullName(u.full_name || '')
+      if (p) {
+        setHasProfile(true)
+        setTradeType(p.trade_type || '')
+        setExperience(p.years_experience ? String(p.years_experience) : '')
+        setIsElectrical(p.is_electrical_worker ? 'Yes' : 'No')
+        setEnglishLevel(p.english_level || '')
+        setLanguages(p.other_languages || [])
+        setBio(p.bio || '')
+      }
+    }
+    if (!token) { applyProfile(MOCK_USER, MOCK_PROFILE); return }
     Promise.all([getMe(token), getCandidateProfile(token).catch(() => null)])
-      .then(([u, p]) => {
-        setUser(u)
-        setFullName(u.full_name || '')
-        if (p) {
-          setHasProfile(true)
-          setTradeType(p.trade_type || '')
-          setExperience(p.years_experience ? String(p.years_experience) : '')
-          setIsElectrical(p.is_electrical_worker ? 'Yes' : 'No')
-          setEnglishLevel(p.english_level || '')
-          setLanguages(p.other_languages || [])
-          setBio(p.bio || '')
-        }
-      })
-      .catch(() => {})
+      .then(([u, p]) => applyProfile(u, p))
+      .catch(() => applyProfile(MOCK_USER, MOCK_PROFILE))
   }, [navigate])
 
   async function save(next) {

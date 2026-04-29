@@ -9,6 +9,7 @@ import {
   getToken, getMe, getCandidateProfile,
   uploadDocument, getDocuments, deleteDocument,
 } from '../../services/api'
+import { MOCK_USER, MOCK_PROFILE } from './mockData'
 
 const font = "'Urbanist', sans-serif"
 
@@ -129,14 +130,14 @@ export function WorkerDocuments() {
 
   useEffect(() => {
     const token = getToken()
-    if (!token) { navigate('/login', { replace:true }); return }
+    if (!token) { setUser(MOCK_USER); setProfile(MOCK_PROFILE); return }
     getMe(token)
       .then(u => {
         setUser(u)
         return getCandidateProfile(token).catch(() => null)
       })
       .then(p => {
-        setProfile(p)
+        setProfile(p || MOCK_PROFILE)
         if (p?.id) {
           getDocuments(p.id, token)
             .then(docs => {
@@ -145,7 +146,7 @@ export function WorkerDocuments() {
             .catch(() => {})
         }
       })
-      .catch(() => {})
+      .catch(() => { setUser(MOCK_USER); setProfile(MOCK_PROFILE) })
   }, [navigate])
 
   function addLocalFiles(selected) {

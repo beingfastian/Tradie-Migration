@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { WorkerLayout } from './WorkerLayout'
 import { getToken, getMe, getMyDashboard } from '../../services/api'
+import { MOCK_USER, MOCK_DASH } from './mockData'
 
 const font = "'Urbanist', sans-serif"
 
@@ -66,10 +67,10 @@ export function WorkerHome() {
 
   useEffect(() => {
     const token = getToken()
-    if (!token) { navigate('/login', { replace:true }); return }
+    if (!token) { setUser(MOCK_USER); setDash(MOCK_DASH); setLoading(false); return }
     Promise.all([getMe(token), getMyDashboard(token)])
       .then(([u, d]) => { setUser(u); setDash(d) })
-      .catch(() => {})
+      .catch(() => { setUser(MOCK_USER); setDash(MOCK_DASH) })
       .finally(() => setLoading(false))
   }, [navigate])
 
