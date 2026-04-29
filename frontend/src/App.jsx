@@ -6,6 +6,10 @@ import { OtpPage }            from './pages/OtpPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { OAuthCallbackPage }  from './pages/OAuthCallbackPage'
 import { WorkerSetup }        from './pages/worker/WorkerSetup'
+import { WorkerHome }         from './pages/worker/WorkerHome'
+import { WorkerDocuments }    from './pages/worker/WorkerDocuments'
+import { WorkerEOIs }         from './pages/worker/WorkerEOIs'
+import { WorkerCourses }      from './pages/worker/WorkerCourses'
 import { CompanySetup }       from './pages/company/CompanySetup'
 import { TrainerSetup }       from './pages/trainer/TrainerSetup'
 import { DashboardPage }      from './pages/DashboardPage'
@@ -23,21 +27,26 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/oauth-callback"  element={<OAuthCallbackPage />} />
 
-      {/* Worker / Candidate setup
-          Both /setup/worker/:step and /setup/employer/:step point to the same component.
-          Step navigation is handled in-component (no remount on step change). */}
+      {/* Worker dashboard */}
+      <Route path="/worker/dashboard"  element={<WorkerHome />} />
+      <Route path="/worker/profile"    element={<WorkerSetup />} />
+      <Route path="/worker/documents"  element={<WorkerDocuments />} />
+      <Route path="/worker/eois"       element={<WorkerEOIs />} />
+      <Route path="/worker/courses"    element={<WorkerCourses />} />
+
+      {/* Worker / Candidate setup (legacy entry points) */}
       <Route path="/setup/worker/:step"   element={<WorkerSetup />} />
       <Route path="/setup/employer/:step" element={<WorkerSetup />} />
 
       {/* Employer / Company setup */}
-      <Route path="/setup/company/:step"  element={<CompanySetup />} />
-      <Route path="/setup/employer-co/:step" element={<CompanySetup />} />
+      <Route path="/setup/company/:step"      element={<CompanySetup />} />
+      <Route path="/setup/employer-co/:step"  element={<CompanySetup />} />
 
       {/* Training Provider setup */}
       <Route path="/setup/trainer/:step"  element={<TrainerSetup />} />
       <Route path="/setup/provider/:step" element={<TrainerSetup />} />
 
-      {/* Dashboard */}
+      {/* Legacy dashboard — redirect candidates to worker dashboard */}
       <Route path="/dashboard" element={<DashboardPage />} />
 
       {/* Fallback */}
