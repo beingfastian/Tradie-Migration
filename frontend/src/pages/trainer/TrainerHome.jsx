@@ -34,117 +34,117 @@ export function TrainerHome() {
     getMe(token).then(u => setUser(u)).catch(() => {})
   }, [])
 
-  const firstName   = user?.full_name?.split(' ')[0] || 'John'
+  const firstName = user?.full_name?.split(' ')[0] || 'John'
 
   return (
     <TrainerLayout user={user} provider={provider}>
 
       {/* ── Hero Banner ── */}
       <div style={{
-        position:'relative', borderRadius:50, overflow:'hidden',
-        height:311, marginBottom:32, flexShrink:0,
+        position:'relative', borderRadius:30, overflow:'hidden',
+        height:220, marginBottom:28, flexShrink:0,
       }}>
-        {/* background image */}
+        {/* background */}
         <img src={imgHeroBg} alt=""
           style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
 
-        {/* text content */}
+        {/* text */}
         <div style={{
-          position:'absolute', inset:0, padding:'44px 48px',
+          position:'absolute', inset:0, padding:'32px 40px',
           display:'flex', flexDirection:'column', justifyContent:'center',
-          zIndex:2,
+          zIndex:2, maxWidth:'55%',
         }}>
           <h1 style={{
-            fontFamily:font, fontWeight:700, fontSize:34, lineHeight:1.3,
-            color:'#403c8b', margin:'0 0 12px',
+            fontFamily:font, fontWeight:700, fontSize:28, lineHeight:1.3,
+            color:'#403c8b', margin:'0 0 10px',
           }}>
             {getGreeting()},{' '}
             <span style={{ color:'#f26f37' }}>{firstName} Smith</span>! 🚀
           </h1>
           <p style={{
-            fontFamily:font, fontWeight:600, fontSize:20, lineHeight:1.5,
-            color:'#1d15a7', margin:0, maxWidth:560,
+            fontFamily:font, fontWeight:600, fontSize:16, lineHeight:1.5,
+            color:'#1d15a7', margin:0,
           }}>
             Your institution is active. You have 5 new enrollment inquiries waiting for review.
           </p>
         </div>
 
-        {/* illustration — flipped vertically per Figma */}
+        {/* illustration — upright, anchored to right */}
         <img src={imgHeroIllus} alt=""
           style={{
-            position:'absolute', right:48, bottom:0,
-            height:280, width:'auto', display:'block',
-            transform:'scaleY(-1)', zIndex:2,
+            position:'absolute', right:32, top:'50%',
+            transform:'translateY(-50%)',
+            height:190, width:'auto', display:'block',
+            zIndex:2,
           }}/>
       </div>
 
       {/* ── Section heading ── */}
       <h2 style={{
-        fontFamily:font, fontWeight:700, fontSize:34,
-        color:'#1e1e1e', margin:'0 0 24px', lineHeight:1.3,
+        fontFamily:font, fontWeight:700, fontSize:28,
+        color:'#1e1e1e', margin:'0 0 20px', lineHeight:1.3,
       }}>
         Education Provider Overview
       </h2>
 
       {/* ── Two-column cards ── */}
-      <div style={{ display:'flex', gap:24, alignItems:'flex-start' }}>
+      <div style={{ display:'flex', gap:20, alignItems:'stretch' }}>
 
-        {/* ── LEFT card — provider profile (751px) ── */}
+        {/* ── LEFT card — provider profile ── */}
         <div style={{
-          width:751, flexShrink:0,
-          background:'#fff', borderRadius:24, padding:'40px 36px',
-          boxShadow:'0 2px 20px rgba(0,0,0,0.05)',
-          display:'flex', flexDirection:'column', alignItems:'center', gap:20,
-          minHeight:669,
+          flex:'0 0 55%',
+          background:'#fff', borderRadius:20, padding:'28px 24px',
+          boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
+          display:'flex', flexDirection:'column', alignItems:'center', gap:16,
         }}>
-          {/* Avatar with ring + donut overlay */}
-          <div style={{ position:'relative', width:200, height:200, flexShrink:0 }}>
+          {/* Avatar ring + donut */}
+          <div style={{ position:'relative', width:160, height:160, flexShrink:0 }}>
             <img src={imgEllipseRing} alt=""
-              style={{ width:200, height:200, display:'block', borderRadius:'50%', objectFit:'cover' }}/>
+              style={{ width:160, height:160, display:'block', borderRadius:'50%', objectFit:'cover' }}/>
             <img src={imgDonutChart} alt=""
               style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }}/>
             {/* orange % badge */}
             <div style={{
-              position:'absolute', bottom:8, left:'50%', transform:'translateX(-50%)',
+              position:'absolute', bottom:4, left:'50%', transform:'translateX(-50%)',
               background:'#f26f37', color:'#fff', borderRadius:20,
-              padding:'4px 16px', fontFamily:font, fontWeight:700, fontSize:14,
+              padding:'3px 14px', fontFamily:font, fontWeight:700, fontSize:13,
               whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(242,111,55,0.35)',
             }}>98%</div>
           </div>
 
           {/* Purple badges */}
-          <div style={{ display:'flex', gap:12 }}>
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center' }}>
             <span style={{
               background:'#403c8b', color:'#f1fdfd',
-              borderRadius:12, padding:'6px 18px',
+              borderRadius:10, padding:'5px 16px',
               fontFamily:font, fontWeight:600, fontSize:13,
             }}>RTO: #12345</span>
             <span style={{
               background:'#403c8b', color:'#f1fdfd',
-              borderRadius:12, padding:'6px 18px',
+              borderRadius:10, padding:'5px 16px',
               fontFamily:font, fontWeight:600, fontSize:13,
             }}>10+ Courses</span>
           </div>
 
           {/* Name + desc */}
           <div style={{ textAlign:'center' }}>
-            <p style={{ fontFamily:font, fontWeight:800, fontSize:22, color:'#1e1e1e', margin:'0 0 8px' }}>
+            <p style={{ fontFamily:font, fontWeight:800, fontSize:20, color:'#1e1e1e', margin:'0 0 6px' }}>
               Trades Academy Australia
             </p>
             <p style={{
-              fontFamily:font, fontWeight:400, fontSize:14, color:'#9ca3af',
-              margin:0, maxWidth:340, lineHeight:1.6,
+              fontFamily:font, fontWeight:400, fontSize:13, color:'#9ca3af',
+              margin:0, lineHeight:1.6,
             }}>
               Specializing in Australian Standards certification and trade skills assessment for international workers seeking skilled migration pathways.
             </p>
           </div>
 
-          {/* Manage Course Catalog button */}
+          {/* Manage Course Catalog */}
           <button onClick={() => navigate('/trainer/courses')} style={{
-            width:'100%', height:53,
+            width:'100%', height:48,
             background:'#156dbf', color:'#fff',
             border:'none', borderRadius:12, cursor:'pointer',
-            fontFamily:font, fontWeight:600, fontSize:16,
+            fontFamily:font, fontWeight:600, fontSize:15,
             boxShadow:'0 4px 12px rgba(21,109,191,0.22)',
             transition:'background 0.15s', marginTop:'auto',
           }}
@@ -155,26 +155,27 @@ export function TrainerHome() {
         </div>
 
         {/* ── RIGHT column ── */}
-        <div style={{ flex:1, display:'flex', flexDirection:'column', gap:24 }}>
+        <div style={{ flex:1, display:'flex', flexDirection:'column', gap:20 }}>
 
-          {/* Active Courses card (609×315) */}
+          {/* Active Courses card */}
           <div style={{
-            background:'#fff', borderRadius:24, padding:'32px 28px',
-            boxShadow:'0 2px 20px rgba(0,0,0,0.05)', minHeight:315,
-            display:'flex', flexDirection:'column', gap:16,
+            flex:1,
+            background:'#fff', borderRadius:20, padding:'24px 22px',
+            boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
+            display:'flex', flexDirection:'column', gap:14,
           }}>
             <div>
-              <h3 style={{ fontFamily:font, fontWeight:700, fontSize:22, color:'#1e1e1e', margin:'0 0 6px' }}>
+              <h3 style={{ fontFamily:font, fontWeight:700, fontSize:20, color:'#1e1e1e', margin:'0 0 4px' }}>
                 Active Courses
               </h3>
-              <p style={{ fontFamily:font, fontWeight:400, fontSize:16, color:'#6a7380', margin:0 }}>
+              <p style={{ fontFamily:font, fontWeight:400, fontSize:15, color:'#6a7380', margin:0 }}>
                 12 Courses Published
               </p>
             </div>
 
             {/* Progress bar */}
             <div style={{
-              background:'#cccccc', borderRadius:8, height:14, overflow:'hidden',
+              background:'#cccccc', borderRadius:8, height:12, overflow:'hidden',
             }}>
               <div style={{
                 width:'36%', height:'100%',
@@ -183,13 +184,13 @@ export function TrainerHome() {
               }}/>
             </div>
 
-            {/* Add New Course button */}
+            {/* Add New Course */}
             <button onClick={() => navigate('/trainer/courses')} style={{
-              width:'100%', height:53,
+              width:'100%', height:46,
               background:'transparent',
               border:'1.5px solid #f26f37',
               borderRadius:12, cursor:'pointer',
-              fontFamily:font, fontWeight:600, fontSize:16, color:'#f26f37',
+              fontFamily:font, fontWeight:600, fontSize:15, color:'#f26f37',
               transition:'background 0.15s', marginTop:'auto',
             }}
               onMouseEnter={e => e.currentTarget.style.background='#fff5f0'}
@@ -198,23 +199,24 @@ export function TrainerHome() {
             </button>
           </div>
 
-          {/* Waiting for student questions card (609×324) */}
+          {/* Waiting for student questions card */}
           <div style={{
-            background:'#fff', borderRadius:24, padding:'32px 28px',
-            boxShadow:'0 2px 20px rgba(0,0,0,0.05)', minHeight:324,
+            flex:1,
+            background:'#fff', borderRadius:20, padding:'24px 22px',
+            boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
             display:'flex', flexDirection:'column', alignItems:'center',
-            justifyContent:'center', gap:16,
+            justifyContent:'center', gap:12,
           }}>
             <img src={imgMailbox} alt="mailbox"
-              style={{ width:180, height:'auto', display:'block' }}/>
+              style={{ width:130, height:'auto', display:'block' }}/>
             <p style={{
-              fontFamily:font, fontWeight:600, fontSize:16, color:'#6a7380',
-              textAlign:'center', margin:0, maxWidth:260, lineHeight:1.5,
+              fontFamily:font, fontWeight:600, fontSize:14, color:'#6a7380',
+              textAlign:'center', margin:0, lineHeight:1.5,
             }}>
               Waiting for student questions
             </p>
             <button onClick={() => navigate('/trainer/inquiries')} style={{
-              padding:'10px 32px',
+              padding:'9px 28px',
               background:'#5379f4', color:'#fff',
               border:'none', borderRadius:10, cursor:'pointer',
               fontFamily:font, fontWeight:600, fontSize:14,
