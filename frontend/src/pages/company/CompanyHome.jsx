@@ -93,7 +93,7 @@ export function CompanyHome() {
 
         {/* Decorative circles */}
         <img src={imgDecoCircle1} alt=""
-          style={{ position:'absolute', left:80, bottom:20, width:60, height:auto, zIndex:3, opacity:0.85, transform:'rotate(6deg)' }}/>
+          style={{ position:'absolute', left:80, bottom:20, width:60, height:'auto', zIndex:3, opacity:0.85, transform:'rotate(6deg)' }}/>
         <img src={imgDecoCircle2} alt=""
           style={{ position:'absolute', left:260, bottom:-10, width:60, height:'auto', zIndex:3, opacity:0.85, transform:'rotate(-164deg)' }}/>
       </div>
