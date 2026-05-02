@@ -8,9 +8,10 @@ import { clearToken } from '../../services/api'
 
 const font = "'Urbanist', sans-serif"
 
-/* ─── FIGMA ASSETS — node 1:4858 / 1:2805 ─── */
+/* ─── FIGMA ASSETS — node 1:4858 / 1:2805 / 1:1859 ─── */
 // Sidebar nav icons (outline = inactive, filled/bold = active)
 const imgIconDashboard     = 'https://www.figma.com/api/mcp/asset/9a7309c2-cfe8-40bd-b38e-c9c570f6af78'
+const imgIconDashboardBold = 'https://www.figma.com/api/mcp/asset/fda47b36-a713-4474-85f2-66c0cbc40f28'
 const imgIconCourses       = 'https://www.figma.com/api/mcp/asset/f8721b35-91de-45a3-adb0-47e5cdec2071'
 const imgIconStudents      = 'https://www.figma.com/api/mcp/asset/5e5782eb-167a-4821-83e9-dba6ddfdb3ee'
 const imgIconInquiryOut    = 'https://www.figma.com/api/mcp/asset/5fcb8095-5654-4198-8d7d-481e9ce8c91a' // outline
@@ -45,7 +46,7 @@ export function TrainerLayout({ children, user, provider }) {
   const displayName = provider?.institution_name || user?.full_name || 'Trades Academy Australia'
 
   const NAV = [
-    { key:'home',      label:'Dashboard (Home)',     icon:imgIconDashboard,  path:'/trainer/dashboard' },
+    { key:'home',      label:'Dashboard (Home)',     icon: active==='home' ? imgIconDashboardBold : imgIconDashboard,  path:'/trainer/dashboard' },
     { key:'courses',   label:'My Courses',           icon:imgIconCourses,    path:'/trainer/courses' },
     { key:'students',  label:'Student Directory',    icon:imgIconStudents,   path:'/trainer/students' },
     {
