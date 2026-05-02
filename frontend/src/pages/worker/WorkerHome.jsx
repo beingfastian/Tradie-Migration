@@ -1,16 +1,23 @@
 /**
- * WorkerHome — Dashboard Home screen for candidate/worker.
- * Matches Figma node 1-1316: welcome banner, profile card, documents card, EOIs card.
+ * WorkerHome — Figma node 1:1316 (file Ud0NnDoXtD1Rd5t4EaAlBT)
+ * All assets from Figma API. Inline styles only.
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { WorkerLayout } from './WorkerLayout'
-import { getToken, getMe, getMyDashboard } from '../../services/api'
-import { MOCK_USER, MOCK_DASH } from './mockData'
+import { getToken, getMe } from '../../services/api'
 
 const font = "'Urbanist', sans-serif"
 
-/* ─── Greeting helper ─── */
+/* ─── FIGMA ASSETS — node 1:1316 ─── */
+const imgHeroBg      = 'https://www.figma.com/api/mcp/asset/40b21323-f8dc-4e68-bc84-c3aefb5c8e47'
+const imgHeroIllus   = 'https://www.figma.com/api/mcp/asset/d62d6f2d-5da6-4c5f-af7e-0a6cd04d039b'
+const imgEllipseRing = 'https://www.figma.com/api/mcp/asset/588a81d2-5ad7-478b-9b45-553dcd224ac2'
+const imgDonutChart  = 'https://www.figma.com/api/mcp/asset/708ed41c-5a42-42dd-a4a8-81591192dd2a'
+const imgMailbox     = 'https://www.figma.com/api/mcp/asset/85ad9baa-8664-48c3-b9de-144771f05ead'
+const imgDeco1       = 'https://www.figma.com/api/mcp/asset/4880e809-4c7d-424c-908d-70e86aded273'
+const imgDeco2       = 'https://www.figma.com/api/mcp/asset/e83216cb-4ab5-4574-8fb1-355704316079'
+
 function getGreeting() {
   const h = new Date().getHours()
   if (h < 12) return 'Good Morning'
@@ -18,244 +25,177 @@ function getGreeting() {
   return 'Good Evening'
 }
 
-/* ─── Circular progress ring ─── */
-function CircularProgress({ pct = 75, size = 200, stroke = 12, photo, initials }) {
-  const r = (size - stroke) / 2
-  const circ = 2 * Math.PI * r
-  const offset = circ - (pct / 100) * circ
-  return (
-    <div style={{ position:'relative', width:size, height:size, flexShrink:0 }}>
-      <svg width={size} height={size} style={{ transform:'rotate(-90deg)', position:'absolute', inset:0 }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e0dff0" strokeWidth={stroke} />
-        <circle cx={size/2} cy={size/2} r={r} fill="none"
-          stroke="#5379f4" strokeWidth={stroke}
-          strokeDasharray={circ} strokeDashoffset={offset}
-          strokeLinecap="round"
-          style={{ transition:'stroke-dashoffset 0.6s ease' }}
-        />
-      </svg>
-      {/* Photo / initials */}
-      <div style={{
-        position:'absolute',
-        top: stroke + 8, left: stroke + 8,
-        right: stroke + 8, bottom: stroke + 8,
-        borderRadius:'50%', background:'#e8ecf0',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        overflow:'hidden',
-      }}>
-        {photo
-          ? <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-          : <span style={{ fontSize:32, fontWeight:700, color:'#5379f4' }}>{initials}</span>
-        }
-      </div>
-      {/* Percentage badge */}
-      <div style={{
-        position:'absolute', bottom:12, left:'50%', transform:'translateX(-50%)',
-        background:'#f26f37', color:'#fff', borderRadius:20,
-        padding:'3px 12px', fontWeight:700, fontSize:15, fontFamily:font,
-        boxShadow:'0 2px 8px rgba(242,111,55,0.3)',
-      }}>{pct}%</div>
-    </div>
-  )
-}
-
 export function WorkerHome() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
-  const [dash, setDash] = useState(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const token = getToken()
-    if (!token) { setUser(MOCK_USER); setDash(MOCK_DASH); setLoading(false); return }
-    Promise.all([getMe(token), getMyDashboard(token)])
-      .then(([u, d]) => { setUser(u); setDash(d) })
-      .catch(() => { setUser(MOCK_USER); setDash(MOCK_DASH) })
-      .finally(() => setLoading(false))
-  }, [navigate])
+    if (!token) return
+    getMe(token).then(u => setUser(u)).catch(() => {})
+  }, [])
 
-  if (loading) return (
-    <WorkerLayout user={user}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:400 }}>
-        <div style={{ color:'#6a7380', fontFamily:font }}>Loading…</div>
-      </div>
-    </WorkerLayout>
-  )
-
-  const displayName = user?.full_name || user?.email?.split('@')[0] || 'Joshua'
-  const firstName   = displayName.split(' ')[0]
-  const initials    = displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)
-  const docsUploaded = dash?.documents?.uploaded ?? 3
-  const docsTotal    = 8
-  const docsPct      = Math.round((docsUploaded / docsTotal) * 100)
-  const eoiCount     = dash?.expressions_of_interest?.received ?? 0
-  const profilePct   = 75  // TODO: compute from profile completeness
+  const firstName = user?.full_name?.split(' ')[0] || 'Joshua'
+  const fullName  = user?.full_name || 'Joshua Co'
 
   return (
     <WorkerLayout user={user}>
-      {/* ── Welcome banner ── */}
-      <div style={{
-        background: 'linear-gradient(135deg, #dde8f8 0%, #c8d8f5 40%, #e8d8f8 100%)',
-        borderRadius:20, padding:'36px 48px',
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        marginBottom:24, overflow:'hidden', position:'relative', minHeight:160,
-      }}>
-        <div style={{ position:'relative', zIndex:2 }}>
-          <h1 style={{
-            fontFamily:font, fontSize:32, fontWeight:700, color:'#403c8b',
-            margin:'0 0 10px', lineHeight:1.3,
-          }}>
-            {getGreeting()}, <span style={{ color:'#f26f37' }}>{firstName}</span>! 🚀
-          </h1>
-          <p style={{
-            fontFamily:font, fontSize:20, fontWeight:600, color:'#1d15a7',
-            margin:0, lineHeight:1.4, maxWidth:600,
-          }}>
-            Your profile is <span style={{ color:'#f26f37' }}>{profilePct}%</span> complete.{' '}
-            Publish your profile to start appearing in employer searches!
-          </p>
-        </div>
-        {/* Decorative circles */}
-        <div style={{ position:'absolute', top:-40, right:-40, width:220, height:220, borderRadius:'50%', background:'rgba(255,255,255,0.18)' }} />
-        <div style={{ position:'absolute', bottom:-30, right:120, width:140, height:140, borderRadius:'50%', background:'rgba(83,121,244,0.12)' }} />
-      </div>
 
-      {/* ── Section title ── */}
-      <div style={{ marginBottom:24 }}>
-        <h2 style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#1e1e1e', margin:'0 0 6px' }}>
+      {/* ── Section heading ── */}
+      <div style={{ marginBottom:20 }}>
+        <h2 style={{ fontFamily:font, fontWeight:700, fontSize:34, color:'#1e1e1e', margin:'0 0 4px', lineHeight:1.3 }}>
           My Career Dashboard
         </h2>
-        <p style={{ fontFamily:font, fontSize:16, color:'#6a7380', margin:0 }}>
+        <p style={{ fontFamily:font, fontWeight:500, fontSize:18, color:'#6a7380', margin:0, lineHeight:1.3 }}>
           Your profile is almost ready! Finish the remaining steps to get noticed by Australian employers.
         </p>
       </div>
 
-      {/* ── Cards row ── */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24 }}>
+      {/* ── Hero Banner ── */}
+      <div style={{
+        position:'relative', borderRadius:50, overflow:'hidden',
+        height:220, marginBottom:28, flexShrink:0,
+      }}>
+        <img src={imgHeroBg} alt=""
+          style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
 
-        {/* ── Profile card ── */}
         <div style={{
-          background:'#fff', borderRadius:20, padding:'32px 28px',
-          display:'flex', flexDirection:'column', alignItems:'center', gap:16,
-          boxShadow:'0 2px 16px rgba(0,0,0,0.05)',
+          position:'absolute', inset:0, padding:'32px 48px',
+          display:'flex', flexDirection:'column', justifyContent:'center',
+          zIndex:2, maxWidth:'60%',
         }}>
-          <CircularProgress pct={profilePct} size={180} stroke={10} initials={initials} />
+          <h1 style={{
+            fontFamily:font, fontWeight:700, fontSize:28, lineHeight:1.3,
+            color:'#403c8b', margin:'0 0 14px',
+          }}>
+            {getGreeting()},{' '}
+            <span style={{ color:'#f26f37' }}>{firstName}</span>! 🚀
+          </h1>
+          <p style={{
+            fontFamily:font, fontWeight:600, fontSize:18, lineHeight:1.5,
+            color:'#1d15a7', margin:0,
+          }}>
+            Your profile is{' '}
+            <span style={{ color:'#f26f37' }}>75%</span>
+            {' '}complete. Publish your profile to start appearing in employer searches!
+          </p>
+        </div>
 
-          {/* Badges */}
-          <div style={{ display:'flex', gap:10 }}>
-            <span style={{ background:'#403c8b', color:'#f1fdfd', borderRadius:12, padding:'4px 14px', fontSize:14, fontWeight:600, fontFamily:font }}>
+        <img src={imgHeroIllus} alt=""
+          style={{
+            position:'absolute', right:40, top:'50%',
+            transform:'translateY(-50%)',
+            height:200, width:'auto', display:'block', zIndex:2,
+          }}/>
+      </div>
+
+      {/* ── Two-column cards ── */}
+      <div style={{ display:'flex', gap:20, alignItems:'stretch' }}>
+
+        {/* LEFT — profile card */}
+        <div style={{
+          flex:'0 0 55%',
+          background:'#fff', borderRadius:16, padding:'28px 24px',
+          boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
+          display:'flex', flexDirection:'column', alignItems:'center', gap:14,
+          position:'relative', overflow:'hidden',
+        }}>
+          <img src={imgDeco1} alt="" style={{ position:'absolute', left:28, top:'42%', width:55, height:'auto', opacity:0.85, transform:'rotate(6deg)', pointerEvents:'none' }}/>
+          <img src={imgDeco2} alt="" style={{ position:'absolute', left:155, top:'56%', width:55, height:'auto', opacity:0.85, transform:'rotate(-164deg)', pointerEvents:'none' }}/>
+
+          {/* Avatar ring + donut */}
+          <div style={{ position:'relative', width:180, height:180, flexShrink:0, marginTop:8 }}>
+            <img src={imgEllipseRing} alt=""
+              style={{ width:180, height:180, display:'block', borderRadius:'50%', objectFit:'cover' }}/>
+            <img src={imgDonutChart} alt=""
+              style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }}/>
+            <div style={{
+              position:'absolute', bottom:4, left:'50%', transform:'translateX(-50%)',
+              background:'#f26f37', color:'#fff', borderRadius:16,
+              padding:'4px 14px', fontFamily:font, fontWeight:600, fontSize:14,
+              whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(242,111,55,0.35)',
+            }}>75%</div>
+          </div>
+
+          {/* Purple badges */}
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center' }}>
+            <span style={{ background:'#403c8b', color:'#f1fdfd', borderRadius:13, padding:'5px 16px', fontFamily:font, fontWeight:600, fontSize:13 }}>
               English: B2
             </span>
-            <span style={{ background:'#403c8b', color:'#f1fdfd', borderRadius:12, padding:'4px 14px', fontSize:14, fontWeight:600, fontFamily:font }}>
+            <span style={{ background:'#403c8b', color:'#f1fdfd', borderRadius:13, padding:'5px 16px', fontFamily:font, fontWeight:600, fontSize:13 }}>
               5+ Years Exp
             </span>
           </div>
 
-          {/* Name */}
+          {/* Name + trade */}
           <div style={{ textAlign:'center' }}>
-            <p style={{ fontFamily:font, fontSize:22, fontWeight:700, color:'#1e1e1e', margin:'0 0 4px' }}>
-              {displayName}
-            </p>
-            <p style={{ fontFamily:font, fontSize:14, color:'#6a7380', margin:0 }}>
-              {user?.trade_type || 'Licensed Electrician (or selected trade).'}
+            <p style={{ fontFamily:font, fontWeight:700, fontSize:22, color:'#1e1e1e', margin:'0 0 4px' }}>{fullName}</p>
+            <p style={{ fontFamily:font, fontWeight:500, fontSize:14, color:'#6a7380', margin:0, lineHeight:1.5 }}>
+              Licensed Electrician (or selected trade).
             </p>
           </div>
 
-          {/* Publish button */}
-          <button
-            onClick={() => navigate('/worker/profile')}
-            style={{
-              width:'100%', height:48, background:'#156dbf', color:'#fff',
-              border:'none', borderRadius:12, cursor:'pointer',
-              fontFamily:font, fontSize:16, fontWeight:600,
-              boxShadow:'0 4px 12px rgba(21,109,191,0.25)',
-              transition:'background 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background='#1259a0' }}
-            onMouseLeave={e => { e.currentTarget.style.background='#156dbf' }}
-          >
+          <button onClick={() => navigate('/worker/profile')} style={{
+            width:'100%', height:53, background:'#156dbf', color:'#fff',
+            border:'none', borderRadius:12, cursor:'pointer',
+            fontFamily:font, fontWeight:600, fontSize:16,
+            boxShadow:'0 4px 12px rgba(21,109,191,0.22)',
+            transition:'background 0.15s', marginTop:'auto',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background='#1259a0'}
+            onMouseLeave={e => e.currentTarget.style.background='#156dbf'}>
             Publish Profile
           </button>
         </div>
 
-        {/* ── Right column ── */}
-        <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+        {/* RIGHT column */}
+        <div style={{ flex:1, display:'flex', flexDirection:'column', gap:20 }}>
 
-          {/* Documents card */}
+          {/* My Documents card */}
           <div style={{
-            background:'#fff', borderRadius:20, padding:'28px 28px',
-            boxShadow:'0 2px 16px rgba(0,0,0,0.05)',
+            flex:1, background:'#fff', borderRadius:16, padding:'28px 24px',
+            boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
+            display:'flex', flexDirection:'column', gap:16,
           }}>
-            <h3 style={{ fontFamily:font, fontSize:22, fontWeight:700, color:'#1e1e1e', margin:'0 0 6px' }}>
-              My Documents
-            </h3>
-            <p style={{ fontFamily:font, fontSize:15, color:'#6a7380', margin:'0 0 18px' }}>
-              {docsUploaded}/{docsTotal} Documents Uploaded
-            </p>
-
-            {/* Progress bar */}
-            <div style={{ background:'#ccc', borderRadius:8, height:12, marginBottom:20, overflow:'hidden' }}>
-              <div style={{
-                width:`${docsPct}%`, height:'100%',
-                background:'#5379f4', borderRadius:8,
-                transition:'width 0.6s ease',
-              }} />
+            <div>
+              <h3 style={{ fontFamily:font, fontWeight:700, fontSize:22, color:'#1e1e1e', margin:'0 0 4px' }}>My Documents</h3>
+              <p style={{ fontFamily:font, fontWeight:500, fontSize:16, color:'#6a7380', margin:0 }}>3/8 Documents Uploaded</p>
             </div>
-
-            <button
-              onClick={() => navigate('/worker/documents')}
-              style={{
-                width:'100%', height:48, background:'transparent',
-                border:'1.5px solid #f26f37', borderRadius:12, cursor:'pointer',
-                fontFamily:font, fontSize:15, fontWeight:600, color:'#f26f37',
-                transition:'background 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background='#fff5f0' }}
-              onMouseLeave={e => { e.currentTarget.style.background='transparent' }}
-            >
-              Upload Documents
+            {/* Progress bar — 3/8 ≈ 37.5% */}
+            <div style={{ background:'#cccccc', borderRadius:48, height:15, overflow:'hidden' }}>
+              <div style={{ width:'37.5%', height:'100%', background:'#5379f4', borderRadius:48, transition:'width 0.6s ease' }}/>
+            </div>
+            <button onClick={() => navigate('/worker/documents')} style={{
+              width:'100%', height:53, background:'transparent',
+              border:'1px solid #f26f37', borderRadius:12, cursor:'pointer',
+              fontFamily:font, fontWeight:600, fontSize:16, color:'#f26f37',
+              transition:'background 0.15s', marginTop:'auto',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background='#fff5f0'}
+              onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+              Save
             </button>
           </div>
 
-          {/* EOIs card */}
+          {/* EOI waiting card */}
           <div style={{
-            background:'#fff', borderRadius:20, padding:'28px 28px',
-            boxShadow:'0 2px 16px rgba(0,0,0,0.05)',
+            flex:1, background:'#fff', borderRadius:16, padding:'28px 24px',
+            boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
             display:'flex', flexDirection:'column', alignItems:'center',
-            flex:1, justifyContent:'center',
+            justifyContent:'center', gap:12,
           }}>
-            {eoiCount === 0 ? (
-              <>
-                {/* Mailbox illustration placeholder */}
-                <div style={{
-                  width:100, height:80, background:'linear-gradient(135deg, #f26f37 0%, #f4a261 100%)',
-                  borderRadius:12, marginBottom:16, display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:36,
-                }}>📬</div>
-                <p style={{ fontFamily:font, fontSize:15, color:'#6a7380', textAlign:'center', margin:0, maxWidth:260 }}>
-                  Waiting for your first Expression of Interest (EOI).
-                </p>
-              </>
-            ) : (
-              <>
-                <h3 style={{ fontFamily:font, fontSize:22, fontWeight:700, color:'#1e1e1e', margin:'0 0 8px' }}>
-                  My EOIs
-                </h3>
-                <div style={{ fontFamily:font, fontSize:36, fontWeight:800, color:'#5379f4' }}>{eoiCount}</div>
-                <p style={{ fontFamily:font, fontSize:14, color:'#6a7380', margin:'4px 0 16px' }}>Expressions of Interest received</p>
-                <button
-                  onClick={() => navigate('/worker/eois')}
-                  style={{
-                    padding:'10px 24px', background:'#5379f4', color:'#fff',
-                    border:'none', borderRadius:12, cursor:'pointer',
-                    fontFamily:font, fontSize:14, fontWeight:600,
-                  }}
-                >View All EOIs</button>
-              </>
-            )}
+            <img src={imgMailbox} alt="mailbox" style={{ width:140, height:'auto', display:'block' }}/>
+            <p style={{
+              fontFamily:font, fontWeight:500, fontSize:16, color:'#6a7380',
+              textAlign:'center', margin:0, lineHeight:1.5, maxWidth:300,
+            }}>
+              Waiting for your first Expression of Interest (EOI).
+            </p>
           </div>
+
         </div>
       </div>
+
     </WorkerLayout>
   )
 }
