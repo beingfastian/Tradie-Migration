@@ -1,566 +1,303 @@
 /**
- * LandingPage — Pixel-perfect rebuild from Figma node 1-41
- * File: KUp74wgn6I4qmd7485ciL0
+ * LandingPage — Pixel-perfect rebuild from Figma KUp74wgn6I4qmd7485ciL0 node 1:41
+ * All illustrations, icons and decorative assets pulled directly from Figma API.
  */
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-const font     = "'Urbanist', 'Inter', sans-serif"
-const darkNavy = '#0d1b3e'
-const blue     = '#1565c0'
-const orange   = '#f26f37'
-const white    = '#ffffff'
+const font     = "'Urbanist', sans-serif"
+const fontMohave = "'Mohave', 'Urbanist', sans-serif"
 
-/* ─── Decorative blob assets from Figma ─── */
-const blobBlueYellow   = 'https://www.figma.com/api/mcp/asset/be9569d5-cb68-4f98-9434-8259d0688294'
-const blobBlue         = 'https://www.figma.com/api/mcp/asset/becffa3b-14ae-4e4b-822c-03801204813d'
-const blobYellow       = 'https://www.figma.com/api/mcp/asset/06ac1147-eaf6-4dd0-b387-aa181866ee62'
-const blobGroup2       = 'https://www.figma.com/api/mcp/asset/b75a4fda-99eb-4ffe-8449-2a8bb45dda3d'
-const blobBlue2        = 'https://www.figma.com/api/mcp/asset/0df99576-e6ed-4c94-882b-723f97c0112c'
-const blobYellow2      = 'https://www.figma.com/api/mcp/asset/3de0107e-44d8-4b74-992b-789b77fdafb9'
-const ringsBg          = 'https://www.figma.com/api/mcp/asset/3cc63838-48e4-4f0b-9e74-246e26db1095'
+/* ─── FIGMA ASSETS — exact URLs from API ─── */
 
-/* ─── Inline SVG illustrations ─── */
-function HeroWorkerLeft() {
-  return (
-    <svg width="340" height="320" viewBox="0 0 340 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Worker 1 - electrician */}
-      <circle cx="60" cy="80" r="22" fill="#FFBE9D"/>
-      <rect x="44" y="100" width="32" height="50" rx="8" fill="#1565C0"/>
-      <rect x="30" y="108" width="14" height="36" rx="6" fill="#1565C0"/>
-      <rect x="78" y="108" width="14" height="36" rx="6" fill="#1565C0"/>
-      <rect x="46" y="148" width="12" height="44" rx="6" fill="#0d3a7a"/>
-      <rect x="62" y="148" width="12" height="44" rx="6" fill="#0d3a7a"/>
-      <rect x="42" y="190" width="16" height="10" rx="4" fill="#333"/>
-      <rect x="62" y="190" width="16" height="10" rx="4" fill="#333"/>
-      {/* Toolbox */}
-      <rect x="88" y="150" width="28" height="22" rx="4" fill="#f26f37"/>
-      <rect x="95" y="146" width="14" height="8" rx="3" fill="#d45a20"/>
-      {/* Worker 2 - female */}
-      <circle cx="180" cy="60" r="24" fill="#FFBE9D"/>
-      <rect x="162" y="82" width="36" height="55" rx="8" fill="#129578"/>
-      <rect x="146" y="92" width="16" height="38" rx="6" fill="#129578"/>
-      <rect x="198" y="92" width="16" height="38" rx="6" fill="#129578"/>
-      <rect x="164" y="135" width="14" height="46" rx="6" fill="#0a5c47"/>
-      <rect x="182" y="135" width="14" height="46" rx="6" fill="#0a5c47"/>
-      <rect x="160" y="179" width="18" height="10" rx="4" fill="#333"/>
-      <rect x="182" y="179" width="18" height="10" rx="4" fill="#333"/>
-      {/* Clipboard */}
-      <rect x="205" y="105" width="24" height="30" rx="4" fill="white" stroke="#ccc" strokeWidth="1.5"/>
-      <line x1="210" y1="114" x2="224" y2="114" stroke="#999" strokeWidth="1.5"/>
-      <line x1="210" y1="120" x2="224" y2="120" stroke="#999" strokeWidth="1.5"/>
-      <line x1="210" y1="126" x2="218" y2="126" stroke="#999" strokeWidth="1.5"/>
-      {/* Worker 3 - builder */}
-      <circle cx="295" cy="75" r="22" fill="#FFBE9D"/>
-      <rect x="280" y="95" width="30" height="48" rx="7" fill="#f26f37"/>
-      <rect x="267" y="104" width="13" height="34" rx="5" fill="#f26f37"/>
-      <rect x="310" y="104" width="13" height="34" rx="5" fill="#f26f37"/>
-      <rect x="282" y="141" width="12" height="44" rx="6" fill="#8B4513"/>
-      <rect x="297" y="141" width="12" height="44" rx="6" fill="#8B4513"/>
-      <rect x="278" y="183" width="16" height="10" rx="4" fill="#333"/>
-      <rect x="297" y="183" width="16" height="10" rx="4" fill="#333"/>
-      {/* Hard hat */}
-      <path d="M278 72 Q295 50 312 72" fill="#FFD700" stroke="#F0C000" strokeWidth="1.5"/>
-      {/* Ground shadow */}
-      <ellipse cx="60" cy="202" rx="28" ry="7" fill="rgba(0,0,0,0.07)"/>
-      <ellipse cx="180" cy="190" rx="30" ry="7" fill="rgba(0,0,0,0.07)"/>
-      <ellipse cx="295" cy="196" rx="28" ry="7" fill="rgba(0,0,0,0.07)"/>
-      {/* Decorative elements */}
-      <circle cx="130" cy="30" r="8" fill="#f26f37" opacity="0.3"/>
-      <circle cx="250" cy="20" r="5" fill="#1565c0" opacity="0.3"/>
-      <circle cx="30" cy="180" r="6" fill="#129578" opacity="0.4"/>
-    </svg>
-  )
-}
+// Navbar icons
+const imgChevronDown  = 'https://www.figma.com/api/mcp/asset/8d9ef145-c582-476d-932c-e5f18cb076c6'
+const imgDivider      = 'https://www.figma.com/api/mcp/asset/8bb8810f-59b0-46b6-a54b-c3d77c17a16f'
+const imgArrowRight   = 'https://www.figma.com/api/mcp/asset/162f2a65-e3dc-402b-a219-4a2cce3f8389'
 
-function FeatureIllustrationCareer() {
-  return (
-    <svg width="180" height="160" viewBox="0 0 180 160" fill="none">
-      <circle cx="90" cy="55" r="28" fill="#FFBE9D"/>
-      <rect x="72" y="80" width="36" height="55" rx="10" fill="#1565C0"/>
-      <rect x="56" y="92" width="16" height="38" rx="6" fill="#1565C0"/>
-      <rect x="108" y="92" width="16" height="38" rx="6" fill="#1565C0"/>
-      <rect x="74" y="133" width="14" height="22" rx="5" fill="#0d3a7a"/>
-      <rect x="92" y="133" width="14" height="22" rx="5" fill="#0d3a7a"/>
-      <rect x="44" y="80" width="30" height="38" rx="6" fill="white" opacity="0.15"/>
-      <rect x="106" y="85" width="30" height="30" rx="6" fill="white" opacity="0.15"/>
-      <path d="M50 95 L70 95 M50 102 L70 102 M50 109 L62 109" stroke="white" strokeWidth="2" opacity="0.5"/>
-      <circle cx="90" cy="155" rx="24" ry="6" fill="rgba(255,255,255,0.15)"/>
-    </svg>
-  )
-}
+// Hero
+const imgHeroIllus    = 'https://www.figma.com/api/mcp/asset/84af5c8e-ff93-47e8-8571-a1b727577da2'
 
-function FeatureIllustrationWorkforce() {
-  return (
-    <svg width="180" height="160" viewBox="0 0 180 160" fill="none">
-      <circle cx="65" cy="50" r="22" fill="#FFBE9D"/>
-      <rect x="50" y="70" width="30" height="45" rx="8" fill="#129578"/>
-      <rect x="36" y="80" width="14" height="30" rx="5" fill="#129578"/>
-      <rect x="80" y="80" width="14" height="30" rx="5" fill="#129578"/>
-      <circle cx="120" cy="55" r="22" fill="#FFBE9D"/>
-      <rect x="105" y="75" width="30" height="45" rx="8" fill="#f26f37"/>
-      <rect x="91" y="85" width="14" height="30" rx="5" fill="#f26f37"/>
-      <rect x="135" y="85" width="14" height="30" rx="5" fill="#f26f37"/>
-      <path d="M80 85 Q92 78 105 85" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-      <circle cx="92" cy="75" r="6" fill="#FFD700"/>
-      <path d="M89 75 L91.5 77.5 L96 72" stroke="#0d1b3e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
+// Background blobs
+const imgBlobBlueYellow = 'https://www.figma.com/api/mcp/asset/b75a4fda-99eb-4ffe-8449-2a8bb45dda3d'
+const imgBlobBlue       = 'https://www.figma.com/api/mcp/asset/becffa3b-14ae-4e4b-822c-03801204813d'
+const imgBlobRings      = 'https://www.figma.com/api/mcp/asset/3cc63838-48e4-4f0b-9e74-246e26db1095'
+const imgBlobGroup2     = 'https://www.figma.com/api/mcp/asset/c43f60fb-63f2-46c2-b8c6-b9f2ca6c241e'
 
-function FeatureIllustrationEnroll() {
-  return (
-    <svg width="160" height="200" viewBox="0 0 160 200" fill="none">
-      {/* Phone */}
-      <rect x="45" y="20" width="70" height="130" rx="14" fill="white" stroke="#e0e0e0" strokeWidth="2"/>
-      <rect x="49" y="30" width="62" height="100" rx="6" fill="#f3f6ff"/>
-      {/* Screen content */}
-      <rect x="55" y="38" width="40" height="6" rx="3" fill="#1565C0"/>
-      <rect x="55" y="50" width="50" height="4" rx="2" fill="#ccc"/>
-      <rect x="55" y="58" width="35" height="4" rx="2" fill="#ccc"/>
-      <rect x="55" y="70" width="50" height="28" rx="6" fill="#e8f0fe"/>
-      <circle cx="70" cy="84" r="8" fill="#1565C0" opacity="0.7"/>
-      <rect x="82" y="79" width="18" height="4" rx="2" fill="#1565C0"/>
-      <rect x="82" y="86" width="12" height="3" rx="1.5" fill="#888"/>
-      <rect x="55" y="104" width="50" height="20" rx="5" fill="#f26f37" opacity="0.9"/>
-      <rect x="67" y="110" width="26" height="8" rx="3" fill="white"/>
-      {/* Notch */}
-      <rect x="68" y="22" width="24" height="8" rx="4" fill="#e0e0e0"/>
-      {/* Person beside phone */}
-      <circle cx="130" cy="80" r="18" fill="#FFBE9D"/>
-      <rect x="115" y="96" width="30" height="40" rx="7" fill="#403c8b"/>
-      <rect x="103" y="104" width="12" height="26" rx="5" fill="#403c8b"/>
-      <rect x="145" y="104" width="12" height="26" rx="5" fill="#403c8b"/>
-    </svg>
-  )
-}
+// Feature card backgrounds + illustrations
+const imgCardBg              = 'https://www.figma.com/api/mcp/asset/41f884d5-8937-48c7-8a7b-7a9586daad0f'
+const imgCardBg2             = 'https://www.figma.com/api/mcp/asset/cbd58162-b8d1-493b-aae9-9f934237a97a'
+const imgIllusCareer         = 'https://www.figma.com/api/mcp/asset/61f04622-e5e2-49b1-b327-7fcbe481fe5a'
+const imgIllusWorkforce      = 'https://www.figma.com/api/mcp/asset/bde3846e-419a-4fb7-8bff-b87379c67ec5'
+const imgIllusEnroll         = 'https://www.figma.com/api/mcp/asset/4357b8db-42c5-4c6e-8c62-dac9f898bbcc'
 
-function StepIllustration1() {
-  return (
-    <svg width="280" height="240" viewBox="0 0 280 240" fill="none">
-      {/* Document */}
-      <rect x="60" y="30" width="140" height="180" rx="12" fill="white" stroke="#e0e8ff" strokeWidth="2"/>
-      <rect x="76" y="55" width="80" height="10" rx="5" fill="#1565C0" opacity="0.7"/>
-      <rect x="76" y="74" width="108" height="6" rx="3" fill="#e0e0e0"/>
-      <rect x="76" y="86" width="95" height="6" rx="3" fill="#e0e0e0"/>
-      <rect x="76" y="98" width="108" height="6" rx="3" fill="#e0e0e0"/>
-      <rect x="76" y="115" width="50" height="6" rx="3" fill="#e0e0e0"/>
-      <rect x="76" y="127" width="70" height="6" rx="3" fill="#e0e0e0"/>
-      {/* Verified badge */}
-      <circle cx="185" cy="50" r="20" fill="#129578"/>
-      <path d="M176 50 L182 56 L194 44" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-      {/* Person */}
-      <circle cx="225" cy="100" r="24" fill="#FFBE9D"/>
-      <rect x="208" y="122" width="34" height="50" rx="9" fill="#f26f37"/>
-      <rect x="193" y="132" width="15" height="34" rx="6" fill="#f26f37"/>
-      <rect x="242" y="132" width="15" height="34" rx="6" fill="#f26f37"/>
-      <rect x="210" y="170" width="14" height="40" rx="6" fill="#d45a20"/>
-      <rect x="228" y="170" width="14" height="40" rx="6" fill="#d45a20"/>
-      {/* Magnifier */}
-      <circle cx="44" cy="150" r="28" fill="none" stroke="#1565C0" strokeWidth="3"/>
-      <line x1="64" y1="170" x2="80" y2="186" stroke="#1565C0" strokeWidth="3" strokeLinecap="round"/>
-      <circle cx="44" cy="150" r="18" fill="#e8f0fe"/>
-    </svg>
-  )
-}
+// Steps dashed line + dots
+const imgStepsLine  = 'https://www.figma.com/api/mcp/asset/c001e7b3-bac6-4ad7-ab5a-d7deabbb8a8f'
+const imgStepDot    = 'https://www.figma.com/api/mcp/asset/2eb818d9-6e9a-41c6-9f3b-1eea253be923'
 
-function StepIllustration2() {
-  return (
-    <svg width="280" height="240" viewBox="0 0 280 240" fill="none">
-      {/* Dashboard */}
-      <rect x="30" y="20" width="180" height="140" rx="12" fill="white" stroke="#e0e8ff" strokeWidth="2"/>
-      <rect x="30" y="20" width="180" height="32" rx="12" fill="#1565C0"/>
-      <rect x="30" y="40" width="180" height="12" fill="#1565C0"/>
-      <circle cx="48" cy="36" r="5" fill="white" opacity="0.5"/>
-      <circle cx="64" cy="36" r="5" fill="white" opacity="0.5"/>
-      <circle cx="80" cy="36" r="5" fill="white" opacity="0.5"/>
-      {/* Chart bars */}
-      <rect x="48" y="100" width="20" height="46" rx="4" fill="#1565C0" opacity="0.7"/>
-      <rect x="76" y="80" width="20" height="66" rx="4" fill="#f26f37" opacity="0.8"/>
-      <rect x="104" y="90" width="20" height="56" rx="4" fill="#129578" opacity="0.7"/>
-      <rect x="132" y="70" width="20" height="76" rx="4" fill="#403c8b" opacity="0.7"/>
-      <rect x="160" y="88" width="20" height="58" rx="4" fill="#1565C0" opacity="0.5"/>
-      {/* Person left */}
-      <circle cx="234" cy="90" r="22" fill="#FFBE9D"/>
-      <rect x="219" y="110" width="30" height="44" rx="8" fill="#129578"/>
-      <rect x="205" y="120" width="14" height="30" rx="5" fill="#129578"/>
-      <rect x="249" y="120" width="14" height="30" rx="5" fill="#129578"/>
-      <rect x="221" y="152" width="12" height="38" rx="5" fill="#0a5c47"/>
-      <rect x="237" y="152" width="12" height="38" rx="5" fill="#0a5c47"/>
-      {/* Arrow / connection */}
-      <path d="M210 105 L215 100 L210 95" stroke="#f26f37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    </svg>
-  )
-}
+// Step illustrations
+const imgStep1Illus = 'https://www.figma.com/api/mcp/asset/bcbf6952-1781-480a-aa7b-0cc74bdb3ce9'
+const imgStep2Illus = 'https://www.figma.com/api/mcp/asset/35da442e-6797-4450-93d2-8e87bc51df43'
+const imgStep3Illus = 'https://www.figma.com/api/mcp/asset/0502fb3f-a68f-4f09-a8cf-a6c17b6155ea'
 
-function StepIllustration3() {
-  return (
-    <svg width="280" height="240" viewBox="0 0 280 240" fill="none">
-      {/* Two people shaking hands / agreement */}
-      <circle cx="75" cy="72" r="26" fill="#FFBE9D"/>
-      <rect x="57" y="96" width="36" height="55" rx="10" fill="#1565C0"/>
-      <rect x="41" y="108" width="16" height="38" rx="6" fill="#1565C0"/>
-      <rect x="93" y="108" width="16" height="38" rx="6" fill="#1565C0"/>
-      <rect x="59" y="149" width="14" height="46" rx="6" fill="#0d3a7a"/>
-      <rect x="77" y="149" width="14" height="46" rx="6" fill="#0d3a7a"/>
+// CTA section illustration
+const imgCtaIllus   = 'https://www.figma.com/api/mcp/asset/9fa64f5a-3bf3-4c9d-a182-0970371e98a8'
 
-      <circle cx="200" cy="72" r="26" fill="#FFBE9D"/>
-      <rect x="182" y="96" width="36" height="55" rx="10" fill="#f26f37"/>
-      <rect x="166" y="108" width="16" height="38" rx="6" fill="#f26f37"/>
-      <rect x="218" y="108" width="16" height="38" rx="6" fill="#f26f37"/>
-      <rect x="184" y="149" width="14" height="46" rx="6" fill="#d45a20"/>
-      <rect x="202" y="149" width="14" height="46" rx="6" fill="#d45a20"/>
+// Footer social icon SVG paths (exact from Figma)
+const imgIconTwitter   = 'https://www.figma.com/api/mcp/asset/6f8d0eac-d5dd-4881-a8ee-3e01c5c91b02'
+const imgIconFacebook  = 'https://www.figma.com/api/mcp/asset/0bad45b4-5666-4508-9844-b6687c5bfcc8'
+const imgIconInstaOuter= 'https://www.figma.com/api/mcp/asset/af58fa35-f2e1-43d5-b1ae-b67ad481edfd'
+const imgIconInstaInner= 'https://www.figma.com/api/mcp/asset/b51a6fd4-db19-4609-8ad9-2600295588de'
+const imgIconInstaDot  = 'https://www.figma.com/api/mcp/asset/cbb2abd0-e43e-4c5a-b489-37db7458e190'
+const imgIconGithub    = 'https://www.figma.com/api/mcp/asset/965eb942-8bf8-4501-9f07-414ec0646d95'
+const imgFooterLine    = 'https://www.figma.com/api/mcp/asset/b6f1511e-d5fa-411a-aa64-ff332152c101'
 
-      {/* Handshake in middle */}
-      <path d="M110 130 Q137 118 165 130" stroke="#FFD700" strokeWidth="3" fill="none" strokeLinecap="round"/>
-      <circle cx="137" cy="120" r="12" fill="#FFD700" opacity="0.9"/>
-      <path d="M131 120 L135 124 L143 115" stroke="#0d1b3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+/* ─── FAQ data (exact from Figma) ─── */
+const FAQS = [
+  { q: 'How does the trade verification work?',               a: 'Our verification process checks your licences, qualifications, and work history against Australian Standards. You upload your documents and our team reviews them within 48 hours, issuing a Verified badge on your profile.' },
+  { q: 'Can employers offer visa sponsorship?',               a: 'Yes. Registered employers with Standard Business Sponsorship (SBS) approval can directly offer 482 Temporary Skill Shortage visa sponsorship to eligible tradies through the platform.' },
+  { q: 'What is the benefit of registering as a Trainer?',    a: 'Registered Training Organisations (RTOs) can list their entire course catalog, manage student enrollments, and track progress. It allows you to connect directly with tradies who need gap training or specific certifications to meet Australian Standards.' },
+  { q: 'Can I use the app to manage my trade documents?',     a: 'Absolutely. You can securely upload, store, and share all your trade documents — licences, certificates, safety tickets, and more — directly from your dashboard.' },
+  { q: 'Is there a cost to join the Tradie App community?',   a: 'Basic membership for tradies is free. Employers and Training Providers have tiered plans depending on the number of active roles and courses they manage.' },
+]
 
-      {/* Document */}
-      <rect x="108" y="155" width="58" height="72" rx="8" fill="white" stroke="#e0e8ff" strokeWidth="2"/>
-      <rect x="118" y="168" width="38" height="5" rx="2.5" fill="#1565C0"/>
-      <rect x="118" y="178" width="30" height="4" rx="2" fill="#e0e0e0"/>
-      <rect x="118" y="188" width="38" height="4" rx="2" fill="#e0e0e0"/>
-      <rect x="118" y="198" width="22" height="4" rx="2" fill="#e0e0e0"/>
-      <rect x="118" y="212" width="38" height="8" rx="4" fill="#f26f37"/>
-    </svg>
-  )
-}
-
-function FAQIllustration() {
-  return (
-    <svg width="320" height="340" viewBox="0 0 320 340" fill="none">
-      {/* Chat bubbles */}
-      <rect x="60" y="20" width="180" height="60" rx="16" fill="#e8f0fe"/>
-      <path d="M80 80 L70 100 L100 80" fill="#e8f0fe"/>
-      <rect x="74" y="38" width="120" height="8" rx="4" fill="#1565C0" opacity="0.5"/>
-      <rect x="74" y="52" width="90" height="8" rx="4" fill="#1565C0" opacity="0.3"/>
-
-      <rect x="30" y="118" width="200" height="60" rx="16" fill="#1565C0"/>
-      <path d="M210 178 L225 198 L195 178" fill="#1565C0"/>
-      <rect x="46" y="136" width="130" height="8" rx="4" fill="white" opacity="0.7"/>
-      <rect x="46" y="150" width="100" height="8" rx="4" fill="white" opacity="0.5"/>
-
-      <rect x="70" y="216" width="170" height="60" rx="16" fill="#e8f5e9"/>
-      <path d="M90 276 L75 296 L108 276" fill="#e8f5e9"/>
-      <rect x="86" y="234" width="110" height="8" rx="4" fill="#129578" opacity="0.5"/>
-      <rect x="86" y="248" width="80" height="8" rx="4" fill="#129578" opacity="0.3"/>
-
-      {/* Person */}
-      <circle cx="255" cy="130" r="28" fill="#FFBE9D"/>
-      <rect x="236" y="156" width="38" height="55" rx="10" fill="#403c8b"/>
-      <rect x="220" y="168" width="16" height="38" rx="6" fill="#403c8b"/>
-      <rect x="274" y="168" width="16" height="38" rx="6" fill="#403c8b"/>
-      <rect x="238" y="209" width="15" height="46" rx="6" fill="#2a2460"/>
-      <rect x="258" y="209" width="15" height="46" rx="6" fill="#2a2460"/>
-
-      {/* Question marks */}
-      <text x="268" y="88" fontSize="28" fill="#f26f37" fontWeight="700" opacity="0.7">?</text>
-      <text x="30" y="310" fontSize="20" fill="#1565C0" fontWeight="700" opacity="0.5">?</text>
-    </svg>
-  )
-}
-
-function CTAIllustration() {
-  return (
-    <svg width="300" height="260" viewBox="0 0 300 260" fill="none">
-      {/* Worker with phone */}
-      <circle cx="150" cy="65" r="32" fill="#FFBE9D"/>
-      <rect x="128" y="94" width="44" height="65" rx="12" fill="#f26f37"/>
-      <rect x="108" y="108" width="20" height="44" rx="7" fill="#f26f37"/>
-      <rect x="172" y="108" width="20" height="44" rx="7" fill="#f26f37"/>
-      <rect x="130" y="157" width="18" height="54" rx="7" fill="#d45a20"/>
-      <rect x="152" y="157" width="18" height="54" rx="7" fill="#d45a20"/>
-      <rect x="126" y="209" width="22" height="12" rx="5" fill="#555"/>
-      <rect x="152" y="209" width="22" height="12" rx="5" fill="#555"/>
-      {/* Phone in hand */}
-      <rect x="172" y="115" width="44" height="76" rx="10" fill="white" opacity="0.9"/>
-      <rect x="176" y="123" width="36" height="56" rx="6" fill="#e8f0fe"/>
-      <rect x="183" y="130" width="22" height="5" rx="2.5" fill="#1565C0"/>
-      <rect x="183" y="140" width="22" height="4" rx="2" fill="#ccc"/>
-      <rect x="183" y="149" width="22" height="14" rx="4" fill="#f26f37" opacity="0.8"/>
-      <rect x="185" y="153" width="18" height="6" rx="3" fill="white"/>
-      {/* Stars */}
-      <text x="52" y="88" fontSize="18" fill="#FFD700" opacity="0.8">★</text>
-      <text x="235" y="70" fontSize="14" fill="#FFD700" opacity="0.7">★</text>
-      <text x="76" y="170" fontSize="12" fill="#FFD700" opacity="0.6">★</text>
-      {/* Floating badge */}
-      <rect x="20" y="120" width="80" height="32" rx="10" fill="white" opacity="0.15"/>
-      <circle cx="36" cy="136" r="8" fill="#129578" opacity="0.8"/>
-      <rect x="50" y="130" width="38" height="5" rx="2.5" fill="white" opacity="0.7"/>
-      <rect x="50" y="139" width="28" height="4" rx="2" fill="white" opacity="0.5"/>
-    </svg>
-  )
-}
-
-/* ─── FAQ Item ─── */
-function FaqItem({ question, answer }) {
+function FaqItem({ q, a }) {
   const [open, setOpen] = useState(false)
   return (
-    <div
-      onClick={() => setOpen(o => !o)}
-      style={{ borderBottom: '1px solid #e8ecf0', padding: '20px 0', cursor: 'pointer' }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-        <span style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: '#1a1a2e', lineHeight: 1.4 }}>{question}</span>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #d0d5dd', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s', background: open ? '#1565C0' : 'transparent', borderColor: open ? '#1565C0' : '#d0d5dd' }}>
+    <div onClick={() => setOpen(o => !o)} style={{ borderBottom: '1px solid #e8ecf0', padding: '20px 0', cursor: 'pointer' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20 }}>
+        <span style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: '#1a1a2e', lineHeight: 1.4, flex: 1 }}>{q}</span>
+        <div style={{
+          width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+          border: `2px solid ${open ? '#156dbf' : '#d0d5dd'}`,
+          background: open ? '#156dbf' : 'transparent',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.2s',
+        }}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             {open
-              ? <line x1="1" y1="6" x2="11" y2="6" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              : <><line x1="6" y1="1" x2="6" y2="11" stroke="#555" strokeWidth="2" strokeLinecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="#555" strokeWidth="2" strokeLinecap="round"/></>
+              ? <line x1="2" y1="6" x2="10" y2="6" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              : <>
+                  <line x1="6" y1="2" x2="6" y2="10" stroke="#555" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="2" y1="6" x2="10" y2="6" stroke="#555" strokeWidth="2" strokeLinecap="round"/>
+                </>
             }
           </svg>
         </div>
       </div>
       {open && (
-        <p style={{ fontFamily: font, fontSize: 15, color: '#6a7380', lineHeight: 1.7, margin: '12px 0 4px' }}>
-          {answer}
+        <p style={{ fontFamily: font, fontSize: 15, color: '#6a7380', lineHeight: 1.7, margin: '14px 0 4px', paddingRight: 52 }}>
+          {a}
         </p>
       )}
     </div>
   )
 }
 
-const FAQS = [
-  { question: 'How do I create an account on Tradie App?', answer: 'Simply click "Sign Up", choose your role (Worker, Employer, or Training Provider), fill in your details, and verify your email. The whole process takes less than 5 minutes.' },
-  { question: 'What are the benefits of registering as a Trainee?', answer: 'As a registered trainee you get access to verified course listings, direct connections with RTOs, employer visibility, and a dashboard to track your qualification progress and visa pathway.' },
-  { question: 'How does employer verification work on Tradie App?', answer: 'Employers submit their ABN, company documents, and sponsorship details. Our team reviews each submission within 48 hours and issues a Verified Employer badge upon approval.' },
-  { question: 'Can I manage multiple training programs through Tradie App?', answer: 'Yes! Training providers can create and manage multiple courses, track enrollments, communicate with students, and export completion reports — all from a single dashboard.' },
-  { question: 'Is there support available if I have issues?', answer: 'Absolutely. We offer live chat support, a comprehensive help centre, and a dedicated onboarding team for Training Providers and Employers. Workers also have access to our community forum.' },
-]
+/* ─── LOGO (reused in Navbar + Footer) ─── */
+function TradieLogoText({ size = 28 }) {
+  return (
+    <span style={{ fontFamily: fontMohave, fontWeight: 600, fontSize: size, letterSpacing: 0.3, lineHeight: 1 }}>
+      <span style={{ color: '#f26f37' }}>T</span>
+      <span style={{ color: '#156dbf' }}>radie Migration</span>
+    </span>
+  )
+}
 
-/* ─── Main Component ─── */
 export function LandingPage() {
   const navigate = useNavigate()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <div style={{ fontFamily: font, background: white, overflowX: 'hidden' }}>
+    <div style={{ fontFamily: font, background: '#fff', overflowX: 'hidden' }}>
 
-      {/* ════════════════════════════════════════
+      {/* ══════════════════════════════════════════
           NAVBAR
-      ════════════════════════════════════════ */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #f0f0f4', height: 68, display: 'flex', alignItems: 'center', padding: '0 60px' }}>
-        <div style={{ maxWidth: 1280, width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* Logo */}
-          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontFamily: "'Mohave','Urbanist',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: 0.5 }}>
-              <span style={{ color: orange }}>T</span>
-              <span style={{ color: blue }}>radie</span>
-              <span style={{ color: '#1a1a2e' }}> Migration</span>
-            </span>
-          </Link>
+          Layout: [Find Jobs  Hire Talent  Blogs  Contact]  [Tradie Migration]  [Eng | Login  Join Now→]
+      ══════════════════════════════════════════ */}
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid #f0f0f4',
+        height: 72, display: 'flex', alignItems: 'center',
+        padding: '0 60px',
+      }}>
+        <div style={{ maxWidth: 1380, width: '100%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
-          {/* Nav Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 36 }}>
-            {['Find Work', 'Find Talent', 'About', 'Contact'].map(link => (
-              <a key={link} href="#" style={{ fontFamily: font, fontSize: 15, fontWeight: 500, color: '#4a4a6a', textDecoration: 'none', transition: 'color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.color = blue}
-                onMouseLeave={e => e.currentTarget.style.color = '#4a4a6a'}>
-                {link}
-              </a>
+          {/* LEFT — nav links */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 48 }}>
+            {['Find Jobs', 'Hire Talent', 'Blogs', 'Contact'].map(l => (
+              <a key={l} href="#" style={{ fontFamily: font, fontSize: 18, fontWeight: 500, color: '#343434', textDecoration: 'none', transition: 'color 0.15s', whiteSpace: 'nowrap' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#156dbf'}
+                onMouseLeave={e => e.currentTarget.style.color = '#343434'}>{l}</a>
             ))}
           </div>
 
-          {/* Auth Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* CENTER — logo */}
+          <Link to="/" style={{ textDecoration: 'none', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+            <TradieLogoText size={28} />
+          </Link>
+
+          {/* RIGHT — Eng | Login  Join Now */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            {/* Eng dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <span style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: '#585484' }}>Eng</span>
+              <img src={imgChevronDown} alt="" style={{ width: 18, height: 14, display: 'block' }}/>
+            </div>
+            {/* Divider */}
+            <div style={{ width: 1, height: 29, background: '#d0d5dd' }}/>
+            {/* Login */}
             <Link to="/login" style={{ textDecoration: 'none' }}>
-              <button style={{ height: 40, padding: '0 22px', background: 'transparent', border: '1.5px solid #d0d5dd', borderRadius: 10, cursor: 'pointer', fontFamily: font, fontSize: 14, fontWeight: 600, color: '#343434', transition: 'all 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = blue; e.currentTarget.style.color = blue }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = '#d0d5dd'; e.currentTarget.style.color = '#343434' }}>
-                Sign In
-              </button>
+              <span style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: '#585484', cursor: 'pointer', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#156dbf'}
+                onMouseLeave={e => e.currentTarget.style.color = '#585484'}>Login</span>
             </Link>
+            {/* Join Now */}
             <Link to="/register" style={{ textDecoration: 'none' }}>
-              <button style={{ height: 40, padding: '0 22px', background: blue, color: white, border: 'none', borderRadius: 10, cursor: 'pointer', fontFamily: font, fontSize: 14, fontWeight: 600, transition: 'background 0.15s', boxShadow: '0 4px 12px rgba(21,101,192,0.25)' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#1255a8'}
-                onMouseLeave={e => e.currentTarget.style.background = blue}>
-                Sign Up
+              <button style={{
+                height: 48, width: 176, borderRadius: 32, border: '1.5px solid #585484',
+                background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                cursor: 'pointer', transition: 'all 0.15s',
+                boxShadow: '0 4px 6px -2px rgba(16,24,40,0.03), 0 12px 16px -4px rgba(16,24,40,0.08)',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#156dbf'; e.currentTarget.style.borderColor = '#156dbf'; e.currentTarget.querySelector('span').style.color='#fff' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = '#585484'; e.currentTarget.querySelector('span').style.color='#585484' }}>
+                <span style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: '#585484', transition: 'color 0.15s' }}>Join Now</span>
+                <img src={imgArrowRight} alt="" style={{ width: 18, height: 14, display: 'block' }}/>
               </button>
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* ════════════════════════════════════════
+      {/* ══════════════════════════════════════════
           HERO SECTION
-      ════════════════════════════════════════ */}
-      <section style={{ position: 'relative', overflow: 'hidden', background: '#fafbff', padding: '80px 60px 60px', minHeight: 580 }}>
+      ══════════════════════════════════════════ */}
+      <section style={{ position: 'relative', overflow: 'hidden', background: '#f6f8ff', paddingTop: 80, paddingBottom: 0, minHeight: 660 }}>
         {/* Background blobs */}
-        <img src={blobBlueYellow} alt="" style={{ position: 'absolute', top: -40, left: -60, width: 320, height: 280, opacity: 0.85, zIndex: 0, pointerEvents: 'none' }}/>
-        <img src={blobBlue} alt="" style={{ position: 'absolute', top: 20, right: -50, width: 280, height: 280, opacity: 0.7, zIndex: 0, pointerEvents: 'none' }}/>
-        <img src={blobYellow} alt="" style={{ position: 'absolute', bottom: -30, right: 100, width: 200, height: 200, opacity: 0.6, zIndex: 0, pointerEvents: 'none' }}/>
-        {/* Small dots */}
-        <div style={{ position: 'absolute', top: '18%', left: '7%', width: 8, height: 8, borderRadius: '50%', background: orange, opacity: 0.6, zIndex: 1 }}/>
-        <div style={{ position: 'absolute', top: '14%', left: '9.5%', width: 5, height: 5, borderRadius: '50%', background: orange, opacity: 0.4, zIndex: 1 }}/>
-        <div style={{ position: 'absolute', top: '22%', right: '9%', width: 6, height: 6, borderRadius: '50%', background: '#c8d8f5', zIndex: 1 }}/>
-        <div style={{ position: 'absolute', bottom: '20%', left: '5%', width: 10, height: 10, borderRadius: '50%', background: '#b4eb50', opacity: 0.7, zIndex: 1 }}/>
+        <img src={imgBlobBlue}       alt="" style={{ position:'absolute', top:-40, left:-60, width:300, height:280, opacity:0.8, pointerEvents:'none', zIndex:0 }}/>
+        <img src={imgBlobBlueYellow} alt="" style={{ position:'absolute', top:0, right:-40, width:280, height:260, opacity:0.7, pointerEvents:'none', zIndex:0 }}/>
+        <img src={imgBlobGroup2}     alt="" style={{ position:'absolute', bottom:100, right:60, width:200, height:200, opacity:0.5, pointerEvents:'none', zIndex:0 }}/>
 
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-          {/* Hero Illustration */}
-          <div style={{ marginBottom: 24 }}>
-            <HeroWorkerLeft />
-          </div>
+        <div style={{ position:'relative', zIndex:2, maxWidth:1280, margin:'0 auto', padding:'0 60px', display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
 
           {/* Headline */}
-          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem, 4vw, 3.1rem)', fontWeight: 800, color: '#1a1a2e', lineHeight: 1.2, maxWidth: 720, margin: '0 0 20px' }}>
-            Connecting Global Talent to<br />
-            <span style={{ color: blue }}>Australia's Trade Industry.</span>
+          <h1 style={{ fontFamily: font, fontSize: 'clamp(2rem,3.8vw,3rem)', fontWeight: 800, lineHeight: 1.18, margin: '0 0 20px', color: '#1a1a2e', maxWidth: 700 }}>
+            Connecting Global Talent to<br/>
+            <span style={{ color: '#156dbf' }}>Australia's Trade Industry.</span>
           </h1>
 
-          {/* Sub-headline */}
-          <p style={{ fontFamily: font, fontSize: 17, color: '#6a7380', maxWidth: 560, lineHeight: 1.7, margin: '0 0 32px' }}>
+          {/* Sub */}
+          <p style={{ fontFamily: font, fontSize: 18, color: '#585484', maxWidth: 560, lineHeight: 1.6, margin: '0 0 32px', fontWeight: 400 }}>
             The all-in-one platform for skilled tradies, employers, and training providers. Verified skills, simplified sponsorship.
           </p>
 
           {/* Search bar */}
-          <div style={{ display: 'flex', alignItems: 'center', background: white, borderRadius: 14, border: '1.5px solid #d0d5dd', padding: '10px 16px', width: '100%', maxWidth: 520, marginBottom: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink: 0 }}>
+          <div style={{
+            display:'flex', alignItems:'center', gap:10,
+            background:'#fff', borderRadius:32, border:'1.5px solid #d0d5dd',
+            padding:'10px 10px 10px 20px', width:'100%', maxWidth:460,
+            marginBottom: 28,
+            boxShadow:'0 4px 20px rgba(0,0,0,0.06)',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" style={{ flexShrink:0 }}>
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input placeholder="Search for Tradie opportunities in Australia..." style={{ flex: 1, border: 'none', outline: 'none', fontFamily: font, fontSize: 14, color: '#343434', background: 'transparent', margin: '0 12px' }}/>
-            <button style={{ height: 36, padding: '0 20px', background: blue, color: white, border: 'none', borderRadius: 10, cursor: 'pointer', fontFamily: font, fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
-              Search
-            </button>
+            <input
+              placeholder="Search for trades (e.g. Electrician, Plumber)..."
+              style={{ flex:1, border:'none', outline:'none', fontFamily:font, fontSize:14, color:'#343434', background:'transparent' }}
+            />
           </div>
 
-          {/* CTA Button */}
-          <button onClick={() => navigate('/register')} style={{ height: 52, padding: '0 40px', background: blue, color: white, border: 'none', borderRadius: 14, cursor: 'pointer', fontFamily: font, fontSize: 16, fontWeight: 700, boxShadow: '0 6px 20px rgba(21,101,192,0.3)', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#1255a8'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = blue; e.currentTarget.style.transform = '' }}>
+          {/* Browse Jobs CTA */}
+          <button onClick={() => navigate('/register')} style={{
+            height:52, padding:'0 48px', background:'#156dbf', color:'#fff',
+            border:'none', borderRadius:32, cursor:'pointer',
+            fontFamily:font, fontSize:16, fontWeight:700,
+            boxShadow:'0 8px 24px rgba(21,109,191,0.3)',
+            transition:'all 0.2s', marginBottom: 48,
+          }}
+            onMouseEnter={e=>{ e.currentTarget.style.background='#1255a8'; e.currentTarget.style.transform='translateY(-2px)' }}
+            onMouseLeave={e=>{ e.currentTarget.style.background='#156dbf'; e.currentTarget.style.transform='' }}>
             Browse Jobs
           </button>
-        </div>
-      </section>
 
-      {/* ════════════════════════════════════════
-          FEATURE ECOSYSTEM SECTION  (dark navy)
-      ════════════════════════════════════════ */}
-      <section style={{ background: darkNavy, padding: '80px 60px', position: 'relative', overflow: 'hidden' }}>
-        {/* Subtle rings bg */}
-        <img src={ringsBg} alt="" style={{ position: 'absolute', right: -120, top: '50%', transform: 'translateY(-50%)', width: 500, height: 500, opacity: 0.08, pointerEvents: 'none' }}/>
-
-        <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 40, flexWrap: 'wrap', marginBottom: 56 }}>
-            <div style={{ maxWidth: 380 }}>
-              <h2 style={{ fontFamily: font, fontSize: 'clamp(1.6rem, 3vw, 2.4rem)', fontWeight: 800, color: white, lineHeight: 1.2, margin: '0 0 16px' }}>
-                A Powerful Ecosystem<br />for the Trade Industry
-              </h2>
-            </div>
-            <div style={{ maxWidth: 440 }}>
-              <p style={{ fontFamily: font, fontSize: 15, color: 'rgba(255,255,255,0.65)', lineHeight: 1.75, margin: 0 }}>
-                Whether you're looking to launch your career, build a verified workforce, or deliver industry-leading training — Tradie Migration brings everyone together in one powerful platform built for the Australian market.
-              </p>
-            </div>
-          </div>
-
-          {/* 3 Feature Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
-            {[
-              {
-                title: 'Launch Your Australian Career',
-                desc: 'Register, upload your trade documents, and get matched to verified employers looking for your exact skill set. Your Australian journey starts here.',
-                illus: <FeatureIllustrationCareer />,
-                accent: blue,
-              },
-              {
-                title: 'Build a Verified Workforce',
-                desc: 'Source pre-screened, licensed tradies with confirmed qualifications. Post roles, review applications, and sponsor skilled workers — all in one place.',
-                illus: <FeatureIllustrationWorkforce />,
-                accent: '#129578',
-              },
-              {
-                title: 'Enrol the Next Generation',
-                desc: 'Connect with aspiring tradies, manage course enrolments, and issue certifications that employers trust. Grow your institution with smart digital tools.',
-                illus: <FeatureIllustrationEnroll />,
-                accent: '#f26f37',
-              },
-            ].map((card, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 20, padding: '32px 28px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 20, transition: 'transform 0.2s, background 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.transform = 'translateY(-4px)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = '' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 170 }}>
-                  {card.illus}
-                </div>
-                <div>
-                  <h3 style={{ fontFamily: font, fontSize: 20, fontWeight: 700, color: white, margin: '0 0 12px', lineHeight: 1.3 }}>{card.title}</h3>
-                  <p style={{ fontFamily: font, fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: 0 }}>{card.desc}</p>
-                </div>
-                <div style={{ paddingTop: 8 }}>
-                  <span style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: card.accent, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                    Learn More
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                  </span>
-                </div>
-              </div>
-            ))}
+          {/* Hero illustration — actual Figma asset */}
+          <div style={{ width:'100%', maxWidth:1100, margin:'0 auto' }}>
+            <img src={imgHeroIllus} alt="Tradie workers illustration"
+              style={{ width:'100%', display:'block', objectFit:'contain' }}/>
           </div>
         </div>
       </section>
 
-      {/* ════════════════════════════════════════
-          3 EASY STEPS SECTION
-      ════════════════════════════════════════ */}
-      <section style={{ background: white, padding: '100px 60px', position: 'relative', overflow: 'hidden' }}>
-        {/* Blob decorations */}
-        <img src={blobGroup2} alt="" style={{ position: 'absolute', left: -100, top: '10%', width: 260, height: 260, opacity: 0.5, pointerEvents: 'none' }}/>
-        <img src={blobBlue2} alt="" style={{ position: 'absolute', right: -80, bottom: '10%', width: 240, height: 240, opacity: 0.45, pointerEvents: 'none' }}/>
+      {/* ══════════════════════════════════════════
+          FEATURE ECOSYSTEM  (blue radial gradient bg)
+      ══════════════════════════════════════════ */}
+      <section style={{
+        background: 'radial-gradient(ellipse at 80% 50%, #156dbf 0%, #4d8fce 20%, #bed4eb 40%, #f6f6f9 55%, #bed4eb 65%, #86b2dc 80%, #156dbf 100%)',
+        padding: '72px 60px 80px',
+        position: 'relative', overflow:'hidden',
+      }}>
+        <div style={{ maxWidth:1280, margin:'0 auto', position:'relative', zIndex:2 }}>
 
-        <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 2 }}>
-          {/* Section header */}
-          <div style={{ textAlign: 'center', marginBottom: 72 }}>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 3.2vw, 2.6rem)', fontWeight: 800, color: '#1a1a2e', lineHeight: 1.2, margin: '0 0 16px' }}>
-              Your Path to Success in<br />
-              <span style={{ color: blue }}>3 Easy Steps</span>
+          {/* Heading row */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:40, marginBottom:48, flexWrap:'wrap' }}>
+            <h2 style={{ fontFamily:font, fontSize:'clamp(1.8rem,3vw,3rem)', fontWeight:800, color:'#fff', lineHeight:1.15, margin:0, maxWidth:480 }}>
+              A Powerful Ecosystem<br/>for the Trade Industry
             </h2>
-            <p style={{ fontFamily: font, fontSize: 16, color: '#6a7380', maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>
-              Whether you're hiring or looking for work, we've simplified the process to get you moving faster.
+            <p style={{ fontFamily:font, fontSize:20, color:'#fff', lineHeight:1.5, margin:0, maxWidth:545, fontWeight:400, paddingTop:8 }}>
+              Whether you're looking for a career move, a top-tier hire, or professional training, Tradie App connects you to the right opportunity.
             </p>
           </div>
 
-          {/* Steps */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 80 }}>
+          {/* 3 feature cards */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:24 }}>
             {[
               {
-                num: '1',
-                title: 'Build a Profile That Stands Out',
-                desc: 'Register and upload your documents. We verify your licences and attempt to match you to your next role with confidence. Your profile becomes your digital trade passport.',
-                illus: <StepIllustration1 />,
-                reverse: false,
+                bg: imgCardBg,
+                illus: imgIllusCareer,
+                title: 'Launch Your Australian Career',
+                desc: 'Get your skills verified, browse visa-sponsored roles, and access gap training to meet Australian licensing standards. Your global career starts here.',
+                illusTop: true,
               },
               {
-                num: '2',
-                title: 'Find Your Perfect Industry Match',
-                desc: "Our smart dashboard connects skilled tradies with registered sponsors and links students to the right RTO training programs. Let the platform do the heavy lifting.",
-                illus: <StepIllustration2 />,
-                reverse: true,
+                bg: imgCardBg2,
+                illus: imgIllusWorkforce,
+                title: 'Build a Verified Workforce',
+                desc: 'Connect with pre-screened local and international talent. Simplify your recruitment with verified background checks and sponsorship tools.',
+                illusBottom: true,
               },
               {
-                num: '3',
-                title: 'Sign, Enrol, and Start',
-                desc: "Once you've found your perfect opportunity or training program, finalise everything within the Tradie App. From offer to onboarding in days, not months.",
-                illus: <StepIllustration3 />,
-                reverse: false,
+                bg: imgCardBg,
+                illus: imgIllusEnroll,
+                title: 'Enroll the Next Generation',
+                desc: 'List your RTO courses and certification programs directly to students and workers looking to upskill or convert their international licenses.',
+                illusTop: true,
               },
-            ].map((step, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 60, flexDirection: step.reverse ? 'row-reverse' : 'row', flexWrap: 'wrap' }}>
-                {/* Illustration side */}
-                <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
-                  {step.illus}
+            ].map((card, i) => (
+              <div key={i} style={{
+                background:'#fff', borderRadius:21,
+                boxShadow:'0 4px 24px rgba(0,0,0,0.13)',
+                overflow:'hidden', display:'flex', flexDirection:'column',
+                minHeight:536,
+                transition:'transform 0.2s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.transform='translateY(-6px)'}
+                onMouseLeave={e => e.currentTarget.style.transform=''}>
+                {/* Illustration area */}
+                <div style={{ flex:1, position:'relative', overflow:'hidden', minHeight:300 }}>
+                  <img src={card.bg} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', borderRadius:21, pointerEvents:'none' }}/>
+                  {/* Gradient overlay */}
+                  <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'45%', background:'linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1))', borderRadius:'0 0 21px 21px' }}/>
+                  <img src={card.illus} alt="" style={{ position:'relative', zIndex:1, width:'100%', height:'100%', objectFit:'contain', display:'block', padding:16 }}/>
                 </div>
-                {/* Text side */}
-                <div style={{ flex: 1, minWidth: 280 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 20 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: '50%', background: blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 6px 18px rgba(21,101,192,0.3)' }}>
-                      <span style={{ fontFamily: font, fontSize: 22, fontWeight: 800, color: white }}>{step.num}</span>
-                    </div>
-                    <div style={{ height: 2, flex: 1, background: 'linear-gradient(90deg, #e8f0fe, transparent)', borderRadius: 2 }}/>
-                  </div>
-                  <h3 style={{ fontFamily: font, fontSize: 'clamp(1.3rem, 2vw, 1.75rem)', fontWeight: 800, color: '#1a1a2e', margin: '0 0 16px', lineHeight: 1.3 }}>
-                    {step.title}
+                {/* Text area */}
+                <div style={{ padding:'0 28px 32px' }}>
+                  <h3 style={{ fontFamily:font, fontSize:36, fontWeight:700, color:'#156dbf', lineHeight:1.16, letterSpacing:-0.32, margin:'0 0 12px' }}>
+                    {card.title}
                   </h3>
-                  <p style={{ fontFamily: font, fontSize: 16, color: '#6a7380', lineHeight: 1.75, margin: 0, maxWidth: 460 }}>
-                    {step.desc}
+                  <p style={{ fontFamily:font, fontSize:16, color:'#8e8d92', lineHeight:1.5, margin:0, fontWeight:400 }}>
+                    {card.desc}
                   </p>
                 </div>
               </div>
@@ -569,136 +306,214 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════════
-          FAQ SECTION
-      ════════════════════════════════════════ */}
-      <section style={{ background: '#f6f8fc', padding: '100px 60px', position: 'relative', overflow: 'hidden' }}>
-        <img src={blobYellow2} alt="" style={{ position: 'absolute', left: -80, bottom: -60, width: 260, height: 260, opacity: 0.5, pointerEvents: 'none' }}/>
+      {/* ══════════════════════════════════════════
+          3 EASY STEPS
+      ══════════════════════════════════════════ */}
+      <section style={{ background:'#fff', padding:'100px 60px', position:'relative', overflow:'hidden' }}>
+        {/* Background blobs */}
+        <img src={imgBlobBlueYellow} alt="" style={{ position:'absolute', left:-100, top:'5%', width:280, height:280, opacity:0.45, pointerEvents:'none' }}/>
+        <img src={imgBlobBlue}       alt="" style={{ position:'absolute', right:-80, bottom:'5%', width:260, height:260, opacity:0.35, pointerEvents:'none' }}/>
 
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', gap: 60, alignItems: 'flex-start', flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
-          {/* Left — text + accordion */}
-          <div style={{ flex: 1, minWidth: 320 }}>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(1.6rem, 2.8vw, 2.4rem)', fontWeight: 800, color: '#1a1a2e', lineHeight: 1.25, margin: '0 0 12px' }}>
-              Got Questions?<br /><span style={{ color: blue }}>We've Got Answers.</span>
+        <div style={{ maxWidth:1280, margin:'0 auto', position:'relative', zIndex:2 }}>
+          {/* Header */}
+          <div style={{ textAlign:'center', marginBottom:80 }}>
+            <h2 style={{ fontFamily:font, fontSize:'clamp(1.8rem,3vw,2.8rem)', fontWeight:800, color:'#1a1a2e', lineHeight:1.2, margin:'0 0 16px' }}>
+              Your Path to Success in<br/>
+              <span style={{ color:'#156dbf' }}>3 Easy Steps</span>
             </h2>
-            <p style={{ fontFamily: font, fontSize: 15, color: '#6a7380', margin: '0 0 36px', lineHeight: 1.7, maxWidth: 420 }}>
-              Find answers to the most common questions about getting started, managing your account, and getting the most out of Tradie Migration.
+            <p style={{ fontFamily:font, fontSize:18, color:'#585484', maxWidth:560, margin:'0 auto', lineHeight:1.6 }}>
+              Whether you're hiring or looking for work, we've simplified the process to get you moving faster.
+            </p>
+          </div>
+
+          {/* Steps — dashed vertical line + numbers + alternating illustrations */}
+          <div style={{ display:'flex', gap:60, alignItems:'flex-start' }}>
+
+            {/* Left dashed line + numbers column */}
+            <div style={{ position:'relative', flexShrink:0, width:90 }}>
+              <img src={imgStepsLine} alt="" style={{ width:90, display:'block' }}/>
+            </div>
+
+            {/* Steps content */}
+            <div style={{ flex:1, display:'flex', flexDirection:'column', gap:100 }}>
+
+              {[
+                { num:'1', title:'Build a Profile That Stands Out',      illus:imgStep1Illus, reverse:false,
+                  desc:'Register and upload your documents. We verify your licences and attempt to match you to your next role with confidence. Your profile becomes your digital trade passport.' },
+                { num:'2', title:'Find Your Perfect Industry Match',      illus:imgStep2Illus, reverse:true,
+                  desc:"Our smart dashboard connects skilled tradies with registered sponsors and links students to the right RTO training programs. Let the platform do the heavy lifting." },
+                { num:'3', title:'Sign, Enrol, and Start',               illus:imgStep3Illus, reverse:false,
+                  desc:"Once you've found your perfect opportunity or training program, finalise everything within the Tradie App. From offer to onboarding in days, not months." },
+              ].map((step, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:60, flexDirection: step.reverse ? 'row-reverse' : 'row', flexWrap:'wrap' }}>
+                  {/* Illustration */}
+                  <div style={{ flex:'0 0 auto' }}>
+                    <img src={step.illus} alt={step.title} style={{ width:380, maxWidth:'100%', display:'block', objectFit:'contain' }}/>
+                  </div>
+                  {/* Text */}
+                  <div style={{ flex:1, minWidth:260 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:20 }}>
+                      <span style={{ fontFamily:font, fontSize:120, fontWeight:800, color:'#156dbf', lineHeight:1, letterSpacing:-0.5 }}>{step.num}</span>
+                      <img src={imgStepDot} alt="" style={{ width:31, height:31, display:'block', flexShrink:0 }}/>
+                    </div>
+                    <h3 style={{ fontFamily:font, fontSize:'clamp(1.4rem,2vw,1.9rem)', fontWeight:800, color:'#1a1a2e', lineHeight:1.25, margin:'0 0 16px' }}>
+                      {step.title}
+                    </h3>
+                    <p style={{ fontFamily:font, fontSize:17, color:'#6a7380', lineHeight:1.7, margin:0, maxWidth:440 }}>
+                      {step.desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          FAQ SECTION
+      ══════════════════════════════════════════ */}
+      <section style={{ background:'#f6f8ff', padding:'100px 60px', position:'relative', overflow:'hidden' }}>
+        <img src={imgBlobRings} alt="" style={{ position:'absolute', right:-140, top:'50%', transform:'translateY(-50%)', width:420, height:420, opacity:0.06, pointerEvents:'none' }}/>
+
+        <div style={{ maxWidth:1280, margin:'0 auto', display:'flex', gap:80, alignItems:'flex-start', flexWrap:'wrap', position:'relative', zIndex:2 }}>
+
+          {/* Left — heading + accordion */}
+          <div style={{ flex:1, minWidth:320 }}>
+            <h2 style={{ fontFamily:font, fontSize:'clamp(1.8rem,3vw,2.8rem)', fontWeight:800, color:'#1a1a2e', lineHeight:1.2, margin:'0 0 16px' }}>
+              Got Questions?<br/><span style={{ color:'#156dbf' }}>We've Got Answers.</span>
+            </h2>
+            <p style={{ fontFamily:font, fontSize:16, color:'#6a7380', margin:'0 0 40px', lineHeight:1.7, maxWidth:460 }}>
+              Find quick answers to common inquiries and learn how we help tradies, employers, and trainers connect safely and efficiently across Australia.
             </p>
             <div>
-              {FAQS.map((faq, i) => <FaqItem key={i} {...faq} />)}
+              {FAQS.map((f, i) => <FaqItem key={i} q={f.q} a={f.a}/>)}
             </div>
           </div>
 
           {/* Right — illustration */}
-          <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center', paddingTop: 40 }}>
-            <FAQIllustration />
+          <div style={{ flex:'0 0 auto', paddingTop:40 }}>
+            <img src={imgStep2Illus} alt="FAQ illustration" style={{ width:380, maxWidth:'100%', display:'block', objectFit:'contain' }}/>
           </div>
         </div>
       </section>
 
-      {/* ════════════════════════════════════════
-          CTA BANNER  (dark navy)
-      ════════════════════════════════════════ */}
-      <section style={{ background: darkNavy, padding: '80px 60px', position: 'relative', overflow: 'hidden' }}>
-        <img src={ringsBg} alt="" style={{ position: 'absolute', left: -120, top: '50%', transform: 'translateY(-50%)', width: 480, height: 480, opacity: 0.07, pointerEvents: 'none' }}/>
+      {/* ══════════════════════════════════════════
+          CTA BANNER
+      ══════════════════════════════════════════ */}
+      <section style={{
+        padding: '80px 60px',
+        background: 'radial-gradient(ellipse at 80% 50%, #156dbf 0%, #4d8fce 20%, #bed4eb 40%, #f6f6f9 55%, #bed4eb 65%, #86b2dc 80%, #156dbf 100%)',
+        position: 'relative', overflow:'hidden',
+      }}>
+        {/* White opacity decorative pills (from Figma) */}
+        <div style={{ position:'absolute', width:232, height:248, borderRadius:308, background:'rgba(255,255,255,0.1)', top:75, right:160, pointerEvents:'none' }}/>
+        <div style={{ position:'absolute', width:76,  height:79,  borderRadius:34,  background:'rgba(255,255,255,0.1)', top:34, right:70, pointerEvents:'none' }}/>
+        <div style={{ position:'absolute', width:86,  height:92,  borderRadius:34,  background:'rgba(255,255,255,0.1)', left:50, bottom:80, pointerEvents:'none' }}/>
 
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 40, flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
-          <div style={{ maxWidth: 540 }}>
-            <h2 style={{ fontFamily: font, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800, color: white, lineHeight: 1.25, margin: '0 0 16px' }}>
-              Build Your Future<br />with <span style={{ color: orange }}>Tradie App.</span>
+        <div style={{ maxWidth:1280, margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center', gap:40, flexWrap:'wrap', position:'relative', zIndex:2 }}>
+          {/* Text + buttons */}
+          <div style={{ maxWidth:560 }}>
+            <h2 style={{ fontFamily:font, fontSize:'clamp(1.8rem,3vw,2.8rem)', fontWeight:800, color:'#fff', lineHeight:1.2, margin:'0 0 20px' }}>
+              Build Your Future<br/>with Tradie App.
             </h2>
-            <p style={{ fontFamily: font, fontSize: 16, color: 'rgba(255,255,255,0.65)', lineHeight: 1.75, margin: '0 0 32px', maxWidth: 440 }}>
-              Join thousands of skilled workers, registered employers, and trusted training providers already using Tradie Migration to shape Australia's trade industry.
+            <p style={{ fontFamily:font, fontSize:18, color:'rgba(255,255,255,0.85)', lineHeight:1.65, margin:'0 0 36px', maxWidth:460 }}>
+              Join Australia's leading network of verified trades, top employers, and RTO trainers.
             </p>
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-              <button onClick={() => navigate('/register')} style={{ height: 52, padding: '0 36px', background: orange, color: white, border: 'none', borderRadius: 14, cursor: 'pointer', fontFamily: font, fontSize: 16, fontWeight: 700, boxShadow: '0 6px 20px rgba(242,111,55,0.4)', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#d95e25'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = orange; e.currentTarget.style.transform = '' }}>
-                Get Started Free
+            <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+              <button onClick={() => navigate('/register')} style={{
+                height:52, padding:'0 40px', background:'#fff', color:'#156dbf',
+                border:'none', borderRadius:32, cursor:'pointer',
+                fontFamily:font, fontSize:16, fontWeight:700,
+                boxShadow:'0 8px 24px rgba(0,0,0,0.15)', transition:'all 0.2s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 32px rgba(0,0,0,0.2)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.15)' }}>
+                Get Started
               </button>
-              <button onClick={() => navigate('/login')} style={{ height: 52, padding: '0 32px', background: 'transparent', color: white, border: '2px solid rgba(255,255,255,0.3)', borderRadius: 14, cursor: 'pointer', fontFamily: font, fontSize: 16, fontWeight: 600, transition: 'all 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.7)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}>
-                Sign In
-              </button>
+              <Link to="/login" style={{ textDecoration:'none' }}>
+                <button style={{
+                  height:52, padding:'0 36px', background:'transparent',
+                  color:'#fff', border:'2px solid rgba(255,255,255,0.6)',
+                  borderRadius:32, cursor:'pointer', fontFamily:font,
+                  fontSize:16, fontWeight:600, transition:'all 0.2s',
+                }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor='rgba(255,255,255,1)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor='rgba(255,255,255,0.6)'}>
+                  Login
+                </button>
+              </Link>
             </div>
           </div>
+
+          {/* CTA illustration — actual Figma asset */}
           <div>
-            <CTAIllustration />
+            <img src={imgCtaIllus} alt="CTA illustration" style={{ width:480, maxWidth:'100%', display:'block', objectFit:'contain' }}/>
           </div>
         </div>
       </section>
 
-      {/* ════════════════════════════════════════
-          FOOTER
-      ════════════════════════════════════════ */}
-      <footer style={{ background: darkNavy, borderTop: '1px solid rgba(255,255,255,0.08)', padding: '48px 60px 32px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          {/* Top row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40, flexWrap: 'wrap', gap: 32 }}>
-            {/* Logo + desc */}
-            <div style={{ maxWidth: 300 }}>
-              <div style={{ fontFamily: "'Mohave','Urbanist',sans-serif", fontWeight: 700, fontSize: 20, marginBottom: 12 }}>
-                <span style={{ color: orange }}>T</span>
-                <span style={{ color: '#5b9bd5' }}>radie</span>
-                <span style={{ color: 'rgba(255,255,255,0.7)' }}> Migration</span>
-              </div>
-              <p style={{ fontFamily: font, fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, margin: 0 }}>
-                Connecting skilled tradespeople with opportunity across Australia's growing infrastructure and construction sectors.
-              </p>
-            </div>
+      {/* ══════════════════════════════════════════
+          FOOTER  — exact from Figma node 1:103
+      ══════════════════════════════════════════ */}
+      <footer style={{ background:'#fff', borderTop:'1px solid #f0f0f4', padding:'40px 60px 0' }}>
+        <div style={{ maxWidth:1380, margin:'0 auto' }}>
+
+          {/* Main footer row */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingBottom:40, flexWrap:'wrap', gap:24 }}>
+
+            {/* Logo */}
+            <Link to="/" style={{ textDecoration:'none' }}>
+              <TradieLogoText size={28}/>
+            </Link>
 
             {/* Nav links */}
-            <div style={{ display: 'flex', gap: 60, flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>Platform</div>
-                {['Find Work', 'Find Talent', 'Training Providers', 'How It Works'].map(l => (
-                  <div key={l} style={{ marginBottom: 10 }}>
-                    <a href="#" style={{ fontFamily: font, fontSize: 14, color: 'rgba(255,255,255,0.6)', textDecoration: 'none', transition: 'color 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.color = white}
-                      onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}>{l}</a>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <div style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>Company</div>
-                {['About', 'Contact', 'Privacy Policy', 'Terms of Service'].map(l => (
-                  <div key={l} style={{ marginBottom: 10 }}>
-                    <a href="#" style={{ fontFamily: font, fontSize: 14, color: 'rgba(255,255,255,0.6)', textDecoration: 'none', transition: 'color 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.color = white}
-                      onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}>{l}</a>
-                  </div>
-                ))}
-              </div>
+            <div style={{ display:'flex', alignItems:'center', gap:48 }}>
+              {['Find Jobs','Hire Talent','About','Contact'].map(l => (
+                <a key={l} href="#" style={{ fontFamily:font, fontSize:16, fontWeight:400, color:'#343434', textDecoration:'none', transition:'color 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.color='#156dbf'}
+                  onMouseLeave={e => e.currentTarget.style.color='#343434'}>{l}</a>
+              ))}
+            </div>
+
+            {/* Social icons — actual Figma SVG assets */}
+            <div style={{ display:'flex', alignItems:'center', gap:40 }}>
+              {/* Twitter */}
+              <a href="#" style={{ display:'flex', alignItems:'center', justifyContent:'center', opacity:0.7, transition:'opacity 0.15s' }}
+                onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.7'}>
+                <img src={imgIconTwitter} alt="Twitter" style={{ width:18, height:15, display:'block' }}/>
+              </a>
+              {/* Facebook */}
+              <a href="#" style={{ display:'flex', alignItems:'center', justifyContent:'center', opacity:0.7, transition:'opacity 0.15s' }}
+                onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.7'}>
+                <img src={imgIconFacebook} alt="Facebook" style={{ width:10, height:18, display:'block' }}/>
+              </a>
+              {/* Instagram (3-layer: outer, inner, dot) */}
+              <a href="#" style={{ position:'relative', display:'flex', width:20, height:20, opacity:0.7, transition:'opacity 0.15s' }}
+                onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.7'}>
+                <img src={imgIconInstaOuter} alt="Instagram" style={{ position:'absolute', inset:0, width:'100%', height:'100%', display:'block' }}/>
+                <img src={imgIconInstaInner} alt="" style={{ position:'absolute', top:'24%', left:'24%', width:'52%', height:'52%', display:'block' }}/>
+                <img src={imgIconInstaDot}   alt="" style={{ position:'absolute', top:'18%', right:'18%', width:'12%', height:'12%', display:'block' }}/>
+              </a>
+              {/* GitHub */}
+              <a href="#" style={{ display:'flex', alignItems:'center', justifyContent:'center', opacity:0.7, transition:'opacity 0.15s' }}
+                onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.7'}>
+                <img src={imgIconGithub} alt="GitHub" style={{ width:19, height:18, display:'block' }}/>
+              </a>
             </div>
           </div>
 
           {/* Divider */}
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 24 }}/>
+          <div style={{ height:1, background:'#e8ecf0', margin:'0 0 0' }}/>
 
-          {/* Bottom row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-            <p style={{ fontFamily: font, fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-              © {new Date().getFullYear()} Tradie Migration. All rights reserved.
+          {/* Bottom copyright row */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'24px 0', flexWrap:'wrap', gap:12 }}>
+            <p style={{ fontFamily:font, fontSize:16, fontWeight:400, color:'#343434', margin:0 }}>
+              © Copyright Tradie Migration 2026, All Rights Reserved
             </p>
-            {/* Social icons */}
-            <div style={{ display: 'flex', gap: 14 }}>
-              {[
-                /* Twitter/X */
-                <svg key="x" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.259 5.631 5.905-5.631Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
-                /* Facebook */
-                <svg key="fb" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
-                /* Instagram */
-                <svg key="ig" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>,
-                /* LinkedIn */
-                <svg key="li" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              ].map((icon, i) => (
-                <a key={i} href="#" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = white }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' }}>
-                  {icon}
-                </a>
-              ))}
+            <div style={{ display:'flex', gap:32 }}>
+              <a href="#" style={{ fontFamily:font, fontSize:16, fontWeight:600, color:'#6a7380', textDecoration:'underline' }}>Privacy Policy</a>
+              <a href="#" style={{ fontFamily:font, fontSize:16, fontWeight:600, color:'#6a7380', textDecoration:'underline' }}>Terms &amp; Conditions</a>
             </div>
           </div>
         </div>
