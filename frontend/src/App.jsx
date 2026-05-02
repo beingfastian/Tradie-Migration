@@ -22,7 +22,12 @@ import { CompanyActiveJobs }       from './pages/company/CompanyActiveJobs'
 import { CompanySentEOIs }         from './pages/company/CompanySentEOIs'
 
 /* Training Provider */
-import { TrainerSetup }      from './pages/trainer/TrainerSetup'
+import { TrainerSetupFlow }            from './pages/trainer/TrainerSetupFlow'
+import { TrainerHome }                 from './pages/trainer/TrainerHome'
+import { TrainerMyCourses }            from './pages/trainer/TrainerMyCourses'
+import { TrainerStudentDirectory }     from './pages/trainer/TrainerStudentDirectory'
+import { TrainerEnrollmentInquiries }  from './pages/trainer/TrainerEnrollmentInquiries'
+import { TrainerCourseSummary }        from './pages/trainer/TrainerCourseSummary'
 
 function App() {
   return (
@@ -59,9 +64,17 @@ function App() {
       <Route path="/setup/company/:step"       element={<CompanySetupFlow />} />
       <Route path="/setup/employer-co/:step"   element={<CompanySetupFlow />} />
 
-      {/* Training Provider setup */}
-      <Route path="/setup/trainer/:step"   element={<TrainerSetup />} />
-      <Route path="/setup/provider/:step"  element={<TrainerSetup />} />
+      {/* ── Training Provider dashboard ── */}
+      <Route path="/trainer/dashboard"      element={<TrainerHome />} />
+      <Route path="/trainer/profile"        element={<TrainerSetupFlow />} />
+      <Route path="/trainer/courses"        element={<TrainerMyCourses />} />
+      <Route path="/trainer/students"       element={<TrainerStudentDirectory />} />
+      <Route path="/trainer/inquiries"      element={<TrainerEnrollmentInquiries />} />
+      <Route path="/trainer/course-summary" element={<TrainerCourseSummary />} />
+
+      {/* Legacy trainer setup entry points */}
+      <Route path="/setup/trainer/:step"   element={<TrainerSetupFlow />} />
+      <Route path="/setup/provider/:step"  element={<TrainerSetupFlow />} />
 
       {/* Legacy generic dashboard */}
       <Route path="/dashboard" element={<DashboardPage />} />
