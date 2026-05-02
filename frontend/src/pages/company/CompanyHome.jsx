@@ -1,5 +1,5 @@
 /**
- * CompanyHome — Figma node 1:1316 (file Ud0NnDoXtD1Rd5t4EaAlBT)
+ * CompanyHome — Figma node 1:1559 (file Ud0NnDoXtD1Rd5t4EaAlBT)
  * All assets from Figma API. Inline styles only.
  */
 import { useState, useEffect } from 'react'
@@ -9,14 +9,15 @@ import { getToken, getMe } from '../../services/api'
 
 const font = "'Urbanist', sans-serif"
 
-/* ─── FIGMA ASSETS — node 1:1316 ─── */
-const imgHeroBg          = 'https://www.figma.com/api/mcp/asset/40b21323-f8dc-4e68-bc84-c3aefb5c8e47' // image 6074
-const imgHeroIllus       = 'https://www.figma.com/api/mcp/asset/d62d6f2d-5da6-4c5f-af7e-0a6cd04d039b' // undraw_welcoming_42an
-const imgEllipseRing     = 'https://www.figma.com/api/mcp/asset/588a81d2-5ad7-478b-9b45-553dcd224ac2' // Ellipse 4336
-const imgDonutChart      = 'https://www.figma.com/api/mcp/asset/708ed41c-5a42-42dd-a4a8-81591192dd2a' // Group 3
-const imgMailbox         = 'https://www.figma.com/api/mcp/asset/85ad9baa-8664-48c3-b9de-144771f05ead' // undraw_mailbox_e7nc 2
-const imgDecoCircle1     = 'https://www.figma.com/api/mcp/asset/4880e809-4c7d-424c-908d-70e86aded273' // Group 1686552116
-const imgDecoCircle2     = 'https://www.figma.com/api/mcp/asset/e83216cb-4ab5-4574-8fb1-355704316079' // Group 1686552117
+/* ─── FIGMA ASSETS — node 1:1559 ─── */
+const imgHeroBg      = 'https://www.figma.com/api/mcp/asset/e8c44ff9-2f95-422b-b16f-0dfc77b70e98'  // image 6074
+const imgHeroIllus   = 'https://www.figma.com/api/mcp/asset/0c744a54-f44d-479a-a597-520d716da979'  // undraw_walk-in-the-city
+const imgEllipseRing = 'https://www.figma.com/api/mcp/asset/8bd72468-9b06-4c16-99f5-46bba3c998d8'  // Ellipse 4336
+const imgDonutChart  = 'https://www.figma.com/api/mcp/asset/9a75a8e6-9b45-4b26-8229-c9ec80ccf00e'  // Group 3
+const imgMailbox     = 'https://www.figma.com/api/mcp/asset/5b9a3b35-a16f-4fce-aeb6-acd0b1e0c918'  // undraw_mailbox_e7nc 2
+const imgDeco1       = 'https://www.figma.com/api/mcp/asset/498b1ed3-aae9-429e-bb63-dca429ca19eb'  // Group1686552118
+const imgDeco2       = 'https://www.figma.com/api/mcp/asset/2a4f3237-e9a1-4316-ae6f-082681dd456f'  // Group1686552119
+const imgDeco3       = 'https://www.figma.com/api/mcp/asset/3e0e8a59-1a0c-42d8-b096-0e96202e0b93'  // Group1686552135
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -26,7 +27,7 @@ function getGreeting() {
 }
 
 export function CompanyHome() {
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
   const [user, setUser]       = useState(null)
   const [company, setCompany] = useState(null)
 
@@ -36,8 +37,7 @@ export function CompanyHome() {
     getMe(token).then(u => setUser(u)).catch(() => {})
   }, [])
 
-  const firstName   = user?.full_name?.split(' ')[0] || 'Joshua'
-  const companyName = company?.company_name || user?.full_name || 'Joshua Co'
+  const companyName = company?.company_name || user?.full_name || 'Acme Electrical Pty Ltd'
 
   return (
     <CompanyLayout user={user} company={company}>
@@ -45,10 +45,10 @@ export function CompanyHome() {
       {/* ── Section heading ── */}
       <div style={{ marginBottom:20 }}>
         <h2 style={{ fontFamily:font, fontWeight:700, fontSize:34, color:'#1e1e1e', margin:'0 0 4px', lineHeight:1.3 }}>
-          My Career Dashboard
+          Company Overview
         </h2>
         <p style={{ fontFamily:font, fontWeight:500, fontSize:18, color:'#6a7380', margin:0, lineHeight:1.3 }}>
-          Your profile is almost ready! Finish the remaining steps to get noticed by Australian employers.
+          Manage your active job listings and track candidate expressions of interest.
         </p>
       </div>
 
@@ -57,71 +57,69 @@ export function CompanyHome() {
         position:'relative', borderRadius:50, overflow:'hidden',
         height:220, marginBottom:28, flexShrink:0,
       }}>
+        {/* bg wave */}
         <img src={imgHeroBg} alt=""
           style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
 
-        {/* Text */}
+        {/* text */}
         <div style={{
           position:'absolute', inset:0, padding:'32px 48px',
           display:'flex', flexDirection:'column', justifyContent:'center',
           zIndex:2, maxWidth:'60%',
         }}>
           <h1 style={{
-            fontFamily:font, fontWeight:700, fontSize:30, lineHeight:1.3,
+            fontFamily:font, fontWeight:700, fontSize:28, lineHeight:1.3,
             color:'#403c8b', margin:'0 0 14px',
           }}>
             {getGreeting()},{' '}
-            <span style={{ color:'#f26f37' }}>{firstName}</span>! 🚀
+            <span style={{ color:'#f26f37' }}>{companyName}</span>! 🚀
           </h1>
           <p style={{
             fontFamily:font, fontWeight:600, fontSize:18, lineHeight:1.5,
             color:'#1d15a7', margin:0,
           }}>
-            Your profile is{' '}
-            <span style={{ color:'#f26f37' }}>75%</span>
-            {' '}complete. Publish your profile to start appearing in employer searches!
+            Your company is verified. You have 3 active job roles appearing in candidate searches.
           </p>
         </div>
 
-        {/* Hero illustration */}
+        {/* city illustration */}
         <img src={imgHeroIllus} alt=""
           style={{
-            position:'absolute', right:40, top:'50%',
-            transform:'translateY(-50%)',
-            height:200, width:'auto', display:'block', zIndex:2,
+            position:'absolute', right:0, top:0,
+            height:'100%', width:'auto', display:'block', zIndex:2,
+            objectFit:'contain', objectPosition:'right center',
           }}/>
-
-        {/* Decorative circles */}
-        <img src={imgDecoCircle1} alt=""
-          style={{ position:'absolute', left:80, bottom:20, width:60, height:'auto', zIndex:3, opacity:0.85, transform:'rotate(6deg)' }}/>
-        <img src={imgDecoCircle2} alt=""
-          style={{ position:'absolute', left:260, bottom:-10, width:60, height:'auto', zIndex:3, opacity:0.85, transform:'rotate(-164deg)' }}/>
       </div>
 
       {/* ── Two-column cards ── */}
       <div style={{ display:'flex', gap:20, alignItems:'stretch' }}>
 
-        {/* LEFT card — profile + donut */}
+        {/* ── LEFT card — company profile ── */}
         <div style={{
           flex:'0 0 55%',
           background:'#fff', borderRadius:16, padding:'28px 24px',
           boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
-          display:'flex', flexDirection:'column', alignItems:'center', gap:16,
+          display:'flex', flexDirection:'column', alignItems:'center', gap:14,
           position:'relative', overflow:'hidden',
         }}>
+          {/* Decorative circles */}
+          <img src={imgDeco1} alt="" style={{ position:'absolute', left:32, top:'42%', width:55, height:'auto', opacity:0.85, transform:'rotate(6deg)', pointerEvents:'none' }}/>
+          <img src={imgDeco2} alt="" style={{ position:'absolute', left:160, top:'55%', width:55, height:'auto', opacity:0.85, transform:'rotate(-164deg)', pointerEvents:'none' }}/>
+          <img src={imgDeco3} alt="" style={{ position:'absolute', right:40, top:'30%', width:40, height:'auto', opacity:0.6, pointerEvents:'none' }}/>
+
           {/* Avatar ring + donut */}
           <div style={{ position:'relative', width:180, height:180, flexShrink:0, marginTop:8 }}>
             <img src={imgEllipseRing} alt=""
               style={{ width:180, height:180, display:'block', borderRadius:'50%', objectFit:'cover' }}/>
             <img src={imgDonutChart} alt=""
               style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }}/>
-            {/* 75% orange badge */}
+            {/* Verified orange badge */}
             <div style={{
               position:'absolute', bottom:4, left:'50%', transform:'translateX(-50%)',
               background:'#f26f37', color:'#fff', borderRadius:16,
               padding:'4px 14px', fontFamily:font, fontWeight:600, fontSize:14,
               whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(242,111,55,0.35)',
-            }}>75%</div>
+            }}>Verified</div>
           </div>
 
           {/* Purple badges */}
@@ -130,25 +128,28 @@ export function CompanyHome() {
               background:'#403c8b', color:'#f1fdfd',
               borderRadius:13, padding:'5px 16px',
               fontFamily:font, fontWeight:600, fontSize:13,
-            }}>English: B2</span>
+            }}>Standard Sponsor</span>
             <span style={{
               background:'#403c8b', color:'#f1fdfd',
               borderRadius:13, padding:'5px 16px',
               fontFamily:font, fontWeight:600, fontSize:13,
-            }}>5+ Years Exp</span>
+            }}>ABN Verified</span>
           </div>
 
-          {/* Name + trade */}
+          {/* Company name + subtitle + description */}
           <div style={{ textAlign:'center' }}>
             <p style={{ fontFamily:font, fontWeight:700, fontSize:22, color:'#1e1e1e', margin:'0 0 4px' }}>
               {companyName}
             </p>
-            <p style={{ fontFamily:font, fontWeight:500, fontSize:14, color:'#6a7380', margin:0, lineHeight:1.5 }}>
-              Licensed Electrician (or selected trade).
+            <p style={{ fontFamily:font, fontWeight:500, fontSize:14, color:'#6a7380', margin:'0 0 6px', lineHeight:1.5 }}>
+              Licensed Electrical Contractor &amp; Sponsor
+            </p>
+            <p style={{ fontFamily:font, fontWeight:400, fontSize:13, color:'#9ca3af', margin:0, lineHeight:1.5, maxWidth:320 }}>
+              Specializing in industrial infrastructure and large-scale residential projects across NSW.
             </p>
           </div>
 
-          {/* Publish Profile button */}
+          {/* Manage Business Profile button */}
           <button onClick={() => navigate('/company/profile')} style={{
             width:'100%', height:53,
             background:'#156dbf', color:'#fff',
@@ -159,14 +160,14 @@ export function CompanyHome() {
           }}
             onMouseEnter={e => e.currentTarget.style.background='#1259a0'}
             onMouseLeave={e => e.currentTarget.style.background='#156dbf'}>
-            Publish Profile
+            Manage Business Profile
           </button>
         </div>
 
-        {/* RIGHT column */}
+        {/* ── RIGHT column ── */}
         <div style={{ flex:1, display:'flex', flexDirection:'column', gap:20 }}>
 
-          {/* My Documents card */}
+          {/* Active Job Roles card */}
           <div style={{
             flex:1,
             background:'#fff', borderRadius:16, padding:'28px 24px',
@@ -175,24 +176,24 @@ export function CompanyHome() {
           }}>
             <div>
               <h3 style={{ fontFamily:font, fontWeight:700, fontSize:22, color:'#1e1e1e', margin:'0 0 4px' }}>
-                My Documents
+                Active Job Roles
               </h3>
               <p style={{ fontFamily:font, fontWeight:500, fontSize:16, color:'#6a7380', margin:0 }}>
-                3/8 Documents Uploaded
+                3/5 Roles Filled
               </p>
             </div>
 
-            {/* Progress bar — 3/8 = ~37.5% */}
+            {/* Progress bar — 3/5 = 60% */}
             <div style={{ background:'#cccccc', borderRadius:48, height:15, overflow:'hidden' }}>
               <div style={{
-                width:'37.5%', height:'100%',
+                width:'60%', height:'100%',
                 background:'#5379f4', borderRadius:48,
                 transition:'width 0.6s ease',
               }}/>
             </div>
 
-            {/* Save button */}
-            <button onClick={() => navigate('/worker/documents')} style={{
+            {/* Post New Role button */}
+            <button onClick={() => navigate('/company/jobs')} style={{
               width:'100%', height:53,
               background:'transparent',
               border:'1px solid #f26f37',
@@ -202,7 +203,7 @@ export function CompanyHome() {
             }}
               onMouseEnter={e => e.currentTarget.style.background='#fff5f0'}
               onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-              Save
+              Post New Role
             </button>
           </div>
 
@@ -218,9 +219,9 @@ export function CompanyHome() {
               style={{ width:140, height:'auto', display:'block' }}/>
             <p style={{
               fontFamily:font, fontWeight:500, fontSize:16, color:'#6a7380',
-              textAlign:'center', margin:0, lineHeight:1.5, maxWidth:280,
+              textAlign:'center', margin:0, lineHeight:1.5, maxWidth:300,
             }}>
-              Waiting for your first Expression of Interest (EOI).
+              Waiting for candidate responses to your sent EOIs.
             </p>
           </div>
 

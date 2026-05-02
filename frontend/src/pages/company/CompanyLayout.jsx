@@ -1,26 +1,26 @@
 /**
  * CompanyLayout — shared sidebar + topbar for all company/employer pages.
- * Figma node 1:1316 (file Ud0NnDoXtD1Rd5t4EaAlBT). All assets from Figma API.
+ * Figma node 1:1559 (file Ud0NnDoXtD1Rd5t4EaAlBT). All assets from Figma API.
  */
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { clearToken } from '../../services/api'
 
 const font = "'Urbanist', sans-serif"
 
-/* ─── FIGMA ASSETS — node 1:1316 ─── */
-const imgLogoIcon       = 'https://www.figma.com/api/mcp/asset/abe72eb9-39b4-4dfa-a003-8cbf0583d2d7'
-const imgIconHomeActive = 'https://www.figma.com/api/mcp/asset/eefed488-1762-472f-9f96-0651ebf05759'
-const imgIconDocuments  = 'https://www.figma.com/api/mcp/asset/411e75e2-1fe6-4751-94ba-0cd63e9f6de8'
-const imgIconEOIs       = 'https://www.figma.com/api/mcp/asset/b850d02a-0d14-4152-b1da-b4ae1abdf13c'
-const imgIconCourses    = 'https://www.figma.com/api/mcp/asset/c9f75557-239b-4a3d-9ad4-9627deb6f5e2'
-const imgIconSettings   = 'https://www.figma.com/api/mcp/asset/fca5eb5c-a092-47bd-90f0-6edc4273b9d3'
-const imgIconHelp       = 'https://www.figma.com/api/mcp/asset/15037cb7-7c47-4e94-aa71-c318bc5c9712'
-const imgSearchIcon     = 'https://www.figma.com/api/mcp/asset/b24fbb95-73d4-492c-b200-bea52b781733'
-const imgBellIcon       = 'https://www.figma.com/api/mcp/asset/d4577ff5-57a5-4798-ada6-8206e38a84fd'
-const imgAvatarUser     = 'https://www.figma.com/api/mcp/asset/86c2d6e7-2fbb-498f-a9ba-8181d5e4e619'
-const imgStrokeDot      = 'https://www.figma.com/api/mcp/asset/a18c91fe-3f27-41f8-a073-9617a46fe7a6'
-const imgDropArrow      = 'https://www.figma.com/api/mcp/asset/373efffd-bc51-413b-9a14-c4f34b7bb4d6'
-const imgMenu           = 'https://www.figma.com/api/mcp/asset/b2a41913-98ec-4e77-be04-16dc0315941b'
+/* ─── FIGMA ASSETS — node 1:1559 ─── */
+const imgLogoIcon       = 'https://www.figma.com/api/mcp/asset/f5734962-1b47-4cf1-8eb0-b89c5e7625b8'  // Layer_1
+const imgIconHomeActive = 'https://www.figma.com/api/mcp/asset/a2a4a83c-5d34-4d08-99ba-16d0759ae82a'  // vuesax/bold/category
+const imgIconCandidates = 'https://www.figma.com/api/mcp/asset/440adbb6-9d24-47aa-985a-50e5720e8325'  // mingcute--search-line
+const imgIconJobs       = 'https://www.figma.com/api/mcp/asset/82bd10e9-3960-4367-bfda-cc304528cd00'  // streamline--job-bag
+const imgIconEOIs       = 'https://www.figma.com/api/mcp/asset/10552c78-27a3-4e4c-bb7f-785707241410'  // tabler--message
+const imgIconSettings   = 'https://www.figma.com/api/mcp/asset/3ba53eb9-7ef6-4a35-8b57-a2a9d6e42970'  // vuesax/outline/setting-2
+const imgIconHelp       = 'https://www.figma.com/api/mcp/asset/745026f1-c6f1-4e73-8fae-3db927603261'  // vuesax/outline/lamp-on
+const imgSearchIcon     = 'https://www.figma.com/api/mcp/asset/a4ec06e0-9b04-4217-acf5-2fc1012c92c8'  // vuesax/outline/search-normal
+const imgBellIcon       = 'https://www.figma.com/api/mcp/asset/389fe99f-105c-4ad6-a8d9-a758ac8f2322'  // vuesax/bold/notification
+const imgAvatarUser     = 'https://www.figma.com/api/mcp/asset/a38e0744-5bdf-46e9-a277-124f3dc69794'  // Default avatar
+const imgStrokeDot      = 'https://www.figma.com/api/mcp/asset/ccd1579a-ad89-44f8-b85f-2dfdd5ead59c'  // Stroke dot
+const imgDropArrow      = 'https://www.figma.com/api/mcp/asset/358fbb27-625a-479e-adff-924f446e653e'  // arrow_drop_down
+const imgMenu           = 'https://www.figma.com/api/mcp/asset/7d87c33c-7a01-4e17-89d2-b4e30b9178cd'  // menu
 
 function getActive(p) {
   if (p.startsWith('/company/candidates')) return 'candidates'
@@ -36,16 +36,16 @@ export function CompanyLayout({ children, user, company }) {
   const navigate = useNavigate()
   const active   = getActive(location.pathname)
 
-  const displayName = company?.company_name || user?.full_name || 'Joshua Co'
-  const roleLabel   = company ? 'Employer' : (user?.role || 'Employee')
+  const displayName = company?.company_name || user?.full_name || 'Acme Electrical Pty Ltd'
+  const roleLabel   = company?.trade_type   || 'Licensed Electrical Contractor & Sponsor'
 
   const NAV = [
-    { key:'home',       label:'Home',             icon: active==='home' ? imgIconHomeActive : imgIconDocuments, path:'/company/dashboard' },
-    { key:'candidates', label:'Find Candidates',  icon: imgIconDocuments, path:'/company/candidates' },
-    { key:'jobs',       label:'Active Jobs',       icon: imgIconEOIs,      path:'/company/jobs' },
-    { key:'eois',       label:'Sent EOIs',         icon: imgIconCourses,   path:'/company/eois' },
-    { key:'settings',   label:'Settings',          icon: imgIconSettings,  path:'/company/settings' },
-    { key:'help',       label:'Help',              icon: imgIconHelp,      path:'/company/help' },
+    { key:'home',       label:'Home',            icon: active==='home' ? imgIconHomeActive : imgIconCandidates, path:'/company/dashboard' },
+    { key:'candidates', label:'Find Candidates', icon: imgIconCandidates, path:'/company/candidates' },
+    { key:'jobs',       label:'Active Jobs',      icon: imgIconJobs,       path:'/company/jobs' },
+    { key:'eois',       label:'Sent EOIs',        icon: imgIconEOIs,       path:'/company/eois' },
+    { key:'settings',   label:'Settings',         icon: imgIconSettings,   path:'/company/settings' },
+    { key:'help',       label:'Help',             icon: imgIconHelp,       path:'/company/help' },
   ]
 
   return (
@@ -58,11 +58,11 @@ export function CompanyLayout({ children, user, company }) {
         position:'relative', zIndex:20,
         boxShadow:'2px 0 8px rgba(0,0,0,0.04)',
       }}>
-        {/* Active indicator bar — right edge */}
+        {/* Active blue indicator bar — right edge */}
         <div style={{
           position:'absolute', right:0,
           top:'9.63%', bottom:'87.14%',
-          width:4, background:'#0b3a66',
+          width:4, background:'#156dbf',
           borderRadius:'4px 0 0 4px', zIndex:2,
         }}/>
 
@@ -140,6 +140,7 @@ export function CompanyLayout({ children, user, company }) {
 
           {/* Bell + User */}
           <div style={{ display:'flex', alignItems:'center', gap:32 }}>
+            {/* Bell */}
             <div style={{ position:'relative' }}>
               <div style={{
                 width:50, height:50, borderRadius:'50%', background:'#f3f1fd',
@@ -155,6 +156,7 @@ export function CompanyLayout({ children, user, company }) {
               }}>4</div>
             </div>
 
+            {/* User */}
             <div style={{ display:'flex', alignItems:'center', gap:14, cursor:'pointer' }}
               onClick={() => { clearToken(); navigate('/login', { replace:true }) }}>
               <div style={{ position:'relative', width:50, height:50, flexShrink:0 }}>
@@ -172,7 +174,7 @@ export function CompanyLayout({ children, user, company }) {
                 <span style={{ fontFamily:font, fontWeight:700, fontSize:18, color:'#343434', lineHeight:1.3, whiteSpace:'nowrap' }}>
                   {displayName}
                 </span>
-                <span style={{ fontFamily:font, fontWeight:500, fontSize:18, color:'#6a7380', lineHeight:1.3, whiteSpace:'nowrap' }}>
+                <span style={{ fontFamily:font, fontWeight:500, fontSize:16, color:'#6a7380', lineHeight:1.3, whiteSpace:'nowrap' }}>
                   {roleLabel}
                 </span>
               </div>
