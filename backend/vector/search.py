@@ -228,6 +228,7 @@ async def store_chunks(
     source_document_id: str,
     chunks: List[str],
     embeddings: List[List[float]],
+    metadata_list: List[dict] | None = None,
 ) -> int:
     """
     Persist text chunks and their embeddings to the `text_chunks` table.
@@ -241,6 +242,11 @@ async def store_chunks(
         source_document_id: UUID string of the ApplicantDocument.
         chunks:             List of text strings (from document_processor).
         embeddings:         Parallel list of 1536-dim vectors (from embeddings.py).
+        metadata_list:      Optional list of JSONB dicts (one per chunk) containing
+                            candidate_id, candidate_username, document_type, etc.
+                            Used to populate bm25_text and chunk_metadata columns
+                            for the hybrid BM25 + semantic retrieval pipeline.
+                            Falls back to empty dict when not provided.
 
     Returns:
         Number of chunks stored.
@@ -252,7 +258,10 @@ async def store_chunks(
     if len(chunks) != len(embeddings):
         raise ValueError("chunks and embeddings lists must be the same length.")
 
-    for chunk_text, embedding in zip(chunks, embeddings):
+    if metadata_list and len(metadata_list) != len(chunks):
+        raise ValueError("metadata_list must have the same length as chunks.")
+
+    for idx, (chunk_text, embedding) in enumerate(zip(chunks, embeddings)):
         # When pgvector is not available the column is TEXT — store as JSON string
         stored_embedding = embedding if _pgvector_enabled() else _json.dumps(embedding)
 
@@ -260,12 +269,32 @@ async def store_chunks(
         cid = uuid.UUID(candidate_id) if isinstance(candidate_id, str) else candidate_id
         src_id = uuid.UUID(source_document_id) if isinstance(source_document_id, str) else source_document_id
 
+        # ── BM25 / metadata enrichment ─────────────────────────────────────────
+        meta: dict = metadata_list[idx] if metadata_list else {}
+
+        # bm25_text combines chunk_text with key metadata tokens so that
+        # PostgreSQL full-text search (plainto_tsquery) also matches on trade,
+        # nationality, document_type, etc. — not just raw document content.
+        bm25_parts = [chunk_text]
+        for field in ("candidate_name", "candidate_username", "trade_category",
+                      "document_type", "nationality", "file_name"):
+            val = meta.get(field)
+            if val and isinstance(val, str):
+                bm25_parts.append(val)
+        bm25_text = " ".join(bm25_parts)
+
+        # Stamp chunk_index into metadata if not already there
+        if "chunk_index" not in meta:
+            meta = {**meta, "chunk_index": idx}
+
         chunk = TextChunk(
             id=uuid.uuid4(),
             candidate_id=cid,
             source_document_id=src_id,
             chunk_text=chunk_text,
             embedding=stored_embedding,
+            bm25_text=bm25_text,
+            chunk_metadata=meta,
         )
         db.add(chunk)
 

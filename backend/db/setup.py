@@ -114,6 +114,21 @@ async def init_db():
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(64)",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMP",
+            # ── Hybrid BM25 + Metadata columns on text_chunks ────────────────────
+            "ALTER TABLE text_chunks ADD COLUMN IF NOT EXISTS bm25_text TEXT",
+            "ALTER TABLE text_chunks ADD COLUMN IF NOT EXISTS chunk_metadata JSONB DEFAULT '{}'::jsonb",
+            # GIN index on PostgreSQL tsvector for fast BM25 keyword pre-filter.
+            # CREATE INDEX CONCURRENTLY is NOT allowed inside a transaction, so we
+            # use a regular CREATE INDEX with IF NOT EXISTS here.
+            (
+                "CREATE INDEX IF NOT EXISTS idx_text_chunks_bm25 "
+                "ON text_chunks USING GIN (to_tsvector('english', COALESCE(bm25_text, '')))"
+            ),
+            # GIN index on chunk_metadata JSONB for fast metadata field lookups.
+            (
+                "CREATE INDEX IF NOT EXISTS idx_text_chunks_metadata "
+                "ON text_chunks USING GIN (chunk_metadata)"
+            ),
         ]:
             try:
                 await conn.execute(text(sql))

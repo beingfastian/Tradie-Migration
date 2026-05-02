@@ -44,6 +44,10 @@ class DocumentSearchQuery(BaseModel):
                        description="Max number of candidates to return")
     document_type: Optional[str] = Field(None,
                                          description="Optional filter: trade_certificate | resume | passport | safety_certificate | english_test | reference_letter")
+    trade_category: Optional[str] = Field(None,
+                                          description="Optional filter: electrician | plumber | welder | carpenter …")
+    nationality: Optional[str] = Field(None,
+                                       description="Optional filter by candidate nationality, e.g. 'Pakistani'")
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -129,6 +133,8 @@ async def search_documents(
             search_term=payload.search_term,
             top_k=payload.top_k,
             document_type=payload.document_type,
+            trade_category=payload.trade_category,
+            nationality=payload.nationality,
         )
         return result
     except Exception as exc:
@@ -173,14 +179,16 @@ async def ingest_document(
     cand_result = await db.execute(
         select(CandidateProfile).where(CandidateProfile.id == cid_uuid)
     )
-    if not cand_result.scalar_one_or_none():
+    profile = cand_result.scalar_one_or_none()
+    if not profile:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
     # Validate document record
     doc_result = await db.execute(
         select(ApplicantDocument).where(ApplicantDocument.id == did_uuid)
     )
-    if not doc_result.scalar_one_or_none():
+    doc_record = doc_result.scalar_one_or_none()
+    if not doc_record:
         raise HTTPException(status_code=404, detail="Document record not found")
 
     # Read file bytes
@@ -195,6 +203,23 @@ async def ingest_document(
             detail=f"File too large. Maximum allowed size is 10 MB."
         )
 
+    # ── Build rich metadata for hybrid BM25 retrieval ────────────────────────
+    # Pull structured fields from the candidate profile and document record so
+    # that BM25 full-text search + JSONB metadata filters work at query time.
+    extra_metadata: dict = {
+        "candidate_id":       candidate_id,
+        "document_type":      doc_record.document_type  if hasattr(doc_record, "document_type")  else None,
+        "file_name":          doc_record.file_name      if hasattr(doc_record, "file_name")      else (file.filename or "upload"),
+        "candidate_name":     profile.full_name         if hasattr(profile, "full_name")         else None,
+        "candidate_username": profile.username          if hasattr(profile, "username")          else None,
+        "trade_category":     profile.trade_category    if hasattr(profile, "trade_category")    else None,
+        "nationality":        profile.nationality       if hasattr(profile, "nationality")       else None,
+        "years_experience":   profile.years_experience  if hasattr(profile, "years_experience")  else None,
+        "is_electrical_worker": profile.is_electrical_worker if hasattr(profile, "is_electrical_worker") else None,
+    }
+    # Strip None values to keep JSONB lean
+    extra_metadata = {k: v for k, v in extra_metadata.items() if v is not None}
+
     try:
         result = await process_and_store_document(
             db=db,
@@ -202,6 +227,7 @@ async def ingest_document(
             source_document_id=document_id,
             file_bytes=file_bytes,
             file_name=file.filename or "upload",
+            extra_metadata=extra_metadata,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -238,11 +264,12 @@ async def list_text_chunks(
 
     return [
         {
-            "id": str(c.id),
+            "id":                str(c.id),
             "source_document_id": str(c.source_document_id),
-            "chunk_text": c.chunk_text[:300] + "..." if len(c.chunk_text) > 300 else c.chunk_text,
-            "has_embedding": c.embedding is not None,
-            "created_at": c.created_at.isoformat() if c.created_at else None,
+            "chunk_text":        c.chunk_text[:300] + "..." if len(c.chunk_text) > 300 else c.chunk_text,
+            "has_embedding":     c.embedding is not None,
+            "chunk_metadata":    c.chunk_metadata or {},
+            "created_at":        c.created_at.isoformat() if c.created_at else None,
         }
         for c in chunks
     ]

@@ -273,6 +273,28 @@ class TextChunk(Base):
     chunk_text = Column(Text, nullable=False)
     # 1536-dim vector from OpenAI text-embedding-3-small; falls back to Text if pgvector missing
     embedding = Column(Vector(1536) if PGVECTOR_AVAILABLE else Text, nullable=True)
+    # ── Hybrid BM25 + Metadata fields ─────────────────────────────────────────
+    # bm25_text: normalised searchable text stored separately for PostgreSQL
+    # full-text search (ts_vector / plainto_tsquery).  A GIN index is created on
+    # to_tsvector('english', bm25_text) by setup.py:init_db().
+    bm25_text = Column(Text, nullable=True)
+    # chunk_metadata: structured JSONB payload linked to the chunk so that we can
+    # pre-filter by candidate_id, candidate_username, document_type, trade_category,
+    # nationality, etc. before running the expensive vector similarity scan.
+    # Example:
+    #   {
+    #     "candidate_id":       "uuid-string",
+    #     "candidate_username": "john.doe",
+    #     "candidate_name":     "John Doe",
+    #     "document_type":      "trade_certificate",
+    #     "file_name":          "cert.pdf",
+    #     "chunk_index":        0,
+    #     "trade_category":     "electrician",
+    #     "nationality":        "Pakistani",
+    #     "years_experience":   5,
+    #     "is_electrical_worker": true
+    #   }
+    chunk_metadata = Column(JSONB, nullable=True, default=dict)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
     # Relationships

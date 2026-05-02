@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.processors.document_processor import process_document
 from backend.vector.embeddings import embed_text, embed_texts
 from backend.vector.search import similarity_search, store_chunks, cross_candidate_search
+from backend.vector.retrieval import hybrid_search, HybridRetriever, hybrid_cross_candidate_search
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ async def process_and_store_document(
     source_document_id: str,
     file_bytes: bytes,
     file_name: str,
+    extra_metadata: Optional[dict] = None,
 ) -> dict:
     """
     Full ingestion pipeline for one uploaded document.
@@ -41,7 +43,8 @@ async def process_and_store_document(
       1. Extract text from PDF or DOCX.
       2. Split into overlapping chunks.
       3. Generate OpenAI embeddings for each chunk.
-      4. Persist TextChunk rows to Postgres / pgvector.
+      4. Persist TextChunk rows to Postgres / pgvector, with rich JSONB metadata
+         that enables hybrid BM25 + semantic retrieval.
 
     Args:
         db:                 Async DB session.
@@ -49,6 +52,17 @@ async def process_and_store_document(
         source_document_id: UUID of the ApplicantDocument record.
         file_bytes:         Raw bytes of the uploaded file.
         file_name:          Original filename (used for format detection).
+        extra_metadata:     Optional dict with additional candidate-level fields to
+                            embed into each chunk's metadata:
+                            {
+                              "candidate_username":  str,
+                              "candidate_name":      str,
+                              "document_type":       str,   # "trade_certificate", "resume" …
+                              "trade_category":      str,   # "electrician", "plumber" …
+                              "nationality":         str,
+                              "years_experience":    int,
+                              "is_electrical_worker": bool,
+                            }
 
     Returns:
         Dict with chunk_count, candidate_id, source_document_id.
@@ -73,15 +87,28 @@ async def process_and_store_document(
     else:
         embeddings = await embed_texts(chunks)
 
-    # Step 4 — store
+    # Step 4 — build per-chunk metadata for hybrid BM25 + semantic retrieval
+    base_meta: dict = {
+        "candidate_id":   candidate_id,
+        "file_name":      file_name,
+        **(extra_metadata or {}),
+    }
+    # Each chunk gets a copy of base metadata + its own chunk_index
+    metadata_list = [
+        {**base_meta, "chunk_index": idx}
+        for idx in range(len(chunks))
+    ]
+
+    # Step 5 — store with metadata
     stored = await store_chunks(
         db=db,
         candidate_id=candidate_id,
         source_document_id=source_document_id,
         chunks=chunks,
         embeddings=embeddings,
+        metadata_list=metadata_list,
     )
-    logger.info(f"  → {stored} chunks stored in pgvector")
+    logger.info(f"  → {stored} chunks stored (with BM25 metadata)")
 
     return {
         "candidate_id": candidate_id,
@@ -97,13 +124,19 @@ async def search_candidates_by_content(
     search_term: str,
     top_k: int = 10,
     document_type: str | None = None,
+    trade_category: str | None = None,
+    nationality: str | None = None,
 ) -> dict:
     """
-    Semantic search across ALL candidates' ingested documents.
+    Hybrid BM25 + semantic search across ALL candidates' ingested documents.
 
-    Embeds the search_term and performs a cross-candidate pgvector similarity
-    search, then enriches each hit with the candidate's profile fields
-    (name, trade, experience, nationality, country_of_residence).
+    Pipeline:
+      1. Metadata pre-filter (document_type, trade_category, nationality).
+      2. BM25 PostgreSQL full-text pre-filter on bm25_text column.
+      3. pgvector cosine re-rank on the BM25-shortlisted chunks.
+
+    Each step narrows the candidate pool, making this significantly faster
+    than a pure cross-table vector scan for large datasets.
 
     Returns a ranked list of candidates whose documents best match the term.
     """
@@ -117,13 +150,33 @@ async def search_candidates_by_content(
     else:
         query_vector = await embed_text(search_term)
 
-    # Cross-candidate vector search
-    hits = await cross_candidate_search(
+    # Hybrid cross-candidate search (BM25 pre-filter + vector re-rank)
+    hits = await hybrid_cross_candidate_search(
         db=db,
+        query=search_term,
         query_embedding=query_vector,
-        top_k=top_k,
         document_type=document_type,
+        trade_category=trade_category,
+        nationality=nationality,
+        top_k=top_k,
+        bm25_top_n=top_k * 10,
     )
+
+    # Map hybrid result keys to the legacy format expected by callers
+    hits = [
+        {
+            "candidate_id":       h["candidate_id"],
+            "chunk_id":           h["id"],
+            "chunk_text":         h["chunk_text"],
+            "source_document_id": h["source_document_id"],
+            "document_type":      h["chunk_metadata"].get("document_type"),
+            "file_name":          h["chunk_metadata"].get("file_name"),
+            "distance":           h["distance"],
+            "hybrid_score":       h["hybrid_score"],
+            "bm25_rank":          h["bm25_rank"],
+        }
+        for h in hits
+    ]
 
     if not hits:
         return {
@@ -144,23 +197,25 @@ async def search_candidates_by_content(
     results = []
     for hit in hits:
         profile = profiles.get(hit["candidate_id"])
+        excerpt = hit["chunk_text"]
         results.append({
-            "candidate_id":   hit["candidate_id"],
-            "relevance_score": round(1 - hit["distance"], 4),   # cosine similarity (higher = better)
-            "match_excerpt":  hit["chunk_text"][:300] + "..." if len(hit["chunk_text"]) > 300 else hit["chunk_text"],
+            "candidate_id":    hit["candidate_id"],
+            "relevance_score": round(hit.get("hybrid_score", 1 - hit["distance"]), 4),
+            "bm25_rank":       round(hit.get("bm25_rank", 0.0), 6),
+            "match_excerpt":   excerpt[:300] + "..." if len(excerpt) > 300 else excerpt,
             "matched_document": {
                 "document_id":   hit["source_document_id"],
                 "document_type": hit["document_type"],
                 "file_name":     hit["file_name"],
             },
             "candidate": {
-                "full_name":            profile.full_name          if profile else None,
-                "trade_category":       profile.trade_category     if profile else None,
-                "nationality":          profile.nationality        if profile else None,
+                "full_name":            profile.full_name            if profile else None,
+                "trade_category":       profile.trade_category       if profile else None,
+                "nationality":          profile.nationality          if profile else None,
                 "country_of_residence": profile.country_of_residence if profile else None,
-                "years_experience":     profile.years_experience   if profile else None,
+                "years_experience":     profile.years_experience     if profile else None,
                 "is_electrical_worker": profile.is_electrical_worker if profile else None,
-                "published":            profile.published          if profile else None,
+                "published":            profile.published            if profile else None,
             },
         })
 
@@ -172,47 +227,10 @@ async def search_candidates_by_content(
     }
 
 
-# ── Custom Retriever ─────────────────────────────────────────────────────────
-
-from langchain_core.documents import Document
-from langchain_core.retrievers import BaseRetriever
-from langchain_core.callbacks import CallbackManagerForRetrieverRun
-from pydantic import Field
-from typing import Any
-
-class CandidateRetriever(BaseRetriever):
-    """Wraps similarity_search into a LangChain BaseRetriever."""
-    db: Any = Field(exclude=True)
-    candidate_id: str
-    top_k: int = 5
-
-    def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
-        raise NotImplementedError("Sync retrieval not supported")
-
-    async def _aget_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
-        if USE_STUB_EMBEDDINGS:
-            query_vector = [0.0] * 1536
-        else:
-            query_vector = await embed_text(query)
-            
-        results = await similarity_search(
-            db=self.db,
-            candidate_id=self.candidate_id,
-            query_embedding=query_vector,
-            top_k=self.top_k,
-        )
-        
-        return [
-            Document(
-                page_content=r["chunk_text"],
-                metadata={
-                    "chunk_id": r["id"],
-                    "source_document_id": r["source_document_id"],
-                    "distance": r["distance"],
-                }
-            )
-            for r in results
-        ]
+# ── Retriever alias — use HybridRetriever from retrieval.py ──────────────────
+# CandidateRetriever is kept as an alias so existing callers continue to work.
+# New code should use HybridRetriever directly for full metadata + BM25 support.
+CandidateRetriever = HybridRetriever
 
 # ── Flow 2 — Query ────────────────────────────────────────────────────────────
 
@@ -235,8 +253,8 @@ async def answer_question(
     from langchain_core.prompts import PromptTemplate
     from langchain_core.output_parsers import StrOutputParser
 
-    # 1. Base retriever (always needed)
-    base_retriever = CandidateRetriever(db=db, candidate_id=candidate_id, top_k=top_k)
+    # 1. Base retriever — hybrid BM25 + semantic, scoped to this candidate
+    base_retriever = HybridRetriever(db=db, candidate_id=candidate_id, top_k=top_k)
 
     # 2. Stub mode — skip OpenAI
     llm_model = os.getenv("OPENAI_LLM_MODEL", "gpt-4o-mini")
@@ -248,10 +266,12 @@ async def answer_question(
             "answer": f"[RAG stub — dev mode] Question received: '{question}'. OpenAI not called.",
             "sources": [
                 {
-                    "chunk_id": doc.metadata.get("chunk_id"),
+                    "chunk_id":          doc.metadata.get("chunk_id"),
                     "source_document_id": doc.metadata.get("source_document_id"),
-                    "excerpt": doc.page_content[:200] + "..." if len(doc.page_content) > 200 else doc.page_content,
-                    "distance": doc.metadata.get("distance", 0.0),
+                    "excerpt":           doc.page_content[:200] + "..." if len(doc.page_content) > 200 else doc.page_content,
+                    "distance":          doc.metadata.get("distance", 0.0),
+                    "bm25_rank":         doc.metadata.get("bm25_rank", 0.0),
+                    "hybrid_score":      doc.metadata.get("hybrid_score", 0.0),
                 }
                 for doc in docs
             ],
@@ -320,10 +340,12 @@ async def answer_question(
         "answer": answer,
         "sources": [
             {
-                "chunk_id": doc.metadata.get("chunk_id"),
+                "chunk_id":          doc.metadata.get("chunk_id"),
                 "source_document_id": doc.metadata.get("source_document_id"),
-                "excerpt": doc.page_content[:200] + "..." if len(doc.page_content) > 200 else doc.page_content,
-                "distance": doc.metadata.get("distance", 0.0),
+                "excerpt":           doc.page_content[:200] + "..." if len(doc.page_content) > 200 else doc.page_content,
+                "distance":          doc.metadata.get("distance", 0.0),
+                "bm25_rank":         doc.metadata.get("bm25_rank", 0.0),
+                "hybrid_score":      doc.metadata.get("hybrid_score", 0.0),
             }
             for doc in retrieved_docs
         ],
