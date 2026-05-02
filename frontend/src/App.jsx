@@ -6,6 +6,7 @@ import { OtpPage }                from './pages/OtpPage'
 import { ForgotPasswordPage }     from './pages/ForgotPasswordPage'
 import { OAuthCallbackPage }      from './pages/OAuthCallbackPage'
 import { DashboardPage }          from './pages/DashboardPage'
+import { ColorPalette }           from './pages/ColorPalette'
 
 /* Worker */
 import { WorkerSetup }       from './pages/worker/WorkerSetup'
@@ -75,6 +76,9 @@ function App() {
       {/* Legacy trainer setup entry points */}
       <Route path="/setup/trainer/:step"   element={<TrainerSetupFlow />} />
       <Route path="/setup/provider/:step"  element={<TrainerSetupFlow />} />
+
+      {/* Brand */}
+      <Route path="/palette" element={<ColorPalette />} />
 
       {/* Legacy generic dashboard */}
       <Route path="/dashboard" element={<DashboardPage />} />
