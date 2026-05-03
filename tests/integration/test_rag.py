@@ -23,7 +23,7 @@ def mock_rag_service(monkeypatch):
             "sources": [],
         }
 
-    async def _fake_ingest(db, candidate_id, source_document_id, file_bytes, file_name):
+    async def _fake_ingest(db, candidate_id, source_document_id, file_bytes, file_name, extra_metadata=None):
         return {"candidate_id": str(candidate_id), "source_document_id": str(source_document_id), "chunk_count": 3}
 
     monkeypatch.setattr(rag, "answer_question", _fake_answer)

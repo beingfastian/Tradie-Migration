@@ -1,480 +1,451 @@
-import { useState, useRef } from 'react'
+/**
+ * WorkerSetup — 3-step profile setup for worker/candidate.
+ * Figma nodes: 1-3152 (Step 1), 1-3691 (Step 2), 1-4188 (Step 3)
+ */
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createCandidateProfile, updateCandidateProfile, getToken } from '../../services/api'
-
-import illusAboutMe   from '../../assets/illus-about-me.svg'
-import illusPercent   from '../../assets/illus-percentages.svg'
-import illusJobHunt   from '../../assets/illus-job-hunt.svg'
-import iconUpload     from '../../assets/icon-upload.svg'
-import radioChecked   from '../../assets/radio-checked.svg'
-import radioUnchecked from '../../assets/radio-unchecked.svg'
-import cornerBL       from '../../assets/corner-bl-fp.svg'
-import cornerTR       from '../../assets/corner-tr-fp.svg'
-import confettiGroup  from '../../assets/confetti-group-ws.svg'
-import confettiGroup1 from '../../assets/confetti-group1-ws.svg'
-import confettiGroup2 from '../../assets/confetti-group2-ws.svg'
-import confettiGroup3 from '../../assets/confetti-group3-ws.svg'
-
-/* ── LocalStorage helpers ── */
-const LS_KEY = 'worker_setup'
-function loadData() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {} } catch { return {} } }
-function saveData(d) { try { localStorage.setItem(LS_KEY, JSON.stringify(d)) } catch {} }
+import { WorkerLayout } from './WorkerLayout'
+import {
+  getToken, getMe,
+  getCandidateProfile, createCandidateProfile, updateCandidateProfile,
+} from '../../services/api'
+import { MOCK_USER, MOCK_PROFILE } from './mockData'
 
 const font = "'Urbanist', sans-serif"
 
-const STEPS = [
-  { label: 'Personal Identity',   sub: 'Your basic profile info' },
-  { label: 'Experience & Skills', sub: 'Your skills and resume'  },
-  { label: 'Career Preferences',  sub: 'What you are looking for'},
+const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Argentina','Australia','Austria','Bangladesh',
+  'Belgium','Brazil','Canada','Chile','China','Colombia','Croatia','Czech Republic',
+  'Denmark','Egypt','Ethiopia','Finland','France','Germany','Ghana','Greece','Hungary',
+  'India','Indonesia','Iran','Iraq','Ireland','Israel','Italy','Japan','Jordan',
+  'Kenya','Malaysia','Mexico','Morocco','Netherlands','New Zealand','Nigeria','Norway',
+  'Pakistan','Peru','Philippines','Poland','Portugal','Romania','Russia','Saudi Arabia',
+  'Serbia','Singapore','South Africa','South Korea','Spain','Sri Lanka','Sweden',
+  'Switzerland','Thailand','Turkey','UAE','Ukraine','United Kingdom','United States',
+  'Vietnam','Zimbabwe',
 ]
 
-const SELECT_ARROW = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236a7380' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`
+const EXPERIENCE_OPTIONS = [
+  'Less than 1 year','1','2','3','4','5','6','7','8','9','10','15','20+',
+]
 
-/* ── Sidebar ── */
-function StepSidebar({ current }) {
-  return (
-    <div style={{ width:260, flexShrink:0, display:'flex', flexDirection:'column', gap:0 }}>
-      {STEPS.map((s, i) => {
-        const n = i + 1
-        const active = n <= current
-        return (
-          <div key={i} style={{ display:'flex', flexDirection:'column' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-              <img src={active ? radioChecked : radioUnchecked} alt=""
-                style={{ width:24, height:24, flexShrink:0 }} />
-              <div>
-                <p style={{ fontFamily:font, fontSize:16, fontWeight:700, margin:0, lineHeight:1.3,
-                  color: active ? '#403c8b' : '#8280a7' }}>
-                  {s.label}
-                </p>
-                <p style={{ fontFamily:font, fontSize:14, fontWeight:400, margin:0, lineHeight:1.3,
-                  color: active ? '#6a7380' : '#b0aec8' }}>
-                  {s.sub}
-                </p>
-              </div>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div style={{
-                width:2, height:32,
-                background: n < current ? '#403c8b' : '#e0dff0',
-                marginLeft:11, marginTop:4, marginBottom:4,
-              }} />
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
+const ENGLISH_OPTIONS = [
+  'Native / Fluent','IELTS 7.0+','IELTS 6.5','IELTS 6.0','IELTS 5.5','IELTS 5.0',
+  'PTE 65+','PTE 58+','PTE 50+','Basic English','No formal test taken',
+]
 
-/* ── Shared styles ── */
-const iStyle = {
-  height:56, padding:'16px 20px',
-  border:'1px solid #6a7380', borderRadius:12, background:'#fff',
-  fontFamily:font, fontSize:16, fontWeight:400, color:'#343434',
-  outline:'none', boxSizing:'border-box', width:'100%', lineHeight:1.3,
-}
+const LANGUAGE_OPTIONS = [
+  'Arabic','Bengali','Chinese (Mandarin)','Chinese (Cantonese)','Dutch','Farsi',
+  'Filipino/Tagalog','French','German','Greek','Gujarati','Hebrew','Hindi',
+  'Indonesian','Italian','Japanese','Korean','Malay','Nepali','Polish',
+  'Portuguese','Punjabi','Romanian','Russian','Sinhalese','Somali','Spanish',
+  'Swahili','Tamil','Thai','Turkish','Ukrainian','Urdu','Vietnamese',
+]
 
 function Field({ label, children }) {
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-      <label style={{ fontFamily:font, fontSize:16, fontWeight:700, color:'#343434', lineHeight:1.3 }}>
-        {label}
-      </label>
+    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+      <label style={{ fontFamily:font, fontSize:14, fontWeight:600, color:'#343434' }}>{label}</label>
       {children}
     </div>
   )
 }
 
-function ErrMsg({ msg }) {
-  return msg ? <p style={{ color:'#ef4444', fontSize:13, margin:0, fontFamily:font }}>{msg}</p> : null
-}
-
-function NextBtn({ loading, label, onClick }) {
+function TextInput({ placeholder, value, onChange, type='text' }) {
+  const [focused, setFocused] = useState(false)
   return (
-    <button onClick={onClick} disabled={loading} style={{
-      width:'100%', height:53, background:'#5379f4', color:'#fff',
-      border:'none', borderRadius:12,
-      fontFamily:font, fontSize:16, fontWeight:600, lineHeight:1.3,
-      cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.75 : 1,
-      boxShadow:'0 4px 13.6px 0 #97b6fd', transition:'background 0.18s',
-    }}
-      onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#4264d6' }}
-      onMouseLeave={e => { e.currentTarget.style.background = '#5379f4' }}
-    >
-      {loading ? 'Saving…' : label}
-    </button>
-  )
-}
-
-function BackBtn({ onClick }) {
-  return (
-    <button type="button" onClick={onClick} style={{
-      background:'none', border:'none', width:'100%',
-      fontFamily:font, fontSize:16, fontWeight:600,
-      color:'#403c8b', textDecoration:'underline',
-      cursor:'pointer', lineHeight:1.3, padding:0,
-    }}>
-      Go Back
-    </button>
-  )
-}
-
-/* ── Upload area ── */
-function UploadArea({ label, sub, fileRef, fileName, onChange, onDrop }) {
-  return (
-    <div onClick={() => fileRef.current?.click()}
-      onDragOver={e => e.preventDefault()} onDrop={onDrop}
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       style={{
-        border:'2px dashed #6a7380', borderRadius:12, background:'#fff',
-        padding:'1.5rem', display:'flex', flexDirection:'column',
-        alignItems:'center', justifyContent:'center',
-        gap:8, cursor:'pointer', minHeight:120,
-      }}>
-      <input ref={fileRef} type="file" accept=".pdf" hidden onChange={onChange} />
-      <img src={iconUpload} alt="" style={{ width:32, height:32 }} />
-      <p style={{ fontFamily:font, fontSize:14, fontWeight:700, color:'#343434', margin:0 }}>
-        {fileName || label}
-      </p>
-      <p style={{ fontFamily:font, fontSize:12, color:'#6a7380', margin:0 }}>
-        {fileName ? 'Click to change' : sub}
-      </p>
-    </div>
+        height:48, borderRadius:10,
+        border: focused ? '1.5px solid #5379f4' : '1.5px solid #d0d5dd',
+        padding:'0 16px', fontFamily:font, fontSize:15, color:'#343434',
+        outline:'none', width:'100%', boxSizing:'border-box', background:'#fff',
+      }}
+    />
   )
 }
 
-/* ── STEP 1 ── */
-function Step1({ data, onChange, onNext }) {
-  const [errors,  setErrors]  = useState({})
-  const [touched, setTouched] = useState({})
-
-  function validate() {
-    const e = {}
-    if (!data.full_name?.trim())          e.full_name          = 'Full name is required.'
-    if (!data.professional_title?.trim()) e.professional_title = 'Professional title is required.'
-    if (!data.years_experience)           e.years_experience   = 'Please select years of experience.'
-    return e
-  }
-
-  function handleNext() {
-    setTouched({ full_name:true, professional_title:true, years_experience:true })
-    const e = validate()
-    if (Object.keys(e).length) { setErrors(e); return }
-    onNext()
-  }
-
-  const err = f => touched[f] && errors[f]
-
+function SelectInput({ placeholder, value, onChange, options }) {
+  const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-      <div>
-        <p style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#343434', margin:'0 0 8px', lineHeight:1.3 }}>
-          Tell us about yourself
-        </p>
-        <p style={{ fontFamily:font, fontSize:16, color:'#6a7380', margin:0, lineHeight:1.5 }}>
-          Create your professional profile to start matching with world-class companies.
-        </p>
-      </div>
-
-      <Field label="Full Name">
-        <input type="text" placeholder="Enter Your Full Name"
-          value={data.full_name || ''}
-          onChange={e => { onChange('full_name', e.target.value); setErrors(p => ({...p, full_name:''})) }}
-          onBlur={() => setTouched(p => ({...p, full_name:true}))}
-          style={{ ...iStyle, borderColor: err('full_name') ? '#ef4444' : '#6a7380' }}
-          onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-        />
-        <ErrMsg msg={err('full_name')} />
-      </Field>
-
-      <Field label="Professional Title">
-        <input type="text" placeholder="e.g. Licensed Electrician"
-          value={data.professional_title || ''}
-          onChange={e => { onChange('professional_title', e.target.value); setErrors(p => ({...p, professional_title:''})) }}
-          onBlur={() => setTouched(p => ({...p, professional_title:true}))}
-          style={{ ...iStyle, borderColor: err('professional_title') ? '#ef4444' : '#6a7380' }}
-          onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-        />
-        <ErrMsg msg={err('professional_title')} />
-      </Field>
-
-      <Field label="Years of Experience">
-        <select value={data.years_experience ?? ''}
-          onChange={e => { onChange('years_experience', e.target.value || null); setErrors(p => ({...p, years_experience:''})) }}
-          onBlur={() => setTouched(p => ({...p, years_experience:true}))}
-          style={{ ...iStyle, borderColor: err('years_experience') ? '#ef4444' : '#6a7380',
-            appearance:'none', backgroundImage:SELECT_ARROW, backgroundRepeat:'no-repeat', backgroundPosition:'right 1.2rem center' }}
-          onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-        >
-          <option value="">Select Years of Experience</option>
-          <option value="0">Less than 1 year</option>
-          <option value="1">1–2 years</option>
-          <option value="3">3–5 years</option>
-          <option value="5">5–10 years</option>
-          <option value="10">10+ years</option>
-        </select>
-        <ErrMsg msg={err('years_experience')} />
-      </Field>
-
-      <NextBtn label="Next Step" onClick={handleNext} />
-    </div>
-  )
-}
-
-/* ── STEP 2 ── */
-function Step2({ data, onChange, onNext, onBack }) {
-  const fileRef = useRef(null)
-  const [fileName, setFile] = useState(data.resume_name || '')
-
-  return (
-    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-      <div>
-        <p style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#343434', margin:'0 0 8px', lineHeight:1.3 }}>
-          What are your core strengths?
-        </p>
-        <p style={{ fontFamily:font, fontSize:16, color:'#6a7380', margin:0, lineHeight:1.5 }}>
-          Add your skills so we can show you the most relevant opportunities.
-        </p>
-      </div>
-
-      <Field label="Skills you have">
-        <input type="text" placeholder="e.g. Wiring, PLC Programming"
-          value={data.skills_have_input || ''}
-          onChange={e => onChange('skills_have_input', e.target.value)}
-          style={iStyle}
-          onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-          onBlur={e => { e.target.style.boxShadow = 'none' }}
-        />
-      </Field>
-
-      <Field label="Skills you want to learn">
-        <input type="text" placeholder="e.g. Solar Installation"
-          value={data.skills_learn_input || ''}
-          onChange={e => onChange('skills_learn_input', e.target.value)}
-          style={iStyle}
-          onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-          onBlur={e => { e.target.style.boxShadow = 'none' }}
-        />
-      </Field>
-
-      <Field label="Upload Resume (PDF)">
-        <UploadArea
-          label="Click or drag to upload resume"
-          sub="PDF files only · Max 10MB"
-          fileRef={fileRef}
-          fileName={fileName}
-          onChange={e => {
-            const f = e.target.files?.[0]
-            if (f) { setFile(f.name); onChange('resume_file', f); onChange('resume_name', f.name) }
-          }}
-          onDrop={e => {
-            e.preventDefault()
-            const f = e.dataTransfer.files?.[0]
-            if (f) { setFile(f.name); onChange('resume_file', f); onChange('resume_name', f.name) }
-          }}
-        />
-      </Field>
-
-      <NextBtn label="Next Step" onClick={onNext} />
-      <BackBtn onClick={onBack} />
-    </div>
-  )
-}
-
-/* ── STEP 3 ── */
-function Step3({ data, onChange, onFinish, onBack, loading }) {
-  return (
-    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-      <div>
-        <p style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#343434', margin:'0 0 8px', lineHeight:1.3 }}>
-          What are you looking for?
-        </p>
-        <p style={{ fontFamily:font, fontSize:16, color:'#6a7380', margin:0, lineHeight:1.5 }}>
-          Define your ideal role so we can find the perfect match.
-        </p>
-      </div>
-
-      <Field label="Preferred Role Type">
-        <select value={data.preferred_role_type || ''}
-          onChange={e => onChange('preferred_role_type', e.target.value)}
-          style={{ ...iStyle, appearance:'none', backgroundImage:SELECT_ARROW, backgroundRepeat:'no-repeat', backgroundPosition:'right 1.2rem center' }}
-          onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-          onBlur={e => { e.target.style.boxShadow = 'none' }}
-        >
-          <option value="">Choose role type</option>
-          <option value="full_time">Full-time</option>
-          <option value="part_time">Part-time</option>
-          <option value="contract">Contract</option>
-          <option value="casual">Casual</option>
-        </select>
-      </Field>
-
-      <Field label="Expected Salary / Rate">
-        <input type="text" placeholder="e.g. $80,000/yr or $45/hr"
-          value={data.expected_salary || ''}
-          onChange={e => onChange('expected_salary', e.target.value)}
-          style={iStyle}
-          onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-          onBlur={e => { e.target.style.boxShadow = 'none' }}
-        />
-      </Field>
-
-      <Field label="Availability">
-        <select value={data.availability || ''}
-          onChange={e => onChange('availability', e.target.value)}
-          style={{ ...iStyle, appearance:'none', backgroundImage:SELECT_ARROW, backgroundRepeat:'no-repeat', backgroundPosition:'right 1.2rem center' }}
-          onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-          onBlur={e => { e.target.style.boxShadow = 'none' }}
-        >
-          <option value="">Choose availability</option>
-          <option value="immediately">Immediately</option>
-          <option value="2_weeks">2 weeks notice</option>
-          <option value="1_month">1 month notice</option>
-          <option value="3_months_plus">3+ months</option>
-        </select>
-      </Field>
-
-      <NextBtn loading={loading} label="Finish Setup" onClick={onFinish} />
-      <BackBtn onClick={onBack} />
-    </div>
-  )
-}
-
-/* ── Success Modal ── */
-function SuccessModal({ onExplore }) {
-  return (
-    <div style={{
-      position:'fixed', inset:0, background:'rgba(53,53,53,0.63)',
-      display:'flex', alignItems:'center', justifyContent:'center',
-      zIndex:100, padding:'1rem',
-    }}>
-      <div style={{
-        background:'#fff', borderRadius:24, padding:'2.5rem 2rem',
-        maxWidth:460, width:'100%', textAlign:'center',
-        position:'relative', overflow:'hidden',
-      }}>
-        <img src={confettiGroup}  alt="" aria-hidden="true" style={{ position:'absolute', top:0, left:0,   width:120, pointerEvents:'none' }} />
-        <img src={confettiGroup1} alt="" aria-hidden="true" style={{ position:'absolute', top:0, right:0,  width:120, pointerEvents:'none' }} />
-        <img src={confettiGroup2} alt="" aria-hidden="true" style={{ position:'absolute', bottom:0, left:0,  width:100, pointerEvents:'none' }} />
-        <img src={confettiGroup3} alt="" aria-hidden="true" style={{ position:'absolute', bottom:0, right:0, width:100, pointerEvents:'none' }} />
-
-        <div style={{
-          width:88, height:88, borderRadius:'50%', background:'#f26f37',
-          display:'flex', alignItems:'center', justifyContent:'center',
-          margin:'0 auto 1.2rem', position:'relative', zIndex:1,
-        }}>
-          <svg width="40" height="32" viewBox="0 0 40 32" fill="none">
-            <path d="M3 16L15 28L37 4" stroke="white" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-
-        <p style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#343434', margin:'0 0 8px', position:'relative', zIndex:1, lineHeight:1.3 }}>
-          Your profile is ready!
-        </p>
-        <p style={{ fontFamily:font, fontSize:16, color:'#6a7380', margin:'0 0 24px', lineHeight:1.5, position:'relative', zIndex:1 }}>
-          You are now visible to world-class companies. Start exploring curated
-          job opportunities tailored to your goals.
-        </p>
-        <button onClick={onExplore} style={{
-          width:'100%', height:53, background:'#5379f4', color:'#fff',
-          border:'none', borderRadius:12,
-          fontFamily:font, fontSize:16, fontWeight:600, cursor:'pointer',
-          boxShadow:'0 4px 13.6px 0 #97b6fd', position:'relative', zIndex:1, lineHeight:1.3,
+    <div style={{ position:'relative' }}>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          height:48, borderRadius:10,
+          border: focused ? '1.5px solid #5379f4' : '1.5px solid #d0d5dd',
+          padding:'0 40px 0 16px', fontFamily:font, fontSize:15,
+          color: value ? '#343434' : '#9ca3af',
+          outline:'none', width:'100%', background:'#fff',
+          appearance:'none', cursor:'pointer', boxSizing:'border-box',
         }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#4264d6' }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#5379f4' }}
-        >
-          Explore Opportunities
-        </button>
-      </div>
+      >
+        <option value="" disabled>{placeholder}</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+      <svg style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}
+        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
     </div>
   )
 }
 
-/* ── Main Component ── */
-export function WorkerSetup() {
-  const navigate = useNavigate()
-  const [step,      setStep]      = useState(1)
-  const [data,      setData]      = useState(() => loadData())
-  const [loading,   setLoading]   = useState(false)
-  const [apiError,  setApiError]  = useState('')
-  const [showModal, setShowModal] = useState(false)
+function MultiSelect({ placeholder, selected, onChange, options }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
 
-  function onChange(field, val) {
-    setData(prev => { const n = { ...prev, [field]: val }; saveData(n); return n })
+  useEffect(() => {
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
+
+  function toggle(opt) {
+    onChange(selected.includes(opt) ? selected.filter(s => s !== opt) : [...selected, opt])
   }
-
-  async function handleFinish() {
-    const token = localStorage.getItem('access_token') || getToken()
-    if (!token) { navigate('/login'); return }
-    setLoading(true); setApiError('')
-    const payload = {
-      full_name:            data.full_name || '',
-      trade_category:       data.trade_category || 'other',
-      years_experience:     parseInt(data.years_experience) || 0,
-      nationality:          data.nationality || '',
-      country_of_residence: data.country_of_residence || '',
-      is_electrical_worker: false,
-      languages:            [{ name: 'English', level: 'Unknown' }],
-      work_types:           [],
-      published:            false,
-    }
-    try {
-      try { await createCandidateProfile(payload, token) }
-      catch (e) {
-        if (e.status === 400 || e.status === 409) await updateCandidateProfile(payload, token)
-        else throw e
-      }
-      localStorage.removeItem(LS_KEY)
-      setShowModal(true)
-    } catch (err) {
-      setApiError(err?.detail || 'Failed to save profile. Please try again.')
-    } finally { setLoading(false) }
-  }
-
-  const ILLUS = [illusAboutMe, illusPercent, illusJobHunt]
 
   return (
-    <div style={{
-      background:'#fbfbfb', minHeight:'100vh',
-      position:'relative', overflow:'hidden', fontFamily:font,
-    }}>
-      <img src={cornerBL} alt="" aria-hidden="true" style={{ position:'absolute', bottom:0, left:0,  width:368, height:396, pointerEvents:'none', zIndex:0 }} />
-      <img src={cornerTR} alt="" aria-hidden="true" style={{ position:'absolute', top:0,  right:0, width:446, height:401, pointerEvents:'none', zIndex:0 }} />
-
-      <div style={{ position:'relative', zIndex:2, minHeight:'100vh', display:'flex', alignItems:'center' }}>
-        <div style={{
-          width:'100%', maxWidth:1200, margin:'2rem auto',
-          padding:'0 60px', display:'flex', alignItems:'center', gap:'3rem',
-        }}>
-          <StepSidebar current={step} />
-
-          <div style={{
-            width:551, flexShrink:0,
-            background:'rgba(230,241,255,0.94)',
-            backdropFilter:'blur(2px)', WebkitBackdropFilter:'blur(2px)',
-            borderRadius:16, padding:32,
-          }}>
-            {apiError && (
-              <div style={{ background:'#fee2e2', border:'1px solid #fca5a5', color:'#b91c1c',
-                borderRadius:8, padding:'0.55rem 0.8rem', fontSize:14, fontFamily:font, marginBottom:16 }}>
-                {apiError}
-              </div>
-            )}
-            {step === 1 && <Step1 data={data} onChange={onChange} onNext={() => { setApiError(''); setStep(2) }} />}
-            {step === 2 && <Step2 data={data} onChange={onChange} onNext={() => { setApiError(''); setStep(3) }} onBack={() => setStep(1)} />}
-            {step === 3 && <Step3 data={data} onChange={onChange} onFinish={handleFinish} onBack={() => setStep(2)} loading={loading} />}
-          </div>
-
-          <div style={{ flex:1, minWidth:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <img src={ILLUS[step-1]} alt="" style={{ width:'100%', maxWidth:460, height:'auto' }} />
-          </div>
-        </div>
+    <div ref={ref} style={{ position:'relative' }}>
+      <div
+        onClick={() => setOpen(v => !v)}
+        style={{
+          minHeight:48, borderRadius:10,
+          border: open ? '1.5px solid #5379f4' : '1.5px solid #d0d5dd',
+          padding:'8px 40px 8px 16px', fontFamily:font, fontSize:15,
+          color: selected.length ? '#343434' : '#9ca3af',
+          background:'#fff', cursor:'pointer', display:'flex',
+          alignItems:'center', flexWrap:'wrap', gap:6, boxSizing:'border-box',
+        }}
+      >
+        {selected.length === 0
+          ? placeholder
+          : selected.map(s => (
+            <span key={s} style={{
+              background:'#e8ecff', color:'#5379f4', borderRadius:6,
+              padding:'2px 8px', fontSize:13, fontWeight:600,
+            }}>{s}</span>
+          ))
+        }
       </div>
-
-      {showModal && (
-        <SuccessModal onExplore={() => { setShowModal(false); navigate('/dashboard', { replace:true }) }} />
+      <svg style={{ position:'absolute', right:14, top:16, pointerEvents:'none' }}
+        width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+      {open && (
+        <div style={{
+          position:'absolute', top:'calc(100% + 4px)', left:0, right:0,
+          background:'#fff', border:'1.5px solid #d0d5dd', borderRadius:10,
+          zIndex:50, maxHeight:220, overflowY:'auto',
+          boxShadow:'0 4px 16px rgba(0,0,0,0.08)',
+        }}>
+          {options.map(opt => {
+            const sel = selected.includes(opt)
+            return (
+              <div
+                key={opt}
+                onClick={() => toggle(opt)}
+                style={{
+                  padding:'10px 16px', fontFamily:font, fontSize:14,
+                  cursor:'pointer', display:'flex', alignItems:'center', gap:10,
+                  background: sel ? '#f3f1fd' : 'transparent',
+                  color: sel ? '#5379f4' : '#343434',
+                }}
+              >
+                <div style={{
+                  width:16, height:16, borderRadius:4, border:'2px solid',
+                  borderColor: sel ? '#5379f4' : '#d0d5dd',
+                  background: sel ? '#5379f4' : 'transparent',
+                  flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
+                }}>
+                  {sel && (
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  )}
+                </div>
+                {opt}
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
+  )
+}
+
+function PhotoUpload({ photo, onPhoto, step }) {
+  const fileRef = useRef(null)
+  const size = 180, stroke = 10
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const pcts = [0.30, 0.65, 0.90]
+  const offset = circ - (pcts[step - 1] || 0.30) * circ
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+      <p style={{ fontFamily:font, fontSize:14, fontWeight:600, color:'#343434', margin:0 }}>
+        Upload Profile Picture
+      </p>
+      <div
+        style={{ position:'relative', width:size, height:size, cursor:'pointer' }}
+        onClick={() => fileRef.current?.click()}
+      >
+        <svg width={size} height={size} style={{ transform:'rotate(-90deg)', position:'absolute', inset:0 }}>
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e0dff0" strokeWidth={stroke}/>
+          <circle cx={size/2} cy={size/2} r={r} fill="none"
+            stroke="#5379f4" strokeWidth={stroke}
+            strokeDasharray={circ} strokeDashoffset={offset}
+            strokeLinecap="round"
+            style={{ transition:'stroke-dashoffset 0.6s ease' }}
+          />
+        </svg>
+        <div style={{
+          position:'absolute', top:stroke+8, left:stroke+8, right:stroke+8, bottom:stroke+8,
+          borderRadius:'50%', background:'#f0f0f5',
+          border:'2px dashed #b0b8d0',
+          display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden',
+        }}>
+          {photo
+            ? <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
+            : <span style={{ fontSize:32, color:'#9ca3af', fontWeight:300 }}>+</span>
+          }
+        </div>
+      </div>
+      <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }}
+        onChange={e => { const f = e.target.files[0]; if (f) onPhoto(URL.createObjectURL(f)) }}
+      />
+    </div>
+  )
+}
+
+export function WorkerSetup() {
+  const navigate = useNavigate()
+  const [user, setUser] = useState(null)
+  const [step, setStep] = useState(1)
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+  const [photo, setPhoto] = useState(null)
+  const [hasProfile, setHasProfile] = useState(false)
+
+  const [fullName, setFullName]       = useState('')
+  const [nationality, setNationality] = useState('')
+  const [country, setCountry]         = useState('')
+  const [phone, setPhone]             = useState('')
+  const [phoneCode, setPhoneCode]     = useState('+61')
+  const [tradeType, setTradeType]     = useState('')
+  const [isElectrical, setIsElectrical] = useState('')
+  const [experience, setExperience]   = useState('')
+  const [englishLevel, setEnglishLevel] = useState('')
+  const [languages, setLanguages]     = useState([])
+  const [bio, setBio]                 = useState('')
+
+  useEffect(() => {
+    const token = getToken()
+    function applyProfile(u, p) {
+      setUser(u)
+      setFullName(u.full_name || '')
+      if (p) {
+        setHasProfile(true)
+        setTradeType(p.trade_type || '')
+        setExperience(p.years_experience ? String(p.years_experience) : '')
+        setIsElectrical(p.is_electrical_worker ? 'Yes' : 'No')
+        setEnglishLevel(p.english_level || '')
+        setLanguages(p.other_languages || [])
+        setBio(p.bio || '')
+      }
+    }
+    if (!token) { applyProfile(MOCK_USER, MOCK_PROFILE); return }
+    Promise.all([getMe(token), getCandidateProfile(token).catch(() => null)])
+      .then(([u, p]) => applyProfile(u, p))
+      .catch(() => applyProfile(MOCK_USER, MOCK_PROFILE))
+  }, [navigate])
+
+  async function save(next) {
+    setErr('')
+    setSaving(true)
+    const token = getToken()
+    try {
+      const payload = {
+        full_name: fullName,
+        nationality,
+        country_of_residence: country,
+        phone_number: `${phoneCode} ${phone}`.trim(),
+        trade_type: tradeType,
+        is_electrical_worker: isElectrical === 'Yes',
+        years_experience: parseInt(experience) || null,
+        english_level: englishLevel,
+        other_languages: languages,
+        bio,
+        published: false,
+      }
+      if (hasProfile) await updateCandidateProfile(payload, token)
+      else { await createCandidateProfile(payload, token); setHasProfile(true) }
+      if (next === 'done') navigate('/worker/dashboard')
+      else setStep(next)
+    } catch (e) {
+      setErr(e.detail || 'Failed to save. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const titles = ['Tell us about yourself', 'What is your trade?', 'Final Touches']
+  const subs = [
+    'Create your professional profile to start matching with Australian employers.',
+    'Provide your trade details to calculate your Australian suitability score.',
+    'Tell us about your language skills and give a brief overview of your professional background.',
+  ]
+  const nextLabels = ['Next: Trade Details', 'Next: Languages', 'Save']
+
+  return (
+    <WorkerLayout user={user}>
+      <div style={{ position:'relative', overflow:'hidden' }}>
+        {/* Decorative blobs */}
+        <div style={{ position:'absolute', top:-30, right:-40, width:260, height:260, borderRadius:'50%', background:'rgba(240,235,210,0.55)', zIndex:0, pointerEvents:'none' }}/>
+        <div style={{ position:'absolute', bottom:-40, right:80, width:180, height:180, borderRadius:'50%', background:'rgba(200,220,245,0.4)', zIndex:0, pointerEvents:'none' }}/>
+
+        {/* Page header */}
+        <div style={{ position:'relative', zIndex:1, marginBottom:28 }}>
+          <h2 style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#1e1e1e', margin:'0 0 6px' }}>
+            {titles[step-1]}
+          </h2>
+          <p style={{ fontFamily:font, fontSize:15, color:'#6a7380', margin:0 }}>
+            {subs[step-1]}
+          </p>
+        </div>
+
+        {/* Card */}
+        <div style={{ position:'relative', zIndex:1, background:'#fff', borderRadius:20, padding:'36px 40px', boxShadow:'0 2px 16px rgba(0,0,0,0.05)' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:48, alignItems:'start' }}>
+            <PhotoUpload photo={photo} onPhoto={setPhoto} step={step} />
+
+            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              {step === 1 && (
+                <>
+                  <Field label="Full Name">
+                    <TextInput placeholder="Enter your full name" value={fullName} onChange={setFullName} />
+                  </Field>
+                  <Field label="Nationality">
+                    <SelectInput placeholder="Select your country" value={nationality} onChange={setNationality} options={COUNTRIES} />
+                  </Field>
+                  <Field label="Country of Residence">
+                    <SelectInput placeholder="Where are you currently living?" value={country} onChange={setCountry} options={COUNTRIES} />
+                  </Field>
+                  <Field label="Phone Number">
+                    <div style={{ display:'flex', gap:8 }}>
+                      <div style={{ position:'relative', width:100, flexShrink:0 }}>
+                        <select value={phoneCode} onChange={e => setPhoneCode(e.target.value)}
+                          style={{ height:48, borderRadius:10, border:'1.5px solid #d0d5dd', padding:'0 28px 0 12px', fontFamily:font, fontSize:15, color:'#343434', background:'#fff', appearance:'none', width:'100%', cursor:'pointer', outline:'none' }}>
+                          {['+61','+1','+44','+91','+92','+971','+966','+880','+62','+63','+84','+27','+234'].map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        <svg style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}
+                          width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2">
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                      </div>
+                      <TextInput placeholder="Enter phone number" value={phone} onChange={setPhone} type="tel" />
+                    </div>
+                  </Field>
+                </>
+              )}
+
+              {step === 2 && (
+                <>
+                  <Field label="Primary Trade Category">
+                    <TextInput placeholder="Select your trade (e.g. Licensed Electrician)" value={tradeType} onChange={setTradeType} />
+                  </Field>
+                  <Field label="Are you an Electrical Worker?">
+                    <SelectInput placeholder="Select Yes or No" value={isElectrical} onChange={setIsElectrical} options={['Yes','No']} />
+                  </Field>
+                  <Field label="Years of Experience">
+                    <SelectInput placeholder="Enter years of experience" value={experience} onChange={setExperience} options={EXPERIENCE_OPTIONS} />
+                  </Field>
+                </>
+              )}
+
+              {step === 3 && (
+                <>
+                  <Field label="English Proficiency (IELTS/PTE)">
+                    <SelectInput placeholder="Select from dropdown" value={englishLevel} onChange={setEnglishLevel} options={ENGLISH_OPTIONS} />
+                  </Field>
+                  <Field label="Other Languages">
+                    <MultiSelect
+                      placeholder="e.g. Urdu, Hindi, Arabic (you can multi-select)"
+                      selected={languages}
+                      onChange={setLanguages}
+                      options={LANGUAGE_OPTIONS}
+                    />
+                  </Field>
+                  <Field label="Profile Summary">
+                    <textarea
+                      value={bio}
+                      onChange={e => setBio(e.target.value)}
+                      placeholder='Briefly describe your expertise (e.g. "Licensed electrician with 10 years of experience in industrial wiring and motor controls...")'
+                      rows={5}
+                      style={{
+                        borderRadius:10, border:'1.5px solid #d0d5dd',
+                        padding:'12px 16px', fontFamily:font, fontSize:15,
+                        color:'#343434', resize:'vertical', outline:'none',
+                        width:'100%', boxSizing:'border-box', lineHeight:1.5,
+                      }}
+                      onFocus={e => { e.target.style.border='1.5px solid #5379f4' }}
+                      onBlur={e => { e.target.style.border='1.5px solid #d0d5dd' }}
+                    />
+                    <p style={{ fontFamily:font, fontSize:13, color:'#6a7380', margin:'4px 0 0' }}>
+                      This is the first thing employers will read about you.
+                    </p>
+                  </Field>
+                </>
+              )}
+
+              {err && <p style={{ fontFamily:font, fontSize:14, color:'#e53e3e', margin:0 }}>{err}</p>}
+            </div>
+          </div>
+
+          {/* Nav buttons */}
+          <div style={{ display:'flex', justifyContent:'space-between', marginTop:36, paddingTop:24, borderTop:'1px solid #f0f0f4' }}>
+            {step > 1 ? (
+              <button
+                onClick={() => setStep(s => s - 1)}
+                style={{ height:48, padding:'0 28px', background:'transparent', border:'1.5px solid #f26f37', borderRadius:12, cursor:'pointer', fontFamily:font, fontSize:15, fontWeight:600, color:'#f26f37' }}
+                onMouseEnter={e => { e.currentTarget.style.background='#fff5f0' }}
+                onMouseLeave={e => { e.currentTarget.style.background='transparent' }}
+              >
+                Back
+              </button>
+            ) : (
+              <button
+                onClick={() => save(step)}
+                disabled={saving}
+                style={{ height:48, padding:'0 28px', background:'transparent', border:'1.5px solid #f26f37', borderRadius:12, cursor:'pointer', fontFamily:font, fontSize:15, fontWeight:600, color:'#f26f37', opacity:saving?0.7:1 }}
+              >
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            )}
+            <button
+              onClick={() => { if (step < 3) save(step + 1); else save('done') }}
+              disabled={saving}
+              style={{ height:48, padding:'0 32px', background:'#156dbf', color:'#fff', border:'none', borderRadius:12, cursor:'pointer', fontFamily:font, fontSize:15, fontWeight:600, boxShadow:'0 4px 12px rgba(21,109,191,0.25)', opacity:saving?0.7:1 }}
+              onMouseEnter={e => { if (!saving) e.currentTarget.style.background='#1259a0' }}
+              onMouseLeave={e => { if (!saving) e.currentTarget.style.background='#156dbf' }}
+            >
+              {saving ? 'Saving…' : nextLabels[step-1]}
+            </button>
+          </div>
+        </div>
+      </div>
+    </WorkerLayout>
   )
 }
