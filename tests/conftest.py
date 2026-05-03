@@ -1,3 +1,8 @@
+import sys
+if sys.platform == "win32":
+    import asyncio
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 """
 Root conftest.py — shared fixtures for all tests.
 
@@ -37,18 +42,31 @@ from backend.db.models.models import (
 )
 from backend.utils.auth import hash_password, create_access_token
 
+# Re-apply test env AFTER all backend imports (email_service.py does load_dotenv(override=True)
+# on the root .env, which would clobber our test DATABASE_URL if we don't re-apply it here).
+load_dotenv(dotenv_path=_ENV_TEST, override=True)
+
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ONE-TIME SCHEMA SETUP (runs before any test, synchronously via asyncio.run)
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _make_engine():
+    """Create a NullPool async engine with SSL disabled for local PostgreSQL."""
+    # ssl=False / sslmode=disable needed on Windows where asyncpg defaults to SSL
+    # and local PostgreSQL doesn't have SSL configured.
+    connect_args: dict = {}
+    url = DATABASE_URL
+    # Pass ssl=False via connect_args for asyncpg dialect (more reliable than URL param)
+    if "asyncpg" in url:
+        connect_args["ssl"] = False
+    return create_async_engine(url, poolclass=NullPool, echo=False,
+                               connect_args=connect_args)
+
+
 async def _init_schema():
-    engine = create_async_engine(
-        DATABASE_URL,
-        poolclass=NullPool,
-        connect_args={"server_settings": {"lock_timeout": "5000"}},  # 5s lock timeout
-    )
+    engine = _make_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         for sql in [
@@ -58,6 +76,11 @@ async def _init_schema():
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(64)",
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires_at TIMESTAMP",
             "ALTER TABLE candidate_profiles ADD COLUMN IF NOT EXISTS work_types JSONB",
+            # Hybrid BM25 retrieval columns
+            "ALTER TABLE text_chunks ADD COLUMN IF NOT EXISTS bm25_text TEXT",
+            "ALTER TABLE text_chunks ADD COLUMN IF NOT EXISTS chunk_metadata JSONB DEFAULT '{}'::jsonb",
+            "CREATE INDEX IF NOT EXISTS idx_text_chunks_bm25 ON text_chunks USING GIN (to_tsvector('english', COALESCE(bm25_text, '')))",
+            "CREATE INDEX IF NOT EXISTS idx_text_chunks_metadata ON text_chunks USING GIN (chunk_metadata)",
         ]:
             try:
                 await conn.execute(text(sql))
@@ -88,7 +111,7 @@ async def db_session():
     Everything is rolled back in teardown.
     NullPool + function loop scope prevents cross-loop connection reuse.
     """
-    engine = create_async_engine(DATABASE_URL, poolclass=NullPool, echo=False)
+    engine = _make_engine()
     session = AsyncSession(engine, expire_on_commit=False)
     await session.begin()                            # outer transaction
     nested = await session.begin_nested()            # SAVEPOINT
