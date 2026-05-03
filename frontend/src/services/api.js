@@ -161,6 +161,7 @@ export const deleteVisaApplication  = (applicationId, token)       => request('D
 
 // ── RAG / AI Q&A ──────────────────────────────────────────────────
 export const askRag         = (payload, token)                     => request('POST', '/rag/ask', payload, token)
+export const ragSearch = (payload, token) => request('POST', '/rag/search', payload, token)
 export const ingestDocument = (candidateId, documentId, token)     => request('POST', `/rag/ingest/${candidateId}/${documentId}`, null, token)
 export const getRagChunks   = (candidateId, token)                 => request('GET', `/rag/candidates/${candidateId}/chunks`, null, token)
 
@@ -183,3 +184,5 @@ export const deleteRecommendation    = (recommendationId, token)   => request('D
 export const saveToken  = (token) => localStorage.setItem('access_token', token)
 export const getToken   = ()      => localStorage.getItem('access_token')
 export const clearToken = ()      => localStorage.removeItem('access_token')
+
+
