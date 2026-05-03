@@ -1,12 +1,19 @@
 """
-RAG Router – AI-powered document Q&A assistant.
+RAG Router – AI-powered document Q&A + candidate search.
 
 Endpoints:
   POST /rag/ask                              – Ask a question about a candidate's documents
+  POST /rag/search                           – Search across all candidates by document content (BM25 + semantic)
+  POST /rag/ingest/{candidate_id}/{doc_id}  – Ingest a document (extract → chunk → embed → store)
   GET  /rag/candidates/{candidate_id}/chunks – List stored text chunks (debug)
-  POST /rag/ingest/{candidate_id}/{doc_id}  – Ingest a document (extract → embed → store)
 
 Access: admin, company_admin, migration_agent, employer.
+
+Lead requirement:
+  - Metadata stored per chunk: candidate_id, candidate_username, document_type, trade_category, nationality, etc.
+  - Search pipeline: metadata filter FIRST → BM25 on filtered set → semantic re-rank
+  - This "linking" makes search fast — expensive vector scan only runs on already-narrowed chunk set
+  - Search returns relevant resumes and credential documents tagged to candidates
 """
 
 import uuid
@@ -26,7 +33,8 @@ from backend.services.rag_service import process_and_store_document, answer_ques
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
-RAG_ROLES = ("admin", "company_admin", "migration_agent")
+# employer added so company dashboard can use /rag/search to find candidates
+RAG_ROLES = ("admin", "company_admin", "migration_agent", "employer")
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -38,16 +46,62 @@ class RAGQuery(BaseModel):
 
 
 class DocumentSearchQuery(BaseModel):
-    search_term: str = Field(..., min_length=2, max_length=500,
-                             description="Natural-language search term, e.g. 'electrician trade certificate Australia' or 'licensed plumber 5 years experience'")
-    top_k: int = Field(default=10, ge=1, le=50,
-                       description="Max number of candidates to return")
-    document_type: Optional[str] = Field(None,
-                                         description="Optional filter: trade_certificate | resume | passport | safety_certificate | english_test | reference_letter")
-    trade_category: Optional[str] = Field(None,
-                                          description="Optional filter: electrician | plumber | welder | carpenter …")
-    nationality: Optional[str] = Field(None,
-                                       description="Optional filter by candidate nationality, e.g. 'Pakistani'")
+    """
+    Search across all ingested candidate documents using BM25 + semantic search.
+
+    Lead requirement:
+      - Filter by metadata fields FIRST (fast SQL WHERE on JSONB chunk_metadata)
+      - Then BM25 keyword search on the filtered chunk set
+      - Then semantic vector re-rank on BM25 results
+
+    Filter fields map directly to chunk_metadata keys stored during ingest:
+      candidate_id, candidate_username, document_type, trade_category,
+      nationality, is_electrical_worker, years_experience
+    """
+    search_term: str = Field(
+        ..., min_length=2, max_length=500,
+        description=(
+            "Natural-language search term. Examples:\n"
+            "  'licensed electrician high voltage'\n"
+            "  'trade certificate Pakistan electrical'\n"
+            "  '5 years commercial electrical work'\n"
+            "  'IELTS English test score'"
+        )
+    )
+    top_k: int = Field(default=10, ge=1, le=50, description="Max number of candidates to return")
+
+    # ── Metadata pre-filter fields (Step 1 — narrows chunk set before BM25) ──
+    document_type: Optional[str] = Field(
+        None,
+        description=(
+            "Filter by document type stored in chunk metadata.\n"
+            "Values: resume | trade_certificate | passport | safety_certificate | "
+            "english_test | reference_letter | employment_reference | visa_application"
+        )
+    )
+    trade_category: Optional[str] = Field(
+        None,
+        description="Filter by candidate trade. Examples: electrician | plumber | welder | carpenter"
+    )
+    nationality: Optional[str] = Field(
+        None,
+        description="Filter by candidate nationality stored in chunk metadata. Example: 'Pakistani'"
+    )
+    candidate_username: Optional[str] = Field(
+        None,
+        description=(
+            "Filter chunks to a specific candidate by their username.\n"
+            "Useful when you want to search within one candidate's documents only."
+        )
+    )
+    is_electrical_worker: Optional[bool] = Field(
+        None,
+        description="Filter to only electrical workers (true) or only non-electrical (false)"
+    )
+    years_experience_min: Optional[int] = Field(
+        None, ge=0, le=70,
+        description="Only return candidates with at least this many years of experience"
+    )
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -63,13 +117,15 @@ async def ask_question(
     """
     Ask a natural-language question about a specific candidate's uploaded documents.
 
-    The system retrieves the most relevant document chunks using pgvector cosine
-    similarity and passes them as context to OpenAI (gpt-4o-mini) to generate a grounded answer.
+    Pipeline:
+      1. Embed question.
+      2. Metadata filter on candidate_id → BM25 pre-filter → pgvector cosine re-rank.
+      3. Pass top-K chunks as context to gpt-4o-mini.
+      4. Returns grounded answer + source excerpts.
 
-    - If no documents have been ingested, returns status='no_documents'.
-    - In local/dev mode (USE_STUB_EMBEDDINGS=true), returns a stub answer.
+    Returns status='no_documents' if the candidate has no ingested chunks yet.
+    In dev mode (USE_STUB_EMBEDDINGS=true) returns a stub answer without calling OpenAI.
     """
-    # Verify candidate exists — cast str → UUID for asyncpg compatibility
     try:
         cid_uuid = uuid.UUID(payload.candidate_id)
     except ValueError:
@@ -106,26 +162,24 @@ async def search_documents(
     _: User = Depends(require_roles(*RAG_ROLES)),
 ):
     """
-    **Global semantic document search across all candidates.**
+    Global hybrid document search across all candidates.
 
-    Use a natural-language search term to find candidates whose ingested
-    documents (resumes, trade certificates, credentials) are most relevant.
+    Lead requirement — 3-step pipeline:
+      Step 1: Metadata pre-filter (SQL WHERE on JSONB chunk_metadata)
+              → narrows chunk pool by candidate_username, document_type,
+                trade_category, nationality, is_electrical_worker instantly
+      Step 2: BM25 keyword search (PostgreSQL plainto_tsquery on bm25_text)
+              → sub-millisecond keyword scoring on metadata-filtered set
+      Step 3: pgvector semantic re-rank on BM25-shortlisted chunk IDs
+              → expensive cosine scan ONLY on already-narrowed small set
 
-    Examples:
-    - `"licensed electrician with high voltage experience"`
-    - `"trade certificate Pakistan electrical"`
-    - `"5 years commercial electrical work"`
-    - `"IELTS English test score"`
+    Returns candidates ranked by relevance with:
+      - Candidate profile details (name, username, trade, experience, nationality)
+      - Matched document type and file name
+      - Excerpt of matching text
+      - Hybrid relevance score (0–1)
 
-    Returns candidates ranked by relevance, each with:
-    - Candidate profile details (name, trade, experience, nationality)
-    - The matching document type and file name
-    - A short excerpt of the matching text
-    - A relevance score (0–1, higher = better match)
-
-    Documents must be ingested first via `POST /rag/ingest/{candidate_id}/{doc_id}`.
-
-    Access: admin, company_admin, migration_agent.
+    Documents must be ingested first via POST /rag/ingest/{candidate_id}/{doc_id}.
     """
     try:
         result = await search_candidates_by_content(
@@ -135,6 +189,9 @@ async def search_documents(
             document_type=payload.document_type,
             trade_category=payload.trade_category,
             nationality=payload.nationality,
+            candidate_username=payload.candidate_username,
+            is_electrical_worker=payload.is_electrical_worker,
+            years_experience_min=payload.years_experience_min,
         )
         return result
     except Exception as exc:
@@ -161,15 +218,18 @@ async def ingest_document(
       1. Extract text from the file (PDF or DOCX).
       2. Split into overlapping chunks.
       3. Embed each chunk with OpenAI text-embedding-3-small.
-      4. Store TextChunk rows in Postgres / pgvector.
+      4. Store TextChunk rows with rich JSONB metadata for hybrid BM25 + semantic retrieval.
+
+    Metadata stored per chunk (enables fast metadata pre-filter at search time):
+      candidate_id, candidate_username, candidate_name, document_type,
+      trade_category, nationality, years_experience, is_electrical_worker
 
     Args (path params):
       candidate_id: UUID of the CandidateProfile.
       document_id:  UUID of an existing ApplicantDocument record.
 
-    Body: multipart/form-data with a 'file' field (.pdf or .docx).
+    Body: multipart/form-data with a 'file' field (.pdf or .docx, max 10 MB).
     """
-    # Validate candidate — cast str → UUID for asyncpg compatibility
     try:
         cid_uuid = uuid.UUID(candidate_id)
         did_uuid = uuid.UUID(document_id)
@@ -183,7 +243,6 @@ async def ingest_document(
     if not profile:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
-    # Validate document record
     doc_result = await db.execute(
         select(ApplicantDocument).where(ApplicantDocument.id == did_uuid)
     )
@@ -191,31 +250,30 @@ async def ingest_document(
     if not doc_record:
         raise HTTPException(status_code=404, detail="Document record not found")
 
-    # Read file bytes
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
     if len(file_bytes) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large. Maximum allowed size is 10 MB."
-        )
+        raise HTTPException(status_code=413, detail="File too large. Maximum allowed size is 10 MB.")
 
     # ── Build rich metadata for hybrid BM25 retrieval ────────────────────────
-    # Pull structured fields from the candidate profile and document record so
-    # that BM25 full-text search + JSONB metadata filters work at query time.
+    # These fields are stored in chunk_metadata JSONB on every chunk.
+    # At search time: metadata pre-filter (Step 1) queries these fields with
+    # SQL WHERE before BM25 (Step 2) and vector re-rank (Step 3).
+    # This "linking" of candidate identity to each chunk makes search fast.
     extra_metadata: dict = {
-        "candidate_id":       candidate_id,
-        "document_type":      doc_record.document_type  if hasattr(doc_record, "document_type")  else None,
-        "file_name":          doc_record.file_name      if hasattr(doc_record, "file_name")      else (file.filename or "upload"),
-        "candidate_name":     profile.full_name         if hasattr(profile, "full_name")         else None,
-        "candidate_username": profile.username          if hasattr(profile, "username")          else None,
-        "trade_category":     profile.trade_category    if hasattr(profile, "trade_category")    else None,
-        "nationality":        profile.nationality       if hasattr(profile, "nationality")       else None,
-        "years_experience":   profile.years_experience  if hasattr(profile, "years_experience")  else None,
+        "candidate_id":         candidate_id,
+        "document_type":        doc_record.document_type  if hasattr(doc_record, "document_type")  else None,
+        "file_name":            doc_record.file_name      if hasattr(doc_record, "file_name")      else (file.filename or "upload"),
+        "candidate_name":       profile.full_name         if hasattr(profile, "full_name")         else None,
+        "candidate_username":   profile.username          if hasattr(profile, "username")          else None,
+        "trade_category":       profile.trade_category    if hasattr(profile, "trade_category")    else None,
+        "nationality":          profile.nationality       if hasattr(profile, "nationality")       else None,
+        "years_experience":     profile.years_experience  if hasattr(profile, "years_experience")  else None,
         "is_electrical_worker": profile.is_electrical_worker if hasattr(profile, "is_electrical_worker") else None,
+        "country_of_residence": profile.country_of_residence if hasattr(profile, "country_of_residence") else None,
     }
     # Strip None values to keep JSONB lean
     extra_metadata = {k: v for k, v in extra_metadata.items() if v is not None}
@@ -245,10 +303,9 @@ async def list_text_chunks(
     _: User = Depends(require_roles(*RAG_ROLES)),
 ):
     """
-    List stored text chunks for a candidate (for inspection / debugging).
-    Shows chunk text (truncated to 300 chars) and whether an embedding exists.
+    List stored text chunks for a candidate (debug / inspection).
+    Shows chunk text (truncated to 300 chars), embedding status, and stored metadata.
     """
-    # Cast str → UUID for asyncpg compatibility
     try:
         cid_uuid = uuid.UUID(candidate_id)
     except ValueError:
