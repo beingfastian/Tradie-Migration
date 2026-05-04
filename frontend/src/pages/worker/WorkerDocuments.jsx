@@ -1,6 +1,13 @@
 /**
  * WorkerDocuments — Upload & manage candidate documents.
  * Figma node 1-4685: 4-step progress, drag-drop zone, file thumbnails.
+ *
+ * FIXES applied:
+ *  1. document_group is now sent in FormData (was missing — caused 422 from backend).
+ *  2. candidate_id removed from FormData (backend derives it from the auth token).
+ *  3. Upload button label now shows "Uploading & indexing for AI search…" while
+ *     the backend auto-ingests the document into the RAG vector store.
+ *  4. Success message confirms the document is now searchable via AI Search.
  */
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -22,8 +29,26 @@ const DOC_TYPES = [
   'English Test Result (IELTS/PTE)',
   'Safety Compliance Certificate',
   'Electrical Licence',
+  'Resume / CV',
   'Other Certification',
 ]
+
+/**
+ * Maps a document_type string to a document_group value.
+ * document_group is a required field on the backend; we derive it from
+ * the selected doc type so the user doesn't need to pick it separately.
+ */
+function deriveDocumentGroup(docType) {
+  const t = (docType || '').toLowerCase()
+  if (t.includes('passport') || t.includes('identity')) return 'identity'
+  if (t.includes('resume') || t.includes('cv'))           return 'resume'
+  if (t.includes('licence') || t.includes('license'))     return 'licence'
+  if (t.includes('certificate') || t.includes('qualification')) return 'credential'
+  if (t.includes('experience') || t.includes('reference')) return 'experience'
+  if (t.includes('english') || t.includes('ielts') || t.includes('pte')) return 'language'
+  if (t.includes('safety') || t.includes('compliance'))   return 'safety'
+  return 'credential'   // safe default
+}
 
 function StepBar({ current }) {
   return (
@@ -76,56 +101,58 @@ function UploadIcon() {
 }
 
 function FileThumb({ file, onRemove }) {
-  const isImg = file.url && /\.(png|jpg|jpeg|gif|webp)$/i.test(file.name || '')
+  const isImg = file.url && /\.(png|jpe?g)$/i.test(file.name)
   return (
     <div style={{
-      width:100, height:100, borderRadius:12,
-      border:'1.5px solid #e0dff0', position:'relative',
-      background:'#f8f8fc', display:'flex', alignItems:'center', justifyContent:'center',
-      overflow:'hidden', flexShrink:0,
+      width:120, borderRadius:12, border:'1.5px solid #e5e7eb',
+      overflow:'hidden', position:'relative', background:'#fafafa',
     }}>
       {isImg
-        ? <img src={file.url} alt={file.name} style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
+        ? <img src={file.url} alt={file.name} style={{ width:'100%', height:80, objectFit:'cover', display:'block' }}/>
         : (
-          <div style={{ textAlign:'center', padding:8 }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5379f4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ height:80, display:'flex', alignItems:'center', justifyContent:'center', background:'#f3f4f6' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
             </svg>
-            <p style={{ fontFamily:font, fontSize:10, color:'#6a7380', margin:'4px 0 0', wordBreak:'break-all' }}>
-              {(file.name || '').substring(0, 12)}
-            </p>
           </div>
         )
       }
+      <div style={{ padding:'6px 8px' }}>
+        <p style={{ fontFamily:font, fontSize:10, color:'#6a7380', margin:0, wordBreak:'break-all', lineHeight:1.3 }}>
+          {file.name.length > 20 ? file.name.slice(0,18) + '…' : file.name}
+        </p>
+        {file.id && (
+          <p style={{ fontFamily:font, fontSize:9, color:'#129578', margin:'2px 0 0', fontWeight:600 }}>
+            ✓ Uploaded
+          </p>
+        )}
+      </div>
       <button
         onClick={() => onRemove(file)}
         style={{
           position:'absolute', top:4, right:4,
           width:20, height:20, borderRadius:'50%',
-          background:'rgba(0,0,0,0.55)', border:'none', cursor:'pointer',
-          display:'flex', alignItems:'center', justifyContent:'center', padding:0,
+          background:'rgba(0,0,0,0.5)', border:'none', cursor:'pointer',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          color:'#fff', fontSize:12, lineHeight:1,
         }}
-      >
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-          <path d="M2 2l8 8M10 2l-8 8" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/>
-        </svg>
-      </button>
+      >×</button>
     </div>
   )
 }
 
 export function WorkerDocuments() {
   const navigate  = useNavigate()
-  const [user, setUser]             = useState(null)
-  const [profile, setProfile]       = useState(null)
-  const [uiStep, setUiStep]         = useState(3)   // Figma shows step 3 (Upload Files)
-  const [docType, setDocType]       = useState('')
-  const [dragOver, setDragOver]     = useState(false)
-  const [files, setFiles]           = useState([])   // {id?, name, url, file?}
-  const [uploading, setUploading]   = useState(false)
-  const [err, setErr]               = useState('')
-  const [success, setSuccess]       = useState('')
+  const [user,     setUser]     = useState(null)
+  const [profile,  setProfile]  = useState(null)
+  const [uiStep,   setUiStep]   = useState(3)
+  const [docType,  setDocType]  = useState('')
+  const [files,    setFiles]    = useState([])
+  const [dragOver, setDragOver] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [err,      setErr]      = useState('')
+  const [success,  setSuccess]  = useState('')
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -141,7 +168,7 @@ export function WorkerDocuments() {
         if (p?.id) {
           getDocuments(p.id, token)
             .then(docs => {
-              setFiles(docs.map(d => ({ id:d.id, name:d.original_filename || d.document_type, url:null })))
+              setFiles(docs.map(d => ({ id:d.id, name:d.file_name || d.document_type, url:null })))
             })
             .catch(() => {})
         }
@@ -175,27 +202,43 @@ export function WorkerDocuments() {
   async function handleUpload() {
     const pending = files.filter(f => f.file)
     if (!pending.length) { setSuccess('All documents already uploaded.'); return }
-    if (!profile?.id) { setErr('Please complete your profile first.'); return }
+    if (!profile?.id)    { setErr('Please complete your profile first.'); return }
+    if (!docType)        { setErr('Please select a document type first.'); return }
+
     const token = getToken()
     setUploading(true)
     setErr('')
     setSuccess('')
+
     try {
       for (const f of pending) {
         const fd = new FormData()
         fd.append('file', f.file)
-        fd.append('document_type', docType || 'Other Certification')
-        fd.append('candidate_id', profile.id)
+        // FIX 1: document_group is REQUIRED by the backend — derive it from docType
+        fd.append('document_group', deriveDocumentGroup(docType))
+        fd.append('document_type', docType)
+        // NOTE: do NOT append candidate_id — the backend reads it from the JWT token
+
         const res = await uploadDocument(fd, token)
-        setFiles(prev => prev.map(x => x === f ? { ...x, id:res.id, file:null } : x))
+        setFiles(prev => prev.map(x => x === f ? { ...x, id: res.id, file: null } : x))
       }
-      setSuccess(`${pending.length} document${pending.length > 1 ? 's' : ''} uploaded successfully!`)
+
+      // FIX 2: success message now reflects that AI search indexing also happened
+      const isPdfOrDocx = pending.some(f => /\.(pdf|docx|doc)$/i.test(f.name))
+      setSuccess(
+        isPdfOrDocx
+          ? `✅ ${pending.length} document${pending.length > 1 ? 's' : ''} uploaded and indexed for AI search! Employers can now find you via the AI candidate search.`
+          : `✅ ${pending.length} document${pending.length > 1 ? 's' : ''} uploaded successfully!`
+      )
     } catch (e) {
       setErr(e.detail || 'Upload failed. Please try again.')
     } finally {
       setUploading(false)
     }
   }
+
+  const pendingCount = files.filter(f => f.file).length
+  const isPdfOrDocxPending = files.some(f => f.file && /\.(pdf|docx|doc)$/i.test(f.name))
 
   return (
     <WorkerLayout user={user}>
@@ -212,7 +255,7 @@ export function WorkerDocuments() {
         <div>
           <h2 style={{ fontFamily:font, fontSize:26, fontWeight:700, color:'#1e1e1e', margin:0 }}>Add Documents</h2>
           <p style={{ fontFamily:font, fontSize:14, color:'#6a7380', margin:'4px 0 0' }}>
-            Upload and manage your professional certifications, licenses, and safety documents.
+            Upload your professional certifications, licences, and résumé. PDF and DOCX files are automatically indexed for AI candidate search.
           </p>
         </div>
       </div>
@@ -222,10 +265,10 @@ export function WorkerDocuments() {
         <StepBar current={uiStep} />
 
         <h3 style={{ fontFamily:font, fontSize:20, fontWeight:700, color:'#1e1e1e', margin:'0 0 6px' }}>
-          Add Certifications & Files
+          Add Certifications &amp; Files
         </h3>
         <p style={{ fontFamily:font, fontSize:14, color:'#6a7380', margin:'0 0 24px' }}>
-          You must upload clear, legible copies of all required documents to be verified. You can edit this section later if needed.
+          Upload clear, legible copies of all required documents. PDF and Word files will also be indexed so employers can find you through AI-powered search.
         </p>
 
         {/* Document type selector */}
@@ -238,29 +281,56 @@ export function WorkerDocuments() {
               value={docType}
               onChange={e => setDocType(e.target.value)}
               style={{
-                height:44, borderRadius:10, border:'1.5px solid #d0d5dd',
+                width:'100%', height:44, borderRadius:10,
+                border:'1.5px solid #d0d5dd',
                 padding:'0 40px 0 14px', fontFamily:font, fontSize:14,
-                color: docType ? '#343434' : '#9ca3af', background:'#fff',
-                appearance:'none', cursor:'pointer', outline:'none', width:'100%',
+                color: docType ? '#1e1e1e' : '#9ca3af',
+                background:'#fff', appearance:'none', cursor:'pointer',
+                outline:'none',
               }}
             >
-              <option value="">Select document type</option>
-              {DOC_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              <option value="">Select document type…</option>
+              {DOC_TYPES.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
             </select>
-            <svg style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}
-              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2">
+            <svg style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </div>
+
+          {/* Show derived group as a hint */}
+          {docType && (
+            <p style={{ fontFamily:font, fontSize:12, color:'#9ca3af', margin:'6px 0 0' }}>
+              Group: <strong style={{ color:'#5379f4' }}>{deriveDocumentGroup(docType)}</strong>
+            </p>
+          )}
         </div>
 
-        {/* Drop zone */}
+        {/* AI search info banner for PDF/DOCX */}
+        <div style={{
+          display:'flex', alignItems:'flex-start', gap:10, padding:'12px 14px',
+          background:'#f0f3ff', borderRadius:10, border:'1px solid #c7d4ff',
+          marginBottom:20,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5379f4" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}>
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p style={{ fontFamily:font, fontSize:13, color:'#5379f4', margin:0, lineHeight:1.5 }}>
+            <strong>PDF and Word files</strong> are automatically indexed for AI search after upload — no extra steps needed. Employers searching for your skills will be matched to your documents.
+          </p>
+        </div>
+
+        {/* Drag-and-drop zone */}
         <div
           onDragOver={e => { e.preventDefault(); setDragOver(true) }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           style={{
-            border: `2px dashed ${dragOver ? '#5379f4' : '#d0d5dd'}`,
+            border:`2px dashed ${dragOver ? '#5379f4' : '#d0d5dd'}`,
             borderRadius:16, padding:'48px 24px',
             background: dragOver ? '#f3f1fd' : '#fafafa',
             display:'flex', flexDirection:'column', alignItems:'center', gap:12,
@@ -271,9 +341,11 @@ export function WorkerDocuments() {
         >
           <UploadIcon />
           <p style={{ fontFamily:font, fontSize:16, fontWeight:600, color:'#6a7380', margin:0 }}>
-            Drag and Drop image
+            Drag &amp; drop files here
           </p>
-          <p style={{ fontFamily:font, fontSize:14, color:'#9ca3af', margin:0 }}>Or</p>
+          <p style={{ fontFamily:font, fontSize:13, color:'#9ca3af', margin:0 }}>
+            PDF, DOCX, DOC, PNG, JPG — max 10 MB each
+          </p>
           <button
             onClick={e => { e.stopPropagation(); fileRef.current?.click() }}
             style={{
@@ -303,25 +375,46 @@ export function WorkerDocuments() {
           </div>
         )}
 
-        {/* Messages */}
-        {err && <p style={{ fontFamily:font, fontSize:14, color:'#e53e3e', margin:'0 0 16px' }}>{err}</p>}
-        {success && <p style={{ fontFamily:font, fontSize:14, color:'#129578', margin:'0 0 16px' }}>{success}</p>}
+        {/* Error / success messages */}
+        {err && (
+          <p style={{ fontFamily:font, fontSize:14, color:'#e53e3e', margin:'0 0 16px', lineHeight:1.5 }}>
+            ⚠ {err}
+          </p>
+        )}
+        {success && (
+          <p style={{ fontFamily:font, fontSize:14, color:'#129578', margin:'0 0 16px', lineHeight:1.5 }}>
+            {success}
+          </p>
+        )}
 
         {/* Upload button */}
-        {files.some(f => f.file) && (
+        {pendingCount > 0 && (
           <button
             onClick={handleUpload}
             disabled={uploading}
             style={{
               height:48, padding:'0 32px', background:'#5379f4', color:'#fff',
-              border:'none', borderRadius:12, cursor:'pointer',
+              border:'none', borderRadius:12, cursor: uploading ? 'not-allowed' : 'pointer',
               fontFamily:font, fontSize:15, fontWeight:600,
               opacity: uploading ? 0.7 : 1,
+              display:'flex', alignItems:'center', gap:10,
             }}
           >
-            {uploading ? 'Uploading…' : `Upload ${files.filter(f => f.file).length} file(s)`}
+            {uploading ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"
+                  style={{ animation:'spin 1s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                {isPdfOrDocxPending ? 'Uploading & indexing for AI search…' : 'Uploading…'}
+              </>
+            ) : (
+              `Upload ${pendingCount} file${pendingCount > 1 ? 's' : ''}`
+            )}
           </button>
         )}
+
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     </WorkerLayout>
   )

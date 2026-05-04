@@ -382,7 +382,7 @@ async def search_candidates_by_content(
             "candidate": {
                 "full_name":            profile.full_name            if profile else None,
                 # username returned so callers can link back to candidate profile
-                "username":             profile.username             if profile else None,
+                "username":             str(profile.user_id)         if profile else None,
                 "trade_category":       profile.trade_category       if profile else None,
                 "nationality":          profile.nationality          if profile else None,
                 "country_of_residence": profile.country_of_residence if profile else None,

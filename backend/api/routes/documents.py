@@ -9,10 +9,18 @@ Actions:
 
 Files are stored on the local filesystem under the ``uploads/`` directory
 managed by ``backend.utils.file_storage``.  No AWS S3 or cloud storage is used.
+
+FIX — Auto RAG ingest:
+  After a PDF / DOCX document is saved, the upload endpoint now automatically
+  calls process_and_store_document() so the file is chunked, embedded, and
+  stored in the pgvector TextChunk table.  This means candidates just upload
+  once and are immediately searchable via POST /rag/search — no separate
+  manual ingest step required.
 """
 
 import uuid
 import logging
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
@@ -22,7 +30,10 @@ from sqlalchemy import select, and_
 
 from backend.db.setup import get_db
 from backend.api.dependencies.rbac import require_roles
-from backend.db.models.models import ApplicantDocument, CandidateProfile, User, CandidateEmployerConsent, EmployerCompany
+from backend.db.models.models import (
+    ApplicantDocument, CandidateProfile, User,
+    CandidateEmployerConsent, EmployerCompany,
+)
 from backend.utils.file_storage import (
     build_storage_key,
     save_upload,
@@ -47,12 +58,14 @@ ALLOWED_MIME_TYPES = {
 }
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"}
 
+# Extensions that can be ingested into the RAG vector store
+RAG_INGESTABLE_EXTENSIONS = {".pdf", ".docx", ".doc"}
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _validate_upload(file: UploadFile) -> None:
     """Raise 400/413 for disallowed file types or oversized uploads."""
-    import os
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -83,8 +96,10 @@ async def upload_document(
 
     - Accepts PDF, DOC, DOCX, JPG, PNG (max 10 MB).
     - Stores the file on the local filesystem.
-    - Creates an ``ApplicantDocument`` database record.
+    - Creates an ApplicantDocument database record.
     - Triggers electrical worker re-scoring if applicable.
+    - AUTO-INGESTS PDF/DOCX into the RAG vector store so the candidate is
+      immediately searchable via POST /rag/search without any extra manual step.
     """
     # 1. Validate file type & size up-front
     _validate_upload(file)
@@ -142,6 +157,47 @@ async def upload_document(
         except Exception as exc:
             logger.warning(
                 "Auto-scoring failed for candidate %s after upload: %s", profile.id, exc
+            )
+
+    # 7. Auto-ingest into RAG vector store (PDF / DOCX only — images skipped)
+    #
+    #    This is the fix that makes /rag/search work without a separate manual
+    #    ingest call.  file_bytes is already in memory from step 3 so there is
+    #    no extra I/O cost.  Failure is non-fatal: the document is still saved
+    #    and accessible; it just won't appear in AI search results until the
+    #    issue is resolved (e.g. OpenAI key missing, stub-embedding mode on).
+    _ext = os.path.splitext(file.filename or "")[1].lower()
+    if _ext in RAG_INGESTABLE_EXTENSIONS:
+        from backend.services.rag_service import process_and_store_document as _rag_ingest
+        try:
+            rag_result = await _rag_ingest(
+                db=db,
+                candidate_id=str(profile.id),
+                source_document_id=str(new_doc.id),
+                file_bytes=file_bytes,
+                file_name=file.filename or "upload",
+                extra_metadata={
+                    "candidate_username":    getattr(profile, "username", None),
+                    "candidate_name":        getattr(profile, "full_name", None),
+                    "document_type":         document_type,
+                    "document_group":        document_group,
+                    "trade_category":        getattr(profile, "trade_category", None),
+                    "nationality":           getattr(profile, "nationality", None),
+                    "years_experience":      getattr(profile, "years_experience", None),
+                    "is_electrical_worker":  getattr(profile, "is_electrical_worker", None),
+                    "country_of_residence":  getattr(profile, "country_of_residence", None),
+                },
+            )
+            logger.info(
+                "Auto-RAG-ingest complete: %d chunks stored for doc %s (candidate %s)",
+                rag_result.get("chunk_count", 0), new_doc.id, profile.id,
+            )
+        except Exception as exc:
+            # Non-fatal — document is saved; candidate just won't appear in AI
+            # search until the root cause (missing API key, stub mode, etc.) is fixed.
+            logger.warning(
+                "Auto-RAG-ingest failed for doc %s (candidate %s): %s",
+                new_doc.id, profile.id, exc,
             )
 
     return {
