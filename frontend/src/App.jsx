@@ -1,90 +1,196 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { LandingPage }            from './pages/LandingPage'
-import { LoginPage }              from './pages/LoginPage'
-import { RegisterPage }           from './pages/RegisterPage'
-import { OtpPage }                from './pages/OtpPage'
-import { ForgotPasswordPage }     from './pages/ForgotPasswordPage'
-import { OAuthCallbackPage }      from './pages/OAuthCallbackPage'
-import { DashboardPage }          from './pages/DashboardPage'
-import { ColorPalette }           from './pages/ColorPalette'
 
-/* Worker */
-import { WorkerSetup }       from './pages/worker/WorkerSetup'
-import { WorkerHome }        from './pages/worker/WorkerHome'
-import { WorkerDocuments }   from './pages/worker/WorkerDocuments'
-import { WorkerEOIs }        from './pages/worker/WorkerEOIs'
-import { WorkerCourses }     from './pages/worker/WorkerCourses'
+// ── Auth pages (public) ───────────────────────────────────────────────────────
+import { LandingPage }        from './pages/LandingPage'
+import { LoginPage }          from './pages/LoginPage'
+import { RegisterPage }       from './pages/RegisterPage'
+import { OtpPage }            from './pages/OtpPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { OAuthCallbackPage }  from './pages/OAuthCallbackPage'
+import { ColorPalette }       from './pages/ColorPalette'
 
-/* Company / Employer */
-import { CompanySetupFlow }        from './pages/company/CompanySetupFlow'
-import { CompanyHome }             from './pages/company/CompanyHome'
-import { CompanyFindCandidates }   from './pages/company/CompanyFindCandidates'
-import { CompanyActiveJobs }       from './pages/company/CompanyActiveJobs'
-import { CompanySentEOIs }         from './pages/company/CompanySentEOIs'
+// ── Worker / Candidate pages ──────────────────────────────────────────────────
+import { WorkerSetup }      from './pages/worker/WorkerSetup'
+import { WorkerHome }       from './pages/worker/WorkerHome'
+import { WorkerDocuments }  from './pages/worker/WorkerDocuments'
+import { WorkerEOIs }       from './pages/worker/WorkerEOIs'
+import { WorkerCourses }    from './pages/worker/WorkerCourses'
 
-/* Training Provider */
-import { TrainerSetupFlow }            from './pages/trainer/TrainerSetupFlow'
-import { TrainerHome }                 from './pages/trainer/TrainerHome'
-import { TrainerMyCourses }            from './pages/trainer/TrainerMyCourses'
-import { TrainerStudentDirectory }     from './pages/trainer/TrainerStudentDirectory'
-import { TrainerEnrollmentInquiries }  from './pages/trainer/TrainerEnrollmentInquiries'
-import { TrainerCourseSummary }        from './pages/trainer/TrainerCourseSummary'
+// ── Company / Employer pages ──────────────────────────────────────────────────
+import { CompanySetupFlow }      from './pages/company/CompanySetupFlow'
+import { CompanyHome }           from './pages/company/CompanyHome'
+import { CompanyFindCandidates } from './pages/company/CompanyFindCandidates'
+import { CompanyActiveJobs }     from './pages/company/CompanyActiveJobs'
+import { CompanySentEOIs }       from './pages/company/CompanySentEOIs'
+
+// ── Training Provider pages ───────────────────────────────────────────────────
+import { TrainerSetupFlow }           from './pages/trainer/TrainerSetupFlow'
+import { TrainerHome }                from './pages/trainer/TrainerHome'
+import { TrainerMyCourses }           from './pages/trainer/TrainerMyCourses'
+import { TrainerStudentDirectory }    from './pages/trainer/TrainerStudentDirectory'
+import { TrainerEnrollmentInquiries } from './pages/trainer/TrainerEnrollmentInquiries'
+import { TrainerCourseSummary }       from './pages/trainer/TrainerCourseSummary'
+
+// ── Admin / Shared pages ──────────────────────────────────────────────────────
+import { DashboardPage } from './pages/DashboardPage'
+
+// ── Auth guard ────────────────────────────────────────────────────────────────
+import { ProtectedRoute } from './components/ProtectedRoute'
+
+// Role constants — keep in sync with backend RBAC
+const CANDIDATE  = ['candidate']
+const EMPLOYER   = ['employer', 'company_admin']
+const TRAINER    = ['training_provider']
+const ADMIN      = ['admin', 'migration_agent', 'company_admin']
+const STAFF      = ['admin', 'migration_agent', 'company_admin', 'employer']
+const ANY        = []   // any authenticated user, no role restriction
 
 function App() {
   return (
     <Routes>
-      {/* Landing */}
+
+      {/* ── PUBLIC — no auth required ── */}
       <Route path="/"               element={<LandingPage />} />
-
-      {/* Auth */}
-      <Route path="/login"           element={<LoginPage />} />
-      <Route path="/register"        element={<RegisterPage />} />
-      <Route path="/verify-otp"      element={<OtpPage />} />
+      <Route path="/login"          element={<LoginPage />} />
+      <Route path="/register"       element={<RegisterPage />} />
+      <Route path="/verify-otp"     element={<OtpPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/oauth-callback"  element={<OAuthCallbackPage />} />
+      <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
+      <Route path="/palette"        element={<ColorPalette />} />
 
-      {/* ── Worker / Candidate dashboard ── */}
-      <Route path="/worker/dashboard"  element={<WorkerHome />} />
-      <Route path="/worker/profile"    element={<WorkerSetup />} />
-      <Route path="/worker/documents"  element={<WorkerDocuments />} />
-      <Route path="/worker/eois"       element={<WorkerEOIs />} />
-      <Route path="/worker/courses"    element={<WorkerCourses />} />
+      {/* ── WORKER / CANDIDATE ── */}
+      <Route path="/worker/dashboard" element={
+        <ProtectedRoute roles={CANDIDATE}>
+          <WorkerHome />
+        </ProtectedRoute>
+      }/>
+      <Route path="/worker/profile" element={
+        <ProtectedRoute roles={CANDIDATE}>
+          <WorkerSetup />
+        </ProtectedRoute>
+      }/>
+      <Route path="/worker/documents" element={
+        <ProtectedRoute roles={CANDIDATE}>
+          <WorkerDocuments />
+        </ProtectedRoute>
+      }/>
+      <Route path="/worker/eois" element={
+        <ProtectedRoute roles={CANDIDATE}>
+          <WorkerEOIs />
+        </ProtectedRoute>
+      }/>
+      <Route path="/worker/courses" element={
+        <ProtectedRoute roles={CANDIDATE}>
+          <WorkerCourses />
+        </ProtectedRoute>
+      }/>
 
-      {/* Legacy worker setup entry points */}
-      <Route path="/setup/worker/:step"    element={<WorkerSetup />} />
-      <Route path="/setup/employer/:step"  element={<WorkerSetup />} />
+      {/* Worker setup flow (first-time onboarding) */}
+      <Route path="/setup/worker/:step" element={
+        <ProtectedRoute roles={CANDIDATE}>
+          <WorkerSetup />
+        </ProtectedRoute>
+      }/>
 
-      {/* ── Company / Employer dashboard ── */}
-      <Route path="/company/dashboard"   element={<CompanyHome />} />
-      <Route path="/company/profile"     element={<CompanySetupFlow />} />
-      <Route path="/company/candidates"  element={<CompanyFindCandidates />} />
-      <Route path="/company/jobs"        element={<CompanyActiveJobs />} />
-      <Route path="/company/eois"        element={<CompanySentEOIs />} />
+      {/* ── COMPANY / EMPLOYER ── */}
+      <Route path="/company/dashboard" element={
+        <ProtectedRoute roles={EMPLOYER}>
+          <CompanyHome />
+        </ProtectedRoute>
+      }/>
+      <Route path="/company/profile" element={
+        <ProtectedRoute roles={EMPLOYER}>
+          <CompanySetupFlow />
+        </ProtectedRoute>
+      }/>
+      <Route path="/company/candidates" element={
+        <ProtectedRoute roles={[...EMPLOYER, ...ADMIN]}>
+          <CompanyFindCandidates />
+        </ProtectedRoute>
+      }/>
+      <Route path="/company/jobs" element={
+        <ProtectedRoute roles={EMPLOYER}>
+          <CompanyActiveJobs />
+        </ProtectedRoute>
+      }/>
+      <Route path="/company/eois" element={
+        <ProtectedRoute roles={EMPLOYER}>
+          <CompanySentEOIs />
+        </ProtectedRoute>
+      }/>
 
-      {/* Legacy company setup entry points */}
-      <Route path="/setup/company/:step"       element={<CompanySetupFlow />} />
-      <Route path="/setup/employer-co/:step"   element={<CompanySetupFlow />} />
+      {/* Company setup flow (first-time onboarding) */}
+      <Route path="/setup/company/:step" element={
+        <ProtectedRoute roles={EMPLOYER}>
+          <CompanySetupFlow />
+        </ProtectedRoute>
+      }/>
+      <Route path="/setup/employer-co/:step" element={
+        <ProtectedRoute roles={EMPLOYER}>
+          <CompanySetupFlow />
+        </ProtectedRoute>
+      }/>
+      {/* Legacy — some older links used /setup/employer/:step */}
+      <Route path="/setup/employer/:step" element={
+        <ProtectedRoute roles={EMPLOYER}>
+          <CompanySetupFlow />
+        </ProtectedRoute>
+      }/>
 
-      {/* ── Training Provider dashboard ── */}
-      <Route path="/trainer/dashboard"      element={<TrainerHome />} />
-      <Route path="/trainer/profile"        element={<TrainerSetupFlow />} />
-      <Route path="/trainer/courses"        element={<TrainerMyCourses />} />
-      <Route path="/trainer/students"       element={<TrainerStudentDirectory />} />
-      <Route path="/trainer/inquiries"      element={<TrainerEnrollmentInquiries />} />
-      <Route path="/trainer/course-summary" element={<TrainerCourseSummary />} />
+      {/* ── TRAINING PROVIDER ── */}
+      <Route path="/trainer/dashboard" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerHome />
+        </ProtectedRoute>
+      }/>
+      <Route path="/trainer/profile" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerSetupFlow />
+        </ProtectedRoute>
+      }/>
+      <Route path="/trainer/courses" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerMyCourses />
+        </ProtectedRoute>
+      }/>
+      <Route path="/trainer/students" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerStudentDirectory />
+        </ProtectedRoute>
+      }/>
+      <Route path="/trainer/inquiries" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerEnrollmentInquiries />
+        </ProtectedRoute>
+      }/>
+      <Route path="/trainer/course-summary" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerCourseSummary />
+        </ProtectedRoute>
+      }/>
 
-      {/* Legacy trainer setup entry points */}
-      <Route path="/setup/trainer/:step"   element={<TrainerSetupFlow />} />
-      <Route path="/setup/provider/:step"  element={<TrainerSetupFlow />} />
+      {/* Trainer setup flow */}
+      <Route path="/setup/trainer/:step" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerSetupFlow />
+        </ProtectedRoute>
+      }/>
+      <Route path="/setup/provider/:step" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerSetupFlow />
+        </ProtectedRoute>
+      }/>
 
-      {/* Brand */}
-      <Route path="/palette" element={<ColorPalette />} />
+      {/* ── ADMIN / MIGRATION AGENT / COMPANY ADMIN ── */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute roles={ADMIN}>
+          <DashboardPage />
+        </ProtectedRoute>
+      }/>
 
-      {/* Legacy generic dashboard */}
-      <Route path="/dashboard" element={<DashboardPage />} />
-
-      {/* Fallback */}
+      {/* ── FALLBACK ── */}
       <Route path="*" element={<Navigate to="/" replace />} />
+
     </Routes>
   )
 }
