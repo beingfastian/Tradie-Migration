@@ -406,3 +406,42 @@ class VisaShareApproval(Base):
     candidate = relationship("CandidateProfile", back_populates="visa_share_approvals")
     employer_company = relationship("EmployerCompany")
     eoi = relationship("ExpressionOfInterest")
+
+
+# ─────────────────────────────────────────────
+# JOB POSTINGS
+# ─────────────────────────────────────────────
+class JobPosting(Base):
+    """Job roles posted by approved employer companies."""
+    __tablename__ = "job_postings"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    employer_company_id = Column(UUID(as_uuid=True), ForeignKey("employer_companies.id"), nullable=False)
+
+    # Basic info
+    title = Column(String, nullable=False)
+    trade_category = Column(String)
+    location = Column(String)
+    employment_type = Column(String)        # e.g. "Full-Time / Permanent"
+    visa_sponsorship = Column(String)       # e.g. "Available (Standard Business Sponsor)"
+
+    # Salary
+    min_salary = Column(Integer, nullable=True)
+    max_salary = Column(Integer, nullable=True)
+    currency = Column(String)               # e.g. "AUD / Per Annum"
+    company_vehicle = Column(Boolean, default=False)
+    overtime = Column(Boolean, default=False)
+    superannuation = Column(Boolean, default=False)
+
+    # Description
+    role_overview = Column(Text)
+    key_requirements = Column(Text)
+    benefits = Column(Text)
+    responsibilities = Column(Text)
+
+    status = Column(String, default="Hiring")  # Hiring | Closing Soon | On Hold | Draft
+    created_at = Column(TIMESTAMP, default=datetime.utcnow)
+    updated_at = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    employer_company = relationship("EmployerCompany")

@@ -101,7 +101,7 @@ async def get_received_eois(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles("candidate")),
 ):
-    """Return all EOIs received by the authenticated candidate."""
+    """Return all EOIs received by the authenticated candidate, enriched with company name."""
     result = await db.execute(
         select(CandidateProfile).where(CandidateProfile.user_id == current_user.id)
     )
@@ -110,22 +110,26 @@ async def get_received_eois(
         raise HTTPException(status_code=404, detail="Candidate profile not found")
 
     result = await db.execute(
-        select(ExpressionOfInterest)
+        select(ExpressionOfInterest, EmployerCompany.company_name)
+        .join(EmployerCompany, ExpressionOfInterest.employer_company_id == EmployerCompany.id)
         .where(ExpressionOfInterest.candidate_id == profile.id)
         .order_by(ExpressionOfInterest.created_at.desc())
     )
-    eois = result.scalars().all()
+    rows = result.all()
     return [
         {
             "id": str(e.id),
             "employer_company_id": str(e.employer_company_id),
+            "employer_company": company_name,   # real company name for display
+            "employer_name": company_name,       # alias used by some frontend components
             "job_title": e.job_title,
+            "trade_type": e.job_title,           # alias: WorkerEOIs shows trade_type
             "message": e.message,
             "sponsorship_flag": e.sponsorship_flag,
             "status": e.status,
             "created_at": e.created_at.isoformat() if e.created_at else None,
         }
-        for e in eois
+        for e, company_name in rows
     ]
 
 

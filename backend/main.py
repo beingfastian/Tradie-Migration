@@ -30,6 +30,7 @@ from backend.api.routes import (
     rag,
     documents,
     migration_agents,
+    jobs,
 )
 
 
@@ -85,6 +86,7 @@ app.include_router(training_providers.router, prefix="/training",  tags=["Traini
 app.include_router(rag.router,                prefix="/rag",       tags=["RAG / AI Assistant"])
 app.include_router(documents.router,          prefix="/documents", tags=["Document Management"])
 app.include_router(migration_agents.router,   prefix="/agents",    tags=["Migration Agents"])
+app.include_router(jobs.router,               prefix="/jobs",      tags=["Job Postings"])
 
 
 # ── Health Check ───────────────────────────────────────────────────────────────

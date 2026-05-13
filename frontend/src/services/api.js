@@ -180,6 +180,14 @@ export const recommendCourse         = (candidateId, courseId, token) => request
 export const getCandidateRecommendations = (candidateId, token)    => request('GET', `/training/recommend/${candidateId}`, null, token)
 export const deleteRecommendation    = (recommendationId, token)   => request('DELETE', `/training/recommend/${recommendationId}`, null, token)
 
+// ── Job Postings ──────────────────────────────────────────────────
+export const createJob        = (payload, token)              => request('POST', '/jobs/', payload, token)
+export const listJobs         = (params, token)               => request('GET', `/jobs/${buildQuery(params)}`, null, token)
+export const getJob           = (jobId, token)                => request('GET', `/jobs/${jobId}`, null, token)
+export const updateJob        = (jobId, payload, token)       => request('PUT', `/jobs/${jobId}`, payload, token)
+export const updateJobStatus  = (jobId, status, token)        => request('PUT', `/jobs/${jobId}/status${buildQuery({ status })}`, null, token)
+export const deleteJob        = (jobId, token)                => request('DELETE', `/jobs/${jobId}`, null, token)
+
 // ── Token helpers ─────────────────────────────────────────────────
 export const saveToken  = (token) => localStorage.setItem('access_token', token)
 export const getToken   = ()      => localStorage.getItem('access_token')

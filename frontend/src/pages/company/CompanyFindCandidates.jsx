@@ -11,27 +11,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CompanyLayout } from './CompanyLayout'
-import { getToken, getMe, searchCandidates, submitEoiAsEmployer, ragSearch } from '../../services/api'
+import { getToken, getMe, searchCandidates, submitEoiAsEmployer, ragSearch, listJobs } from '../../services/api'
 
 const font = "'Urbanist', sans-serif"
 
-/* ── Mock data (fallback when API unavailable) ── */
-const MOCK_CANDIDATES = [
-  { id:'1', full_name:'John Doe', email:'john.doe@gmail.com', trade_category:'Industrial Electrician', years_experience:8, visa_status:'482 Eligible',    status:'Shortlisted', shortlisted:true  },
-  { id:'2', full_name:'John Doe', email:'john.doe@gmail.com', trade_category:'Industrial Electrician', years_experience:8, visa_status:'Skilled Ind.',    status:'Shortlisted', shortlisted:false },
-  { id:'3', full_name:'John Doe', email:'john.doe@gmail.com', trade_category:'Industrial Electrician', years_experience:8, visa_status:'Sponsor Required', status:'Verified',    shortlisted:false },
-  { id:'4', full_name:'John Doe', email:'john.doe@gmail.com', trade_category:'Industrial Electrician', years_experience:8, visa_status:'Skilled Ind.',    status:'Shortlisted', shortlisted:false },
-  { id:'5', full_name:'John Doe', email:'john.doe@gmail.com', trade_category:'Industrial Electrician', years_experience:8, visa_status:'482 Eligible',    status:'Verified',    shortlisted:false },
-  { id:'6', full_name:'John Doe', email:'john.doe@gmail.com', trade_category:'Industrial Electrician', years_experience:8, visa_status:'Sponsor Required', status:'Verified',    shortlisted:false },
-  { id:'7', full_name:'John Doe', email:'john.doe@gmail.com', trade_category:'Industrial Electrician', years_experience:8, visa_status:'482 Eligible',    status:'Shortlisted', shortlisted:false },
-]
-
-const MOCK_ACTIVE_JOBS = [
-  'Licensed A-Grade Electrician - Sydney',
-  'Senior Electrician - Melbourne',
-  'Solar Installer - Perth',
-  'HVAC Technician - Brisbane',
-]
 
 const TRADE_SUGGESTIONS = [
   'Residential / Domestic Electrician',
@@ -283,7 +266,7 @@ function ManageColumnsModal({ visibleCols, onSave, onClose }) {
 }
 
 /* ── Invite Modal ─────────────────────────────────────────────────────────── */
-function InviteModal({ onClose, onSend }) {
+function InviteModal({ onClose, onSend, activeJobs = [] }) {
   const [job,    setJob]    = useState('')
   const [email,  setEmail]  = useState('')
   const [note,   setNote]   = useState('')
@@ -319,7 +302,7 @@ function InviteModal({ onClose, onSend }) {
               outline:'none', background:'#fff', cursor:'pointer',
             }}>
             <option value="">Choose a job posting...</option>
-            {MOCK_ACTIVE_JOBS.map(j => <option key={j} value={j}>{j}</option>)}
+            {activeJobs.map(j => <option key={j.id} value={j.id}>{j.title}{j.location ? ` — ${j.location}` : ''}</option>)}
           </select>
         </div>
 
@@ -494,6 +477,7 @@ export function CompanyFindCandidates() {
   const [showCols,    setShowCols]    = useState(false)
   const [showInvite,  setShowInvite]  = useState(false)
   const [filters,     setFilters]     = useState({})
+  const [activeJobs,  setActiveJobs]  = useState([])
 
   /* ── RAG search state ── */
   const [isAiSearch,  setIsAiSearch]  = useState(false)   // AI mode toggle
@@ -504,17 +488,24 @@ export function CompanyFindCandidates() {
   const ROWS_PER_PAGE = 10
   const totalPages    = 4
 
-  /* ── Load regular candidates on mount ── */
+  /* ── Load real candidates and own jobs on mount ── */
   useEffect(() => {
     const token = getToken()
-    if (!token) { setCandidates(MOCK_CANDIDATES); setLoading(false); return }
+    if (!token) { setLoading(false); return }
     getMe(token)
-      .then(u => { setUser(u); return searchCandidates({}, token) })
-      .then(data => {
-        const list = Array.isArray(data) ? data : (data.items || [])
-        setCandidates(list.length > 0 ? list : MOCK_CANDIDATES)
+      .then(u => {
+        setUser(u)
+        return Promise.all([
+          searchCandidates({ published: true }, token),
+          listJobs({ status: 'Hiring' }, token),
+        ])
       })
-      .catch(() => setCandidates(MOCK_CANDIDATES))
+      .then(([candData, jobData]) => {
+        const list = Array.isArray(candData) ? candData : (candData.items || [])
+        setCandidates(list)
+        setActiveJobs(Array.isArray(jobData) ? jobData : [])
+      })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
@@ -603,6 +594,7 @@ export function CompanyFindCandidates() {
       )}
       {showInvite && (
         <InviteModal
+          activeJobs={activeJobs}
           onClose={() => setShowInvite(false)}
           onSend={data => { alert(`Invitation sent to ${data.email}`); setShowInvite(false) }}
         />
@@ -949,7 +941,9 @@ export function CompanyFindCandidates() {
                     <tr>
                       <td colSpan={visibleCols.length + 2}
                         style={{ textAlign:'center', padding:40, fontFamily:font, color:'#6a7380' }}>
-                        No candidates found.
+                        {tab === 'My Shortlist'
+                          ? 'No shortlisted candidates yet. Star candidates to add them here.'
+                          : 'No published candidate profiles found. Candidates appear here once they complete and publish their profile.'}
                       </td>
                     </tr>
                   ) : filtered.map(c => (
@@ -972,7 +966,7 @@ export function CompanyFindCandidates() {
                                 {c.full_name}
                               </div>
                               <div style={{ fontFamily:font, fontSize:12, color:'#9ca3af' }}>
-                                {c.email}
+                                {c.nationality || c.country_of_residence || '—'}
                               </div>
                             </div>
                             <StarIcon filled={!!starred[c.id]} onClick={() => toggleStar(c.id)}/>
@@ -982,28 +976,35 @@ export function CompanyFindCandidates() {
 
                       {visibleCols.includes('Primary Trade') && (
                         <td style={{ padding:'14px 12px', fontFamily:font, fontSize:14, color:'#343434' }}>
-                          {c.trade_category || 'Industrial Electrician'}
+                          {c.trade_category || '—'}
                         </td>
                       )}
 
                       {visibleCols.includes('Experience') && (
                         <td style={{ padding:'14px 12px', fontFamily:font, fontSize:14, color:'#343434' }}>
-                          {c.years_experience || 8} Years
+                          {c.years_experience != null ? `${c.years_experience} Years` : '—'}
                         </td>
                       )}
 
                       {visibleCols.includes('Visa Status') && (
                         <td style={{ padding:'14px 12px' }}>
-                          <VisaBadge value={c.visa_status || '482 Eligible'}/>
+                          {c.visa_status
+                            ? <VisaBadge value={c.visa_status}/>
+                            : <span style={{ fontFamily:font, fontSize:13, color:'#9ca3af' }}>
+                                {Array.isArray(c.work_types) && c.work_types.length > 0
+                                  ? c.work_types.join(', ')
+                                  : '—'}
+                              </span>
+                          }
                         </td>
                       )}
 
                       {visibleCols.includes('Status') && (
                         <td style={{ padding:'14px 12px' }}>
-                          <StatusBadge
-                            value={statuses[c.id] || c.status || 'Verified'}
-                            onChange={val => setStatus(c.id, val)}
-                          />
+                          {c.published
+                            ? <span style={{ fontFamily:font, fontSize:12, fontWeight:700, color:'#129578', background:'#e8f5e9', borderRadius:20, padding:'4px 12px' }}>Published</span>
+                            : <span style={{ fontFamily:font, fontSize:12, fontWeight:700, color:'#5379f4', background:'#e8ecff', borderRadius:20, padding:'4px 12px' }}>Has Documents</span>
+                          }
                         </td>
                       )}
 
@@ -1034,11 +1035,11 @@ export function CompanyFindCandidates() {
                 </p>
               ) : filtered.length === 0 ? (
                 <p style={{ fontFamily:font, color:'#6a7380', gridColumn:'1/-1', textAlign:'center', padding:40 }}>
-                  No candidates found.
+                  {tab === 'My Shortlist'
+                    ? 'No shortlisted candidates yet.'
+                    : 'No published candidate profiles found. Candidates appear here once they publish their profile.'}
                 </p>
               ) : filtered.map(c => {
-                const st = statuses[c.id] || c.status || 'Verified'
-                const sc = STATUS_COLORS[st] || { bg:'#f0f0f4', color:'#6a7380' }
                 return (
                   <div key={c.id} style={{
                     background:'#f8f8fc', borderRadius:16, padding:'20px',
@@ -1054,17 +1055,18 @@ export function CompanyFindCandidates() {
                     <div style={{ fontFamily:font, fontSize:15, fontWeight:700, color:'#343434', marginBottom:4 }}>
                       {c.full_name}
                     </div>
-                    <div style={{ fontFamily:font, fontSize:13, color:'#6a7380', marginBottom:12 }}>
-                      {c.trade_category || 'Industrial Electrician'}
+                    <div style={{ fontFamily:font, fontSize:13, color:'#6a7380', marginBottom:4 }}>
+                      {c.trade_category || '—'}
+                    </div>
+                    <div style={{ fontFamily:font, fontSize:12, color:'#9ca3af', marginBottom:12 }}>
+                      {c.years_experience != null ? `${c.years_experience} yrs exp` : ''}{c.nationality ? ` · ${c.nationality}` : ''}
                     </div>
                     <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                      <VisaBadge value={c.visa_status || '482 Eligible'}/>
-                      <span style={{
-                        background:sc.bg, color:sc.color, borderRadius:20, padding:'4px 10px',
-                        fontSize:12, fontWeight:700, fontFamily:font,
-                      }}>
-                        {st}
-                      </span>
+                      {c.visa_status && <VisaBadge value={c.visa_status}/>}
+                      {c.published
+                        ? <span style={{ fontFamily:font, fontSize:12, fontWeight:700, color:'#129578', background:'#e8f5e9', borderRadius:20, padding:'4px 10px' }}>Published</span>
+                        : <span style={{ fontFamily:font, fontSize:12, fontWeight:700, color:'#5379f4', background:'#e8ecff', borderRadius:20, padding:'4px 10px' }}>Has Documents</span>
+                      }
                     </div>
                   </div>
                 )

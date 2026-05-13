@@ -16,13 +16,14 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_, exists
 
 from backend.db.setup import get_db
 from backend.api.dependencies.rbac import get_current_user, require_roles
 from backend.db.models.models import (
     EmployerCompany, CandidateProfile, ExpressionOfInterest, User,
     CandidateEmployerConsent, VisaShareApproval, VisaApplication, VisaCaseAssignment,
+    ApplicantDocument,
 )
 
 router = APIRouter()
@@ -265,10 +266,22 @@ async def search_candidates(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles("employer")),
 ):
-    """Search published candidate profiles. Returns basic info only (full profile requires candidate consent)."""
+    """
+    Search candidate profiles visible to employers.
+    Shows candidates who are published OR have uploaded at least one document.
+    Returns basic info only (full profile requires candidate consent).
+    """
     await _get_approved_company(current_user.id, db)
 
-    filters = [CandidateProfile.published == True]
+    # Subquery: candidate has at least one uploaded document
+    has_document = exists(
+        select(ApplicantDocument.id).where(
+            ApplicantDocument.candidate_id == CandidateProfile.id
+        )
+    )
+
+    # Show candidates who published their profile OR uploaded any document
+    filters = [or_(CandidateProfile.published == True, has_document)]
     if trade_category:
         filters.append(CandidateProfile.trade_category == trade_category)
     if country_of_residence:
@@ -304,6 +317,8 @@ async def search_candidates(
             "is_electrical_worker": p.is_electrical_worker,
             "years_experience": p.years_experience,
             "work_types": p.work_types,
+            "published": p.published,
+            "profile_summary": p.profile_summary,
         }
         for p in profiles
     ]

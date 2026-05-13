@@ -7,20 +7,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CompanyLayout } from './CompanyLayout'
-import { getToken, getMe } from '../../services/api'
+import { getToken, getMe, listJobs, createJob, updateJobStatus as apiUpdateJobStatus, deleteJob as apiDeleteJob } from '../../services/api'
 
 const font = "'Urbanist', sans-serif"
 
-/* ── Mock data ── */
-const MOCK_JOBS = [
-  { id:'1', title:'Senior Electrician',  location:'Sydney, NSW',   applicants:{ new:12, total:45 }, status:'Hiring' },
-  { id:'2', title:'Solar Installer',     location:'Perth, WA',     applicants:{ new:5,  total:18 }, status:'Closing Soon' },
-  { id:'3', title:'HVAC Technician',     location:'Brisbane, QLD', applicants:{ new:0,  total:10 }, status:'On Hold' },
-  { id:'4', title:'Senior Electrician',  location:'Sydney, NSW',   applicants:{ new:12, total:45 }, status:'Hiring' },
-  { id:'5', title:'Solar Installer',     location:'Perth, WA',     applicants:{ new:5,  total:18 }, status:'Closing Soon' },
-  { id:'6', title:'HVAC Technician',     location:'Brisbane, QLD', applicants:{ new:0,  total:10 }, status:'On Hold' },
-  { id:'7', title:'Senior Electrician',  location:'Sydney, NSW',   applicants:{ new:12, total:45 }, status:'Hiring' },
-]
 
 const STATUS_COLORS = {
   'Hiring':       { bg:'#e8f5e9', color:'#129578' },
@@ -564,7 +554,7 @@ function AddJobWizard({ onBack, onDone }) {
 export function CompanyActiveJobs() {
   const navigate = useNavigate()
   const [user,     setUser]     = useState(null)
-  const [jobs,     setJobs]     = useState(MOCK_JOBS)
+  const [jobs,     setJobs]     = useState([])
   const [loading,  setLoading]  = useState(true)
   const [tab,      setTab]      = useState('All Roles')
   const [viewMode, setViewMode] = useState('List')
@@ -573,10 +563,19 @@ export function CompanyActiveJobs() {
   const [statuses, setStatuses] = useState({})
   const [view,     setView]     = useState('list')   // 'list' | 'add' | 'detail'
   const [selected, setSelected] = useState(null)
+  const [company,  setCompany]  = useState(null)
 
   useEffect(() => {
     const token = getToken()
-    getMe(token).then(u=>setUser(u)).catch(()=>{}).finally(()=>setLoading(false))
+    getMe(token)
+      .then(u => { setUser(u); return u })
+      .then(() => listJobs({}, token))
+      .then(data => {
+        const list = Array.isArray(data) ? data : []
+        setJobs(list)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
   const filtered = jobs.filter(j => {
@@ -588,15 +587,32 @@ export function CompanyActiveJobs() {
     return matchTab && matchSearch
   })
 
-  function handleJobDone(data) {
-    const newJob = {
-      id: String(Date.now()),
-      title: data.title || 'New Role',
-      location: data.location || 'Australia',
-      applicants: { new:0, total:0 },
-      status: 'Hiring',
+  async function handleJobDone(data) {
+    const token = getToken()
+    try {
+      const payload = {
+        title:            data.title || 'New Role',
+        trade_category:   data.tradecat || null,
+        location:         data.location || null,
+        employment_type:  data.empType  || null,
+        visa_sponsorship: data.visa     || null,
+        min_salary:       data.minSal   ? parseInt(data.minSal) : null,
+        max_salary:       data.maxSal   ? parseInt(data.maxSal) : null,
+        currency:         data.currency || null,
+        company_vehicle:  data.vehicle  === 'Yes',
+        overtime:         data.overtime === 'Yes',
+        superannuation:   data.superann === 'Yes',
+        role_overview:    data.roleOv   || null,
+        key_requirements: data.keyReqs  || null,
+        benefits:         data.benefits || null,
+        responsibilities: data.resps    || null,
+        status:           'Hiring',
+      }
+      const created = await createJob(payload, token)
+      setJobs(prev => [created, ...prev])
+    } catch (e) {
+      alert(e.detail || 'Failed to create job')
     }
-    setJobs(prev=>[newJob, ...prev])
     setView('list')
   }
 
@@ -747,11 +763,15 @@ export function CompanyActiveJobs() {
                     {job.location}
                   </td>
                   <td style={{ padding:'16px 14px', fontFamily:font, fontSize:14, color:'#6a7380' }}>
-                    {job.applicants.new} New / {job.applicants.total} Total
+                    {job.applicants ? `${job.applicants.new} New / ${job.applicants.total} Total` : '—'}
                   </td>
                   <td style={{ padding:'16px 14px' }}>
                     <StatusBadge value={statuses[job.id]||job.status}
-                      onChange={val=>setStatuses(p=>({...p,[job.id]:val}))}/>
+                      onChange={async val => {
+                        const token = getToken()
+                        try { await apiUpdateJobStatus(job.id, val, token) } catch {}
+                        setStatuses(p=>({...p,[job.id]:val}))
+                      }}/>
                   </td>
                   <td style={{ padding:'16px 14px' }}>
                     <button style={{ width:32, height:32, borderRadius:8, border:'1.5px solid #e0dff0',

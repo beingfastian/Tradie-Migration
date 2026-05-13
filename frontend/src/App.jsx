@@ -15,6 +15,7 @@ import { WorkerHome }       from './pages/worker/WorkerHome'
 import { WorkerDocuments }  from './pages/worker/WorkerDocuments'
 import { WorkerEOIs }       from './pages/worker/WorkerEOIs'
 import { WorkerCourses }    from './pages/worker/WorkerCourses'
+import { WorkerJobs }       from './pages/worker/WorkerJobs'
 
 // ── Company / Employer pages ──────────────────────────────────────────────────
 import { CompanySetupFlow }      from './pages/company/CompanySetupFlow'
@@ -82,6 +83,11 @@ function App() {
       <Route path="/worker/courses" element={
         <ProtectedRoute roles={CANDIDATE}>
           <WorkerCourses />
+        </ProtectedRoute>
+      }/>
+      <Route path="/worker/jobs" element={
+        <ProtectedRoute roles={CANDIDATE}>
+          <WorkerJobs />
         </ProtectedRoute>
       }/>
 
