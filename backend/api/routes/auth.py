@@ -33,7 +33,7 @@ from backend.utils.email_service import generate_otp, send_otp_email, send_passw
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
-OTP_EXPIRY_MINUTES = 2
+OTP_EXPIRY_MINUTES = 10
 
 # Read once at startup
 SKIP_EMAIL_VERIFICATION = os.getenv("SKIP_EMAIL_VERIFICATION", "false").lower() == "true"
@@ -132,11 +132,22 @@ async def register(request: Request, payload: RegisterRequest, db: AsyncSession 
     # ── Production: send OTP email ────────────────────────────────────────────
     sent = await send_otp_email(new_user.email, otp)
     if not sent:
-        # Email failed but account is created — user can request resend
+        # Email failed — always print OTP to console so dev can still test
+        import logging
+        logging.getLogger(__name__).warning(
+            "\n"
+            "╔══════════════════════════════════════════════════════╗\n"
+            "║  EMAIL SEND FAILED — DEV FALLBACK OTP                ║\n"
+            "║  Email : %-43s ║\n"
+            "║  OTP   : %-43s ║\n"
+            "║  (Check your Gmail App Password if this is unintended)║\n"
+            "╚══════════════════════════════════════════════════════╝",
+            new_user.email, otp,
+        )
         return {
             "message": (
                 "Account created but we could not send the verification email. "
-                "Please use the resend-otp option on the verification page."
+                "Check the backend console for your OTP code, or use resend-otp."
             ),
             "email":  new_user.email,
             "status": "pending",
@@ -193,7 +204,7 @@ async def verify_otp(
     if datetime.utcnow() > user.otp_expires_at:
         raise HTTPException(
             status_code=400,
-            detail="OTP has expired (2-minute limit). Please use resend-otp to get a new code.",
+            detail="OTP has expired (10-minute limit). Please use resend-otp to get a new code.",
         )
 
     if user.otp_code != resolved_otp:
@@ -245,7 +256,18 @@ async def resend_otp(
     user.otp_expires_at = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
     await db.commit()
 
-    await send_otp_email(resolved_email, new_otp)
+    sent = await send_otp_email(resolved_email, new_otp)
+    if not sent:
+        import logging
+        logging.getLogger(__name__).warning(
+            "\n"
+            "╔══════════════════════════════════════════════════════╗\n"
+            "║  RESEND OTP — EMAIL FAILED, DEV FALLBACK             ║\n"
+            "║  Email : %-43s ║\n"
+            "║  OTP   : %-43s ║\n"
+            "╚══════════════════════════════════════════════════════╝",
+            resolved_email, new_otp,
+        )
     return {"message": "If that email is registered and unverified, a new OTP has been sent."}
 
 

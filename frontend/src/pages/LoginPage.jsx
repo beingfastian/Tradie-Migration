@@ -48,6 +48,14 @@ const ssoBtnStyle = {
   cursor: 'pointer', transition: 'border-color 0.15s',
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+const DEV_ROLES = [
+  { role: 'candidate',         label: '👷 Worker',   color: '#156dbf', bg: '#e8f4ff', redirect: '/worker/dashboard' },
+  { role: 'employer',          label: '🏢 Employer', color: '#0d7377', bg: '#e8faf9', redirect: '/company/dashboard' },
+  { role: 'training_provider', label: '📚 Trainer',  color: '#7c3aed', bg: '#f3f0ff', redirect: '/trainer/dashboard' },
+]
+
 export function LoginPage() {
   const navigate   = useNavigate()
   const location   = useLocation()
@@ -59,6 +67,22 @@ export function LoginPage() {
   const [errors,  setErrors]  = useState({})
   const [apiErr,  setApiErr]  = useState('')
   const [loading, setLoading] = useState(false)
+  const [devLoading, setDevLoading] = useState('')
+
+  async function handleDevLogin(role, redirect) {
+    setDevLoading(role)
+    try {
+      const res = await fetch(`${API_BASE}/auth/dev-login?role=${role}`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Dev login failed')
+      saveToken(data.access_token)
+      navigate(redirect, { replace: true })
+    } catch (err) {
+      setApiErr(err.message)
+    } finally {
+      setDevLoading('')
+    }
+  }
 
   function set(f, v) {
     setForm(p   => ({ ...p, [f]: v }))
@@ -277,7 +301,7 @@ export function LoginPage() {
               <button
                 type="button"
                 style={ssoBtnStyle}
-                onClick={() => { window.location.href = 'http://localhost:8000/auth/linkedin?role=candidate' }}
+                onClick={() => { window.location.href = 'http://localhost:8000/auth/linkedin' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = '#0a66c2'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = '#e0dff0'}
               >
@@ -289,7 +313,7 @@ export function LoginPage() {
               <button
                 type="button"
                 style={ssoBtnStyle}
-                onClick={() => { window.location.href = 'http://localhost:8000/auth/google?role=candidate' }}
+                onClick={() => { window.location.href = 'http://localhost:8000/auth/google' }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = '#4285f4'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = '#e0dff0'}
               >
@@ -301,6 +325,45 @@ export function LoginPage() {
             </div>
 
           </form>
+
+          {/* ── DEV QUICK LOGIN — remove before production ── */}
+          <div style={{
+            marginTop: 32, padding: '20px 24px',
+            background: '#fffbeb', border: '1.5px dashed #f59e0b',
+            borderRadius: 16,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <span style={{ fontSize: 16 }}>⚡</span>
+              <span style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: '#92400e' }}>
+                Dev Quick Login
+              </span>
+              <span style={{ fontFamily: font, fontSize: 11, color: '#b45309', marginLeft: 4 }}>
+                (testing only — remove before production)
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {DEV_ROLES.map(({ role, label, color, bg, redirect }) => (
+                <button
+                  key={role}
+                  onClick={() => handleDevLogin(role, redirect)}
+                  disabled={devLoading === role}
+                  style={{
+                    flex: 1, height: 44, border: `1.5px solid ${color}`,
+                    borderRadius: 10, background: devLoading === role ? '#f3f4f6' : bg,
+                    fontFamily: font, fontSize: 13, fontWeight: 700,
+                    color: devLoading === role ? '#9ca3af' : color,
+                    cursor: devLoading === role ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { if (devLoading !== role) e.currentTarget.style.background = color; e.currentTarget.style.color = '#fff' }}
+                  onMouseLeave={e => { if (devLoading !== role) e.currentTarget.style.background = bg; e.currentTarget.style.color = color }}
+                >
+                  {devLoading === role ? 'Loading…' : label}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

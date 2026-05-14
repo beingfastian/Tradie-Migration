@@ -245,11 +245,21 @@ async def _upsert_oauth_user(
     user = result.scalar_one_or_none()
 
     if user:
-        # Existing user — activate if still pending (edge case: signed up via email but never verified)
+        changed = False
+        # Activate if still pending (edge case: signed up via email but never verified)
         if user.status == "pending":
             user.email_verified = True
             user.status = "active"
+            changed = True
+        # Update role only if explicitly requested with a non-default role
+        # (e.g. Register page passes ?role=employer — upgrade the account)
+        # Login page passes no role — never downgrade an existing employer to candidate
+        if role and role != "candidate" and user.role == "candidate":
+            user.role = role
+            changed = True
+        if changed:
             await db.commit()
+            await db.refresh(user)
         return user
 
     # New user — create account, auto-verified via OAuth
