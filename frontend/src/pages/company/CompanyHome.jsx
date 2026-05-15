@@ -1,23 +1,18 @@
 /**
- * CompanyHome — Figma node 1:1559 (file Ud0NnDoXtD1Rd5t4EaAlBT)
- * All assets from Figma API. Inline styles only.
+ * CompanyHome — Figma node 1:1559
+ * Assets stored permanently in frontend/src/assets/company-dashboard/
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CompanyLayout } from './CompanyLayout'
 import { getToken, getMe } from '../../services/api'
 
-const font = "'Urbanist', sans-serif"
+import cdEllipseRing  from '../../assets/company-dashboard/cd-ellipse-ring.png'
+import cdProgressRing from '../../assets/company-dashboard/cd-progress-ring.png'
+import cdDeco1        from '../../assets/company-dashboard/cd-deco1.png'
+import cdDeco2        from '../../assets/company-dashboard/cd-deco2.png'
 
-/* ─── FIGMA ASSETS — node 1:1559 ─── */
-const imgHeroBg      = 'https://www.figma.com/api/mcp/asset/e8c44ff9-2f95-422b-b16f-0dfc77b70e98'  // image 6074
-const imgHeroIllus   = 'https://www.figma.com/api/mcp/asset/0c744a54-f44d-479a-a597-520d716da979'  // undraw_walk-in-the-city
-const imgEllipseRing = 'https://www.figma.com/api/mcp/asset/8bd72468-9b06-4c16-99f5-46bba3c998d8'  // Ellipse 4336
-const imgDonutChart  = 'https://www.figma.com/api/mcp/asset/9a75a8e6-9b45-4b26-8229-c9ec80ccf00e'  // Group 3
-const imgMailbox     = 'https://www.figma.com/api/mcp/asset/5b9a3b35-a16f-4fce-aeb6-acd0b1e0c918'  // undraw_mailbox_e7nc 2
-const imgDeco1       = 'https://www.figma.com/api/mcp/asset/498b1ed3-aae9-429e-bb63-dca429ca19eb'  // Group1686552118
-const imgDeco2       = 'https://www.figma.com/api/mcp/asset/2a4f3237-e9a1-4316-ae6f-082681dd456f'  // Group1686552119
-const imgDeco3       = 'https://www.figma.com/api/mcp/asset/3e0e8a59-1a0c-42d8-b096-0e96202e0b93'  // Group1686552135
+const font = "'Urbanist', sans-serif"
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -54,21 +49,22 @@ export function CompanyHome() {
 
       {/* ── Hero Banner ── */}
       <div style={{
-        position:'relative', borderRadius:50, overflow:'hidden',
+        position:'relative', borderRadius:32, overflow:'hidden',
         height:220, marginBottom:28, flexShrink:0,
+        background:'linear-gradient(135deg, #e8f0ff 0%, #f3f1fd 40%, #fffbf5 100%)',
       }}>
-        {/* bg wave */}
-        <img src={imgHeroBg} alt=""
-          style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+        {/* Decorative circles */}
+        <div style={{ position:'absolute', right:-60, top:-60, width:300, height:300, borderRadius:'50%', background:'rgba(83,121,244,0.08)' }}/>
+        <div style={{ position:'absolute', right:60, bottom:-80, width:200, height:200, borderRadius:'50%', background:'rgba(242,111,55,0.07)' }}/>
 
         {/* text */}
         <div style={{
           position:'absolute', inset:0, padding:'32px 48px',
           display:'flex', flexDirection:'column', justifyContent:'center',
-          zIndex:2, maxWidth:'60%',
+          zIndex:2, maxWidth:'65%',
         }}>
           <h1 style={{
-            fontFamily:font, fontWeight:700, fontSize:28, lineHeight:1.3,
+            fontFamily:font, fontWeight:700, fontSize:28, lineHeight:1.4,
             color:'#403c8b', margin:'0 0 14px',
           }}>
             {getGreeting()},{' '}
@@ -82,13 +78,21 @@ export function CompanyHome() {
           </p>
         </div>
 
-        {/* city illustration */}
-        <img src={imgHeroIllus} alt=""
-          style={{
-            position:'absolute', right:0, top:0,
-            height:'100%', width:'auto', display:'block', zIndex:2,
-            objectFit:'contain', objectPosition:'right center',
-          }}/>
+        {/* Right illustration */}
+        <div style={{
+          position:'absolute', right:48, top:'50%', transform:'translateY(-50%)',
+          zIndex:2, display:'flex', alignItems:'center', justifyContent:'center',
+          width:160, height:160,
+          background:'rgba(255,255,255,0.7)', borderRadius:24,
+          boxShadow:'0 4px 24px rgba(64,60,139,0.15)',
+        }}>
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <rect x="10" y="30" width="60" height="40" rx="4" fill="#403c8b" opacity="0.15"/>
+            <rect x="20" y="20" width="40" height="50" rx="4" fill="#403c8b" opacity="0.3"/>
+            <rect x="30" y="10" width="20" height="60" rx="4" fill="#403c8b" opacity="0.5"/>
+            <rect x="35" y="50" width="10" height="20" rx="2" fill="#f26f37"/>
+          </svg>
+        </div>
       </div>
 
       {/* ── Two-column cards ── */}
@@ -103,15 +107,14 @@ export function CompanyHome() {
           position:'relative', overflow:'hidden',
         }}>
           {/* Decorative circles */}
-          <img src={imgDeco1} alt="" style={{ position:'absolute', left:32, top:'42%', width:55, height:'auto', opacity:0.85, transform:'rotate(6deg)', pointerEvents:'none' }}/>
-          <img src={imgDeco2} alt="" style={{ position:'absolute', left:160, top:'55%', width:55, height:'auto', opacity:0.85, transform:'rotate(-164deg)', pointerEvents:'none' }}/>
-          <img src={imgDeco3} alt="" style={{ position:'absolute', right:40, top:'30%', width:40, height:'auto', opacity:0.6, pointerEvents:'none' }}/>
+          <img src={cdDeco1} alt="" style={{ position:'absolute', left:32, top:'42%', width:55, height:'auto', opacity:0.85, transform:'rotate(6deg)', pointerEvents:'none' }}/>
+          <img src={cdDeco2} alt="" style={{ position:'absolute', left:160, top:'55%', width:55, height:'auto', opacity:0.85, transform:'rotate(-164deg)', pointerEvents:'none' }}/>
 
-          {/* Avatar ring + donut */}
+          {/* Avatar ring + progress */}
           <div style={{ position:'relative', width:180, height:180, flexShrink:0, marginTop:8 }}>
-            <img src={imgEllipseRing} alt=""
+            <img src={cdEllipseRing} alt=""
               style={{ width:180, height:180, display:'block', borderRadius:'50%', objectFit:'cover' }}/>
-            <img src={imgDonutChart} alt=""
+            <img src={cdProgressRing} alt=""
               style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }}/>
             {/* Verified orange badge */}
             <div style={{
@@ -215,8 +218,7 @@ export function CompanyHome() {
             display:'flex', flexDirection:'column', alignItems:'center',
             justifyContent:'center', gap:12,
           }}>
-            <img src={imgMailbox} alt="mailbox"
-              style={{ width:140, height:'auto', display:'block' }}/>
+            <div style={{ fontSize:80 }}>📬</div>
             <p style={{
               fontFamily:font, fontWeight:500, fontSize:16, color:'#6a7380',
               textAlign:'center', margin:0, lineHeight:1.5, maxWidth:300,
