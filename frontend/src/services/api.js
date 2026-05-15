@@ -187,6 +187,7 @@ export const getJob           = (jobId, token)                => request('GET', 
 export const updateJob        = (jobId, payload, token)       => request('PUT', `/jobs/${jobId}`, payload, token)
 export const updateJobStatus  = (jobId, status, token)        => request('PUT', `/jobs/${jobId}/status${buildQuery({ status })}`, null, token)
 export const deleteJob        = (jobId, token)                => request('DELETE', `/jobs/${jobId}`, null, token)
+export const inviteCandidate  = (payload, token)              => request('POST', '/jobs/invite', payload, token)
 
 // ── Token helpers ─────────────────────────────────────────────────
 export const saveToken  = (token) => localStorage.setItem('access_token', token)

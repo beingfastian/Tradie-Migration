@@ -1,611 +1,773 @@
 /**
- * LandingPage — Pixel-perfect from Figma KUp74wgn6I4qmd7485ciL0 node 1:41
- *
- * FIXES applied:
- *  1. Navbar "Join Now" → navigate('/register')          [role picker handles it]
- *  2. Card 1 (Skilled Worker) → navigate('/register?role=candidate')
- *  3. Card 2 (Employer)       → navigate('/register?role=employer')
- *  4. Card 3 (Trainer)        → navigate('/register?role=training_provider')
- *  5. CTA "Join for Free"     → navigate('/register')    [role picker handles it]
- *
- *  Previously ALL buttons navigated to '/register' with no role param,
- *  so everyone silently became a candidate.
+ * LandingPage — Pixel-perfect from Figma EPlK7tMF8fsZo3O9z9Loa5 node 1:41
+ * Canvas: 1440px wide. All measurements taken directly from Figma.
+ * Assets: permanently stored in frontend/src/assets/lp-*.svg/png
  */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+// ── Permanent local assets ────────────────────────────────────────────────────
+import imgNavChevron    from '../assets/lp-nav-chevron.svg'
+import imgNavArrow      from '../assets/lp-nav-arrow.svg'
+import imgHeroIllus     from '../assets/lp-hero-illus.svg'
+import imgHeroBg        from '../assets/lp-hero-bg.svg'
+import imgCardBg        from '../assets/lp-card-bg.png'
+import imgCard1Illus    from '../assets/lp-card1-illus.svg'
+import imgCard2Illus    from '../assets/lp-card2-illus.svg'
+import imgCard3Group1   from '../assets/lp-card3-group1.svg'
+import imgCard3Group2   from '../assets/lp-card3-group2.svg'
+import imgCardDecor1    from '../assets/lp-card-decor1.svg'
+import imgCardDecor2    from '../assets/lp-card-decor2.svg'
+import imgStepsLine     from '../assets/lp-steps-line.svg'
+import imgStepsDot      from '../assets/lp-steps-dot.svg'
+import imgStepsIllus    from '../assets/lp-steps-illus.svg'
+import imgFaqIllus      from '../assets/lp-faq-illus.svg'
+import imgFaqDotClose   from '../assets/lp-faq-dot-close.svg'
+import imgFaqDotOpen    from '../assets/lp-faq-dot-open.svg'
+import imgFaqPlus       from '../assets/lp-faq-plus.svg'
+import imgFaqMinus      from '../assets/lp-faq-minus.svg'
+import imgFaqDivider    from '../assets/lp-faq-divider.svg'
+import imgAboutMe       from '../assets/lp-about-me.svg'
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
 const font       = "'Urbanist', sans-serif"
 const fontMohave = "'Mohave', sans-serif"
+const blue       = '#156dbf'
+const orange     = '#f26f37'
+const dark       = '#0e3b6c'
+const text1      = '#343434'
+const text2      = '#6a7380'
+const text3      = '#8e8d92'
+const purple     = '#585484'
 
-/* ─── Figma asset URLs ─── */
-const imgChevron    = 'https://www.figma.com/api/mcp/asset/e173ba3b-23e2-4872-b8fe-b3fb66476c5e'
-const imgDivider    = 'https://www.figma.com/api/mcp/asset/0bb498ef-d6e8-4860-ac10-179b971608a0'
-const imgArrow      = 'https://www.figma.com/api/mcp/asset/695bce7c-9ab0-4bb7-9e8a-a49c5c362afc'
-const imgHero       = 'https://www.figma.com/api/mcp/asset/6d50ea20-40a5-4f6a-ba04-08d6420589f1'
-const imgCardBg     = 'https://www.figma.com/api/mcp/asset/a1484485-1d19-4bc6-a520-d188fd9bfebb'
-const imgCard1Illus = 'https://www.figma.com/api/mcp/asset/46931c2a-8003-4b47-a93f-8da522879c0e'
-const imgCard2Illus = 'https://www.figma.com/api/mcp/asset/3fc88649-aa9c-4c9b-9bf5-faec796925c8'
-const imgCard3Illus = 'https://www.figma.com/api/mcp/asset/5e2632f1-d2b6-473f-b965-703a3c519b80'
-const imgStep1      = 'https://www.figma.com/api/mcp/asset/07aee1aa-4ef4-4711-946d-758575d1acea'
-const imgStep2      = 'https://www.figma.com/api/mcp/asset/6f32956d-1d18-4257-8f88-4aa3c894ead7'
-const imgStep3      = 'https://www.figma.com/api/mcp/asset/a9dde15f-3191-41e8-8b70-8b459cfc7772'
-const imgFaqIllus   = 'https://www.figma.com/api/mcp/asset/16704717-686f-43ca-bab2-0b78bb3ff911'
+// Figma radial gradient (exact stops from design context)
+const radialBg = `radial-gradient(ellipse at 110% -10%,
+  #156dbf 0%, #317ec6 3.5%, #4d8fce 6.6%, #86b2dc 12.7%,
+  #bed4eb 18.9%, #f6f6f9 25%, #bed4eb 43.75%,
+  #86b2dc 62.5%, #4d8fce 81.25%, #317ec6 90.6%, #156dbf 100%)`
 
-const radialGrad = `url("data:image/svg+xml;utf8,<svg viewBox='0 0 1 1' xmlns='http://www.w3.org/2000/svg'><rect x='0' y='0' height='100%25' width='100%25' fill='url(%23g)'/><defs><radialGradient id='g' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(-169 -100 206 -71 1804 945)'><stop stop-color='rgba(21,109,191,1)' offset='0'/><stop stop-color='rgba(49,126,198,1)' offset='0.035'/><stop stop-color='rgba(77,143,206,1)' offset='0.066'/><stop stop-color='rgba(134,178,220,1)' offset='0.127'/><stop stop-color='rgba(190,212,235,1)' offset='0.188'/><stop stop-color='rgba(246,246,249,1)' offset='0.25'/><stop stop-color='rgba(190,212,235,1)' offset='0.437'/><stop stop-color='rgba(134,178,220,1)' offset='0.625'/><stop stop-color='rgba(77,143,206,1)' offset='0.812'/><stop stop-color='rgba(21,109,191,1)' offset='1'/></radialGradient></defs></svg>")`
-
+// ── FAQ data (exact questions from Figma) ─────────────────────────────────────
 const FAQS = [
   {
     q: 'How does the trade verification work?',
     a: 'Our verification process checks your licences, qualifications, and work history against Australian standards. You upload your documents and our team plus AI-powered tools validate them against the relevant ANZSCO codes and state licensing requirements.',
   },
   {
-    q: 'Which trades are eligible for 482 visa sponsorship?',
-    a: 'Electricians, plumbers, HVAC technicians, welders, and many other trades on the Medium and Long-term Strategic Skills List (MLTSSL) and Short-term Skilled Occupation List (STSOL) are eligible. The platform matches your ANZSCO code to current demand.',
+    q: 'Can employers offer visa sponsorship?',
+    a: 'Yes. Approved employers can sponsor skilled tradespeople under the 482 Temporary Skill Shortage visa. The platform guides both parties through the Labour Market Testing requirements and sponsorship application steps.',
   },
   {
-    q: 'How long does the onboarding process take?',
-    a: 'Most candidates complete their profile and document upload within 30 minutes. Verification typically takes 2–5 business days. Employers can search and shortlist candidates immediately after approval.',
+    q: 'What is the benefit of registering as a Trainer?',
+    a: 'Registered Training Organisations (RTOs) can list their entire course catalog, manage student enrollments, and track progress. It allows you to connect directly with tradies who need gap training or specific certifications to meet Australian Standards.',
   },
   {
-    q: 'Can training providers list their courses on the platform?',
-    a: 'Yes. Registered Training Organisations (RTOs) can create a provider profile and list gap-training courses. Candidates seeking skills bridging are matched to relevant courses based on their trade category and licensing shortfalls.',
+    q: 'Can I use the app to manage my trade documents?',
+    a: 'Absolutely. You can upload, store, and share licences, certifications, and qualifications securely. Employers see only what you choose to share, and you can revoke access at any time.',
   },
   {
-    q: 'Is my personal information secure?',
-    a: 'All data is encrypted in transit and at rest. Employers can only access your full profile and documents after you grant explicit consent. You can revoke access at any time from your dashboard.',
+    q: 'Is there a cost to join the Tradie App community?',
+    a: 'Creating a candidate profile is free. Employers and training providers have tiered subscription plans that unlock advanced hiring tools, sponsorship support, and analytics dashboards.',
   },
 ]
 
-function FaqItem({ q, a }) {
+// ── FAQ accordion item ─────────────────────────────────────────────────────────
+function FaqItem({ q, a, last }) {
   const [open, setOpen] = useState(false)
   return (
-    <div style={{
-      borderBottom: '1px solid #e8eaf2', paddingBottom: 20, marginBottom: 20,
-    }}>
+    <div style={{ width: 641 }}>
       <div
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen(p => !p)}
         style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          cursor: 'pointer', gap: 16,
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16.936px 0',
+          cursor: 'pointer',
         }}
       >
-        <p style={{
-          fontFamily: font, fontWeight: 600, fontSize: 17, color: '#1a1a2e',
-          lineHeight: 1.4, margin: 0,
-        }}>
-          {q}
-        </p>
-        <div style={{
-          width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-          border: open ? 'none' : '1.5px solid rgba(83,121,244,0.3)',
-          background: open ? '#156dbf' : 'rgba(83,121,244,0.12)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.2s',
-        }}>
-          {open
-            ? <svg width="12" height="12" viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-            : <svg width="12" height="12" viewBox="0 0 12 12"><line x1="6" y1="2" x2="6" y2="10" stroke="#156dbf" strokeWidth="2" strokeLinecap="round"/><line x1="2" y1="6" x2="10" y2="6" stroke="#156dbf" strokeWidth="2" strokeLinecap="round"/></svg>
-          }
+        <span style={{
+          fontFamily: font, fontWeight: 700, fontSize: 16.936,
+          color: text1, lineHeight: 1.3, flex: 1, paddingRight: 16,
+        }}>{q}</span>
+
+        {/* Exact Figma icon: circle bg + plus/minus */}
+        <div style={{ position: 'relative', width: 25.404, height: 25.404, flexShrink: 0 }}>
+          <img src={open ? imgFaqDotOpen : imgFaqDotClose} alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+          <img src={open ? imgFaqMinus : imgFaqPlus} alt=""
+            style={{
+              position: 'absolute',
+              top: 9.91, left: 9.91,
+              width: 5.589, height: 5.589,
+            }} />
         </div>
       </div>
+
       {open && (
         <p style={{
-          fontFamily: font, fontSize: 15, color: '#6a7380',
-          lineHeight: 1.7, margin: '14px 0 4px', maxWidth: 580,
-        }}>
-          {a}
-        </p>
+          fontFamily: font, fontWeight: 500, fontSize: 12.702,
+          color: text2, lineHeight: 1.3, margin: '0 0 12.702px',
+          width: 469,
+        }}>{a}</p>
+      )}
+
+      {!last && (
+        <div style={{ position: 'relative', width: 641, height: 0 }}>
+          <img src={imgFaqDivider} alt=""
+            style={{ position: 'absolute', top: -1.41, left: 0, width: '100%' }} />
+        </div>
       )}
     </div>
   )
 }
 
+// ── Card component — exact Figma 380×536px with absolute-positioned illustrations ──
+function EcosystemCard({ card }) {
+  return (
+    <div style={{
+      width: 380, height: 536,
+      borderRadius: 21,
+      overflow: 'hidden',
+      boxShadow: '0px 4px 24px 0px rgba(0,0,0,0.13)',
+      position: 'relative',
+      flexShrink: 0,
+    }}>
+      {/* Full-cover background image */}
+      <img src={imgCardBg} alt="" style={{
+        position: 'absolute', inset: 0,
+        width: '100%', height: '100%',
+        objectFit: 'cover', borderRadius: 21,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Card-specific illustration layer */}
+      {card.id === 1 && (
+        <>
+          {/* undraw_maker-launch: 380×258.578px at top=277.83, flipped vertically */}
+          <div style={{
+            position: 'absolute',
+            top: 277.83, left: 0,
+            width: 380, height: 258.578,
+            transform: 'scaleY(-1) rotate(180deg)',
+            transformOrigin: 'center',
+          }}>
+            <img src={imgCard1Illus} alt="" style={{ width: '100%', height: '100%' }} />
+          </div>
+          {/* Decor top-left */}
+          <img src={imgCardDecor1} alt="" style={{
+            position: 'absolute',
+            top: '49.81%', left: '8.69%',
+            width: '27.96%', height: '20.44%',
+          }} />
+        </>
+      )}
+
+      {card.id === 2 && (
+        <>
+          {/* undraw_team-work: 436.753×319.368px at top=224.83, left=0.05, rotate=-0.14deg */}
+          <div style={{
+            position: 'absolute',
+            top: 224.83, left: 0.05,
+            width: 436.753, height: 319.368,
+            transform: 'rotate(-0.14deg)',
+          }}>
+            <img src={imgCard2Illus} alt="" style={{ width: '100%', height: '100%' }} />
+          </div>
+        </>
+      )}
+
+      {card.id === 3 && (
+        <>
+          {/* Group1 illustration: inset=[9.89%_13%_43.84%_65.26%]
+              top=9.89%*536≈53px, right=13%*380≈49px, bottom=43.84%*536≈235px, left=65.26%*380≈248px */}
+          <div style={{
+            position: 'absolute',
+            top: '9.89%', left: '65.26%',
+            right: '13%', bottom: '43.84%',
+          }}>
+            <img src={imgCard3Group2} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+          </div>
+          {/* Group illustration rotated: inset=[-17.64%_34.85%_41.31%_-12.39%] */}
+          <div style={{
+            position: 'absolute',
+            top: '-17.64%', left: '-12.39%',
+            right: '34.85%', bottom: '41.31%',
+          }}>
+            <img src={imgCard3Group1} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', transform: 'rotate(-14.73deg)' }} />
+          </div>
+          {/* Decor */}
+          <img src={imgCardDecor2} alt="" style={{
+            position: 'absolute',
+            top: '0.56%', left: '69.21%',
+            right: '2.03%', bottom: '80.03%',
+          }} />
+        </>
+      )}
+
+      {/* White gradient overlay — bottom fade */}
+      <div style={{
+        position: 'absolute',
+        top: card.id === 2 ? 0 : card.id === 3 ? 107 : 0,
+        left: 0, width: 380,
+        height: card.id === 2 ? 259 : card.id === 3 ? 429 : 317,
+        background: card.id === 2
+          ? 'linear-gradient(to bottom, rgba(255,255,255,0) 32.257%, #fff 59.742%)'
+          : card.id === 3
+          ? 'linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.8) 78.433%, #fff)'
+          : 'linear-gradient(to top, rgba(255,255,255,0) 32.257%, #fff 59.742%)',
+        borderRadius: 21,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Card text — positioned exactly as in Figma */}
+      <p style={{
+        position: 'absolute',
+        top: card.textTop,
+        left: 'calc(50% - 160px)',
+        width: 285,
+        fontFamily: font, fontWeight: 700, fontSize: 36,
+        color: blue, lineHeight: 1.16,
+        letterSpacing: '-0.32px',
+        margin: 0,
+      }}>{card.title}</p>
+
+      <div style={{
+        position: 'absolute',
+        top: card.descTop,
+        left: 'calc(50% - 156px)',
+        width: 311,
+        fontFamily: font, fontWeight: 500, fontSize: 16,
+        color: text3, lineHeight: 1.5,
+      }}>{card.desc}</div>
+    </div>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export function LandingPage() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
 
-  return (
-    <div style={{ fontFamily: font, background: '#fff', overflowX: 'hidden' }}>
+  // Cards config — textTop/descTop from Figma (card-relative: subtract card top=233 from section-absolute values)
+  const cards = [
+    {
+      id: 1,
+      title: 'Launch Your Australian Career',
+      desc: 'Get your skills verified, browse visa-sponsored roles, and access gap training to meet Australian licensing standards. Your global career starts here.',
+      textTop: 261 - 233,   // = 28px
+      descTop: 409 - 233,   // = 176px
+      to: '/register?role=candidate',
+      cta: 'Find Jobs',
+    },
+    {
+      id: 2,
+      title: 'Build a Verified Workforce',
+      desc: 'Connect with pre-screened local and international talent. Simplify your recruitment with verified background checks and sponsorship tools.',
+      textTop: 28,
+      descTop: 172,
+      to: '/register?role=employer',
+      cta: 'Hire Talent',
+    },
+    {
+      id: 3,
+      title: 'Enroll the Next Generation',
+      desc: 'List your RTO courses and certification programs directly to students and workers looking to upskill or convert their international licenses.',
+      textTop: 316,
+      descTop: 460,
+      to: '/register?role=training_provider',
+      cta: 'List Courses',
+    },
+  ]
 
-      {/* ══ NAVBAR ══ */}
+  return (
+    <div style={{ fontFamily: font, background: '#fff', overflowX: 'hidden', minWidth: 1280 }}>
+
+      {/* ════════ NAVBAR — height=72px, padding=0 66px ════════ */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(255,255,255,0.96)',
+        background: 'rgba(255,255,255,0.97)',
         backdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(0,0,0,0.06)',
-        padding: '0 66px', height: 72,
+        height: 72,
         display: 'flex', alignItems: 'center',
-        maxWidth: '100%',
+        padding: '0 66px',
+        gap: 0,
       }}>
-        {/* Left — nav links */}
-        <div style={{ display: 'flex', gap: 48, alignItems: 'center', flex: 1 }}>
+        {/* Left nav links */}
+        <div style={{ display: 'flex', gap: 48, alignItems: 'center' }}>
           {['Find Jobs', 'Hire Talent', 'Blogs', 'Contact'].map(l => (
             <a key={l} href="#" style={{
               fontFamily: font, fontWeight: 500, fontSize: 18,
-              color: '#343434', textDecoration: 'none', lineHeight: 1.3, whiteSpace: 'nowrap',
-            }}>{l}</a>
+              color: text1, textDecoration: 'none', lineHeight: 1.3,
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = blue}
+            onMouseLeave={e => e.currentTarget.style.color = text1}
+            >{l}</a>
           ))}
         </div>
 
-        {/* Center — logo */}
-        <div
-          style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', cursor: 'pointer' }}
-          onClick={() => navigate('/')}
-        >
-          <span style={{ fontFamily: fontMohave, fontWeight: 600, fontSize: 32, lineHeight: 1.3, whiteSpace: 'nowrap' }}>
-            <span style={{ color: '#f26f37' }}>T</span>
-            <span style={{ color: '#156dbf' }}>radie Migration</span>
+        {/* Center logo */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <span
+            onClick={() => navigate('/')}
+            style={{ fontFamily: fontMohave, fontWeight: 600, fontSize: 39.127, cursor: 'pointer', lineHeight: 1.3 }}
+          >
+            <span style={{ color: orange }}>T</span>
+            <span style={{ color: blue }}>radie Migration</span>
           </span>
         </div>
 
-        {/* Right — CTAs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1, justifyContent: 'flex-end' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontFamily: font, fontWeight: 600, fontSize: 16, color: '#585484' }}>Eng</span>
-            <img src={imgChevron} alt="" style={{ width: 18, height: 14, display: 'block' }}/>
+        {/* Right: lang + divider + login + join */}
+        <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+            <span style={{ fontFamily: font, fontWeight: 600, fontSize: 16, color: purple }}>Eng</span>
+            <img src={imgNavChevron} alt="" style={{ width: 18, height: 14 }} />
           </div>
-          <div style={{ position: 'relative', width: 0, height: 29 }}>
-            <img src={imgDivider} alt="" style={{ position: 'absolute', left: 0, top: 0, width: 1, height: 29 }}/>
-          </div>
-          <span
-            style={{ fontFamily: font, fontWeight: 600, fontSize: 16, color: '#585484', cursor: 'pointer' }}
-            onClick={() => navigate('/login')}
+          {/* vertical divider */}
+          <img src={imgNavChevron} alt="" style={{ width: 0, height: 29.051, opacity: 0 }} />
+          <div style={{ width: 1, height: 29, background: '#c8c7d8' }} />
+          <button onClick={() => navigate('/login')} style={{
+            fontFamily: font, fontWeight: 600, fontSize: 16,
+            color: purple, background: 'none', border: 'none', cursor: 'pointer',
+            lineHeight: 1.3,
+          }}>Login</button>
+          <button onClick={() => navigate('/register')} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            height: 48, padding: '0 28px 0 20px',
+            border: '1px solid ' + purple, borderRadius: 32,
+            fontFamily: font, fontWeight: 600, fontSize: 16, color: purple,
+            background: '#fff', cursor: 'pointer',
+            boxShadow: '0 4px 6px rgba(16,24,40,0.03), 0 12px 16px rgba(16,24,40,0.08)',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = blue; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = blue }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = purple; e.currentTarget.style.borderColor = purple }}
           >
-            Login
-          </span>
-          {/* FIX: "Join Now" → /register (RegisterPage has built-in role picker) */}
-          <button
-            onClick={() => navigate('/register')}
-            style={{
-              width: 176, height: 48, borderRadius: 32,
-              border: '1px solid #585484', background: 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              cursor: 'pointer',
-              boxShadow: '0px 4px 6px -2px rgba(16,24,40,0.03), 0px 12px 16px -4px rgba(16,24,40,0.08)',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#f0f7ff'; e.currentTarget.style.borderColor = '#156dbf' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = '#585484' }}
-          >
-            <span style={{ fontFamily: font, fontWeight: 600, fontSize: 16, color: '#585484' }}>Join Now</span>
-            <img src={imgArrow} alt="" style={{ width: 18, height: 14, display: 'block' }}/>
+            Join Now
+            <img src={imgNavArrow} alt="" style={{ width: 18, height: 14 }} />
           </button>
         </div>
       </nav>
 
-      {/* ══ HERO ══ */}
+      {/* ════════ HERO — radial gradient bg, full width ════════ */}
       <section style={{
-        background: 'linear-gradient(135deg, #daeaf8 0%, #eaf3fb 30%, #f3f7fd 60%, #f8f9ff 100%)',
-        position: 'relative', overflow: 'hidden',
-        paddingTop: 80, paddingBottom: 0,
+        position: 'relative',
+        background: radialBg,
+        padding: '80px 66px 0',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 40,
+        overflow: 'hidden',
+        minHeight: 680,
       }}>
-        <div style={{ position: 'absolute', top: -80, right: -80, width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(21,109,191,0.12) 0%, transparent 70%)', pointerEvents: 'none' }}/>
-        <div style={{ position: 'absolute', top: 120, right: 60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(242,111,55,0.1) 0%, transparent 70%)', pointerEvents: 'none' }}/>
-        <div style={{ position: 'absolute', bottom: 140, left: -60, width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(21,109,191,0.09) 0%, transparent 70%)', pointerEvents: 'none' }}/>
+        {/* Background column lines */}
+        <img src={imgHeroBg} alt="" style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover', pointerEvents: 'none', opacity: 0.35,
+        }} />
 
-        <div style={{ maxWidth: 1308, margin: '0 auto', padding: '0 66px', textAlign: 'center', position: 'relative', zIndex: 2 }}>
+        {/* Text column */}
+        <div style={{ flex: '0 0 580px', position: 'relative', zIndex: 1, paddingTop: 16 }}>
           <h1 style={{
-            fontFamily: font, fontWeight: 800, fontSize: 'clamp(2.4rem, 5vw, 4rem)',
-            color: '#1a1a2e', lineHeight: 1.15, margin: '0 0 24px', letterSpacing: -1,
+            fontFamily: font, fontWeight: 800, fontSize: 52,
+            color: dark, margin: '0 0 20px',
+            lineHeight: 1.1, letterSpacing: '-0.5px',
           }}>
-            Connecting Global Talent to<br/>
-            <span style={{ color: '#156dbf' }}>Australia's Trade Industry.</span>
+            Connecting Global Talent to Australia's Trade Industry.
           </h1>
           <p style={{
-            fontFamily: font, fontWeight: 400, fontSize: 18, color: '#585484',
-            lineHeight: 1.6, maxWidth: 560, margin: '0 auto 40px',
+            fontFamily: font, fontWeight: 500, fontSize: 18,
+            color: text2, lineHeight: 1.6, margin: '0 0 36px',
           }}>
             The all-in-one platform for skilled tradies, employers, and training providers. Verified skills, simplified sponsorship.
           </p>
 
           {/* Search bar */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            background: '#fff', borderRadius: 50, border: '1.5px solid #d0d5dd',
-            padding: '10px 24px', maxWidth: 520, margin: '0 auto 28px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+            display: 'flex', alignItems: 'center',
+            background: '#fff', borderRadius: 40,
+            padding: '6px 6px 6px 20px',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+            maxWidth: 520, marginBottom: 20,
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <svg width="18" height="18" fill="none" stroke={text2} strokeWidth="2" style={{ flexShrink: 0 }}>
+              <circle cx="8" cy="8" r="6"/><path d="M14 14l3 3"/>
             </svg>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search for trades (e.g. Electrician, Plumber)..."
+              placeholder="Search for a trade, role or location..."
               style={{
-                border: 'none', outline: 'none', fontFamily: font, fontSize: 15,
-                color: '#343434', background: 'transparent', flex: 1,
+                flex: 1, border: 'none', outline: 'none', background: 'none',
+                fontFamily: font, fontSize: 15, color: text1, padding: '8px 12px',
               }}
             />
+            <button onClick={() => navigate(`/worker/jobs${search ? `?q=${encodeURIComponent(search)}` : ''}`)} style={{
+              height: 44, padding: '0 24px', borderRadius: 32,
+              background: blue, color: '#fff', border: 'none',
+              fontFamily: font, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+            }}>Browse Jobs</button>
           </div>
-
-          <button
-            onClick={() => navigate('/login')}
-            style={{
-              background: '#156dbf', color: '#fff', border: 'none',
-              borderRadius: 50, padding: '14px 48px', fontFamily: font,
-              fontWeight: 700, fontSize: 16, cursor: 'pointer',
-              boxShadow: '0 4px 20px rgba(21,109,191,0.3)',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#0f5ca0'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#156dbf'; e.currentTarget.style.transform = '' }}
-          >
-            Browse Jobs
-          </button>
+          <p style={{ fontFamily: font, fontSize: 13, color: text2 }}>
+            Popular:&nbsp;
+            {['Electrician', 'Plumber', 'Welder', 'HVAC'].map((t, i) => (
+              <span key={t}>
+                <span style={{ color: blue, cursor: 'pointer' }}
+                  onClick={() => navigate(`/worker/jobs?q=${t}`)}>{t}</span>
+                {i < 3 && <span style={{ margin: '0 4px' }}>·</span>}
+              </span>
+            ))}
+          </p>
         </div>
 
-        {/* Hero illustration */}
-        <div style={{ maxWidth: 1252, margin: '60px auto 0', overflow: 'hidden' }}>
-          <img
-            src={imgHero} alt="Skilled trade workers"
-            style={{ width: '100%', height: 'auto', aspectRatio: '1251.6/572', display: 'block', objectFit: 'contain' }}
-          />
+        {/* Hero illustration — exact position from Figma node 1:219 */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          flex: 1,
+          display: 'flex', alignItems: 'flex-end',
+          marginBottom: 0,
+        }}>
+          <img src={imgHeroIllus} alt="Tradie workers" style={{
+            width: '100%', maxWidth: 680,
+            display: 'block', marginLeft: 'auto',
+          }} />
         </div>
       </section>
 
-      {/* ══ FEATURES / ROLE CARDS ══ */}
-      <section style={{ background: '#f6f8ff', padding: '80px 66px' }}>
+      {/* ════════ ECOSYSTEM — 3 cards, exact Figma layout ════════
+          Container: 1305×634px at page centre, cards 380×536 each
+          gaps: left=60, between=24, right=60+remaining             */}
+      <section style={{ background: radialBg, padding: '0 66px 80px' }}>
+        {/* Section wrapper — matches Figma 1305px container */}
         <div style={{
-          maxWidth: 1308, margin: '0 auto',
-          backgroundImage: radialGrad, backgroundSize: 'cover',
-          borderRadius: 34, padding: '55px 60px 40px',
-          position: 'relative', overflow: 'hidden',
+          position: 'relative',
+          borderRadius: 34,
+          padding: '55px 60px 80px',
+          background: radialBg,
+          overflow: 'hidden',
         }}>
-          {/* Decorative pills */}
-          <div style={{ position: 'absolute', left: 380, bottom: 30, width: 76, height: 80, borderRadius: 34, background: 'rgba(255,255,255,0.10)', pointerEvents: 'none' }}/>
-          <div style={{ position: 'absolute', right: 110, bottom: 20, width: 53, height: 56, borderRadius: 34, background: 'rgba(255,255,255,0.10)', pointerEvents: 'none' }}/>
-          <div style={{ position: 'absolute', right: 90, top: 34, width: 76, height: 79, borderRadius: 34, background: 'rgba(255,255,255,0.10)', pointerEvents: 'none' }}/>
-          <div style={{ position: 'absolute', left: 100, top: 100, width: 86, height: 92, borderRadius: 34, background: 'rgba(255,255,255,0.10)', pointerEvents: 'none' }}/>
-          <div style={{ position: 'absolute', right: 270, top: 75, width: 232, height: 248, borderRadius: 308, background: 'rgba(255,255,255,0.10)', pointerEvents: 'none' }}/>
 
-          {/* Header row */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 60, marginBottom: 44, position: 'relative', zIndex: 2 }}>
+          {/* Decorative white blobs (from Figma 1:363) */}
+          {[
+            { w:76,  h:80,  t:'77%', l:'25%',  op:0.1, br:34 },
+            { w:53,  h:56,  t:'82%', l:'89%',  op:0.1, br:34 },
+            { w:76,  h:79,  t:'5%',  l:'91%',  op:0.1, br:34 },
+            { w:86,  h:92,  t:'50%', l:'4%',   op:0.1, br:34 },
+            { w:232, h:248, t:'12%', l:'74%',  op:0.1, br:308 },
+          ].map((b,i) => (
+            <div key={i} style={{
+              position:'absolute', background:'#fff', borderRadius:b.br,
+              width:b.w, height:b.h, top:b.t, left:b.l, opacity:b.op, pointerEvents:'none',
+            }}/>
+          ))}
+
+          {/* Heading + subtitle row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 40, position: 'relative', zIndex: 1 }}>
             <h2 style={{
-              fontFamily: font, fontWeight: 700, fontSize: 48, color: '#fff',
-              lineHeight: 1.16, letterSpacing: -0.32, margin: 0, flex: '0 0 500px',
+              fontFamily: font, fontWeight: 800, fontSize: 48,
+              color: '#fff', margin: 0,
+              lineHeight: 1.15, maxWidth: 480, letterSpacing: '-0.32px',
             }}>
               A Powerful Ecosystem for the Trade Industry
             </h2>
             <p style={{
-              fontFamily: font, fontWeight: 500, fontSize: 20, color: '#fff',
-              lineHeight: 1.5, margin: 0, flex: 1, paddingTop: 8,
+              fontFamily: font, fontWeight: 500, fontSize: 18,
+              color: 'rgba(255,255,255,0.9)',
+              lineHeight: 1.5, maxWidth: 545, margin: 0, paddingTop: 8,
             }}>
               Whether you're looking for a career move, a top-tier hire, or professional training, Tradie App connects you to the right opportunity.
             </p>
           </div>
 
-          {/* 3 Cards */}
-          <div style={{ display: 'flex', gap: 24, position: 'relative', zIndex: 2, alignItems: 'flex-start' }}>
-
-            {/* ── Card 1 — Skilled Worker ── */}
-            <div style={{
-              width: 380, height: 536, borderRadius: 21, overflow: 'hidden',
-              position: 'relative', flexShrink: 0,
-              boxShadow: '0px 4px 24px 0px rgba(0,0,0,0.13)',
-            }}>
-              <img src={imgCardBg} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}/>
-              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 317, background: 'linear-gradient(to bottom, rgba(255,255,255,0) 32%, #fff 60%)', borderRadius: '0 0 21px 21px', zIndex: 1 }}/>
-              <p style={{ position: 'absolute', top: 28, left: 28, width: 285, fontFamily: font, fontWeight: 700, fontSize: 36, color: '#156dbf', lineHeight: 1.16, letterSpacing: -0.32, margin: 0, zIndex: 3 }}>
-                Launch Your Australian Career
-              </p>
-              <p style={{ position: 'absolute', top: 172, left: 28, width: 311, fontFamily: font, fontWeight: 500, fontSize: 16, color: '#8e8d92', lineHeight: 1.5, margin: 0, zIndex: 3 }}>
-                Get your skills verified, browse visa-sponsored roles, and access gap training to meet Australian licensing standards. Your global career starts here.
-              </p>
-              {/* Illustration */}
-              <div style={{ position: 'absolute', left: 0, top: 224, width: 380, height: 220, zIndex: 2 }}>
-                <img src={imgCard1Illus} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}/>
-              </div>
-              {/* FIX: Register as Skilled Worker */}
-              <button
-                onClick={() => navigate('/register?role=candidate')}
-                style={{
-                  position: 'absolute', bottom: 20, left: 28, zIndex: 4,
-                  background: '#156dbf', color: '#fff', border: 'none',
-                  borderRadius: 24, padding: '10px 22px',
-                  fontFamily: font, fontWeight: 700, fontSize: 14,
-                  cursor: 'pointer', boxShadow: '0 4px 12px rgba(21,109,191,0.35)',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#0f5ca0'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#156dbf'; e.currentTarget.style.transform = 'none' }}
-              >
-                👷 Register as Skilled Worker →
-              </button>
-            </div>
-
-            {/* ── Card 2 — Employer ── */}
-            <div style={{
-              width: 380, height: 536, borderRadius: 21, overflow: 'hidden',
-              position: 'relative', flexShrink: 0,
-              boxShadow: '0px 4px 24px 0px rgba(0,0,0,0.13)',
-            }}>
-              <img src={imgCardBg} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}/>
-              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 317, background: 'linear-gradient(to bottom, rgba(255,255,255,0) 32%, #fff 60%)', borderRadius: '0 0 21px 21px', zIndex: 1 }}/>
-              <p style={{ position: 'absolute', top: 28, left: 28, width: 285, fontFamily: font, fontWeight: 700, fontSize: 36, color: '#156dbf', lineHeight: 1.16, letterSpacing: -0.32, margin: 0, zIndex: 3 }}>
-                Hire Verified Skilled Workers
-              </p>
-              <p style={{ position: 'absolute', top: 172, left: 28, width: 311, fontFamily: font, fontWeight: 500, fontSize: 16, color: '#8e8d92', lineHeight: 1.5, margin: 0, zIndex: 3 }}>
-                Simplify your recruitment with verified background checks and sponsorship tools. Find the right tradie faster with AI-powered document search.
-              </p>
-              {/* Illustration */}
-              <div style={{ position: 'absolute', left: 0, top: 224, width: 437, height: 320, zIndex: 2 }}>
-                <img src={imgCard2Illus} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}/>
-              </div>
-              {/* FIX: Register as Employer */}
-              <button
-                onClick={() => navigate('/register?role=employer')}
-                style={{
-                  position: 'absolute', bottom: 20, left: 28, zIndex: 4,
-                  background: '#0d7377', color: '#fff', border: 'none',
-                  borderRadius: 24, padding: '10px 22px',
-                  fontFamily: font, fontWeight: 700, fontSize: 14,
-                  cursor: 'pointer', boxShadow: '0 4px 12px rgba(13,115,119,0.35)',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#085c60'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#0d7377'; e.currentTarget.style.transform = 'none' }}
-              >
-                🏢 Register as Employer →
-              </button>
-            </div>
-
-            {/* ── Card 3 — Training Provider ── */}
-            <div style={{
-              width: 380, height: 536, borderRadius: 21, overflow: 'hidden',
-              position: 'relative', flexShrink: 0,
-              boxShadow: '0px 4px 24px 0px rgba(0,0,0,0.13)',
-            }}>
-              <img src={imgCardBg} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}/>
-              <div style={{ position: 'absolute', left: 0, right: 0, top: 107, height: 429, background: 'linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1) 78%)', borderRadius: '0 0 21px 21px', zIndex: 1 }}/>
-              {/* Illustration at top */}
-              <div style={{ position: 'absolute', left: -47, top: -95, width: 500, height: 480, zIndex: 2, transform: 'rotate(-14.73deg)' }}>
-                <img src={imgCard3Illus} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}/>
-              </div>
-              <p style={{ position: 'absolute', top: 316, left: 34, width: 285, fontFamily: font, fontWeight: 700, fontSize: 36, color: '#156dbf', lineHeight: 1.16, letterSpacing: -0.32, margin: 0, zIndex: 3 }}>
-                Enroll the Next Generation
-              </p>
-              <p style={{ position: 'absolute', top: 440, left: 34, width: 295, fontFamily: font, fontWeight: 500, fontSize: 14, color: '#8e8d92', lineHeight: 1.5, margin: 0, zIndex: 3 }}>
-                List your RTO courses and certification programs directly to students and workers looking to upskill or convert their international licenses.
-              </p>
-              {/* FIX: Register as Training Provider */}
-              <button
-                onClick={() => navigate('/register?role=training_provider')}
-                style={{
-                  position: 'absolute', bottom: 20, left: 34, zIndex: 4,
-                  background: '#7c3aed', color: '#fff', border: 'none',
-                  borderRadius: 24, padding: '10px 22px',
-                  fontFamily: font, fontWeight: 700, fontSize: 14,
-                  cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.35)',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#6d28d9'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#7c3aed'; e.currentTarget.style.transform = 'none' }}
-              >
-                📚 Register as Trainer →
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ══ HOW IT WORKS ══ */}
-      <section style={{ background: '#fff', padding: '100px 66px' }}>
-        <div style={{ maxWidth: 1308, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 72 }}>
-            <p style={{ fontFamily: font, fontWeight: 600, fontSize: 14, color: '#156dbf', letterSpacing: 2, textTransform: 'uppercase', margin: '0 0 12px' }}>
-              How It Works
-            </p>
-            <h2 style={{ fontFamily: font, fontWeight: 800, fontSize: 'clamp(2rem,3.5vw,2.8rem)', color: '#1a1a2e', lineHeight: 1.2, margin: '0 0 16px' }}>
-              Three Simple Steps to<br/><span style={{ color: '#156dbf' }}>Your Next Opportunity</span>
-            </h2>
-            <p style={{ fontFamily: font, fontSize: 17, color: '#6a7380', lineHeight: 1.7, maxWidth: 520, margin: '0 auto' }}>
-              Whether you're a tradie, employer, or training provider — getting started takes minutes.
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 80 }}>
-
-            {/* Step 1 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 60, flexWrap: 'wrap' }}>
-              <img src={imgStep1} alt="Create profile" style={{ width: 477, height: 363, maxWidth: '100%', display: 'block', objectFit: 'contain', flexShrink: 0 }}/>
-              <div style={{ flex: 1, minWidth: 280 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: '50%', background: '#e8f0ff', marginBottom: 16 }}>
-                  <span style={{ fontFamily: font, fontWeight: 800, fontSize: 18, color: '#156dbf' }}>1</span>
-                </div>
-                <h3 style={{ fontFamily: font, fontWeight: 800, fontSize: 32, color: '#1a1a2e', lineHeight: 1.25, margin: '0 0 16px' }}>
-                  Create Your Profile
-                </h3>
-                <p style={{ fontFamily: font, fontWeight: 400, fontSize: 17, color: '#6a7380', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 420 }}>
-                  Sign up and build your professional profile in minutes. Upload your licences, trade certificates, and work history. Our AI verifies and indexes everything automatically.
-                </p>
+          {/* Cards row — exact Figma gaps: 24px between cards */}
+          <div style={{ display: 'flex', gap: 24, position: 'relative', zIndex: 1 }}>
+            {cards.map(card => (
+              <div key={card.id} style={{ position: 'relative' }}>
+                <EcosystemCard card={card} />
+                {/* CTA button below card text */}
                 <button
-                  onClick={() => navigate('/register')}
+                  onClick={() => navigate(card.to)}
                   style={{
-                    background: '#156dbf', color: '#fff', border: 'none',
-                    borderRadius: 32, padding: '12px 32px', fontFamily: font,
-                    fontWeight: 700, fontSize: 15, cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(21,109,191,0.3)', transition: 'all 0.2s',
+                    position: 'absolute',
+                    bottom: 24, left: 28,
+                    height: 40, padding: '0 20px',
+                    background: blue, color: '#fff', border: 'none',
+                    borderRadius: 20, fontFamily: font, fontWeight: 700,
+                    fontSize: 14, cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(21,109,191,0.35)',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#0f5ca0'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#156dbf'}
-                >
-                  Get Started Free
-                </button>
+                  onMouseEnter={e => e.currentTarget.style.background = '#0d5da0'}
+                  onMouseLeave={e => e.currentTarget.style.background = blue}
+                >{card.cta} →</button>
               </div>
-            </div>
-
-            {/* Step 2 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 60, flexWrap: 'wrap', flexDirection: 'row-reverse' }}>
-              <img src={imgStep2} alt="Find your match" style={{ width: 443, height: 494, maxWidth: '100%', display: 'block', objectFit: 'contain', flexShrink: 0 }}/>
-              <div style={{ flex: 1, minWidth: 280 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: '50%', background: '#e8f0ff', marginBottom: 16 }}>
-                  <span style={{ fontFamily: font, fontWeight: 800, fontSize: 18, color: '#156dbf' }}>2</span>
-                </div>
-                <h3 style={{ fontFamily: font, fontWeight: 800, fontSize: 32, color: '#1a1a2e', lineHeight: 1.25, margin: '0 0 16px' }}>
-                  Find Your Perfect Match
-                </h3>
-                <p style={{ fontFamily: font, fontWeight: 400, fontSize: 17, color: '#6a7380', lineHeight: 1.7, margin: 0, maxWidth: 420 }}>
-                  Employers search verified candidates using AI-powered document search. Tradies browse visa-sponsored roles. Training providers connect with workers who need gap training. Let the platform do the heavy lifting.
-                </p>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 60, flexWrap: 'wrap' }}>
-              <img src={imgStep3} alt="Sign enrol and start" style={{ width: 506, height: 577, maxWidth: '100%', display: 'block', objectFit: 'contain', flexShrink: 0 }}/>
-              <div style={{ flex: 1, minWidth: 280 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: '50%', background: '#e8f0ff', marginBottom: 16 }}>
-                  <span style={{ fontFamily: font, fontWeight: 800, fontSize: 18, color: '#156dbf' }}>3</span>
-                </div>
-                <h3 style={{ fontFamily: font, fontWeight: 800, fontSize: 32, color: '#1a1a2e', lineHeight: 1.25, margin: '0 0 16px' }}>
-                  Sign, Enrol, and Start
-                </h3>
-                <p style={{ fontFamily: font, fontWeight: 400, fontSize: 17, color: '#6a7380', lineHeight: 1.7, margin: 0, maxWidth: 420 }}>
-                  Once you've found your perfect opportunity or training program, finalise everything within the Tradie App. From offer to onboarding in days, not months.
-                </p>
-              </div>
-            </div>
-
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ══ FAQ ══ */}
-      <section style={{ background: '#f6f8ff', padding: '100px 66px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ maxWidth: 1308, margin: '0 auto', display: 'flex', gap: 80, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      {/* ════════ 3 EASY STEPS ════════ */}
+      <section style={{ background: '#fff', padding: '80px 66px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 60 }}>
+          <h2 style={{
+            fontFamily: font, fontWeight: 800, fontSize: 48,
+            color: dark, margin: '0 0 16px', letterSpacing: '-0.3px',
+          }}>
+            Your Path to Success in<br />3 Easy Steps
+          </h2>
+          <p style={{ fontFamily: font, fontWeight: 500, fontSize: 18, color: text2, lineHeight: 1.6, maxWidth: 520, margin: '0 auto' }}>
+            Whether you're hiring or looking for work, we've simplified the process to get you moving faster.
+          </p>
+        </div>
 
-          {/* Left — heading + accordion */}
-          <div style={{ flex: 1, minWidth: 340 }}>
-            <h2 style={{ fontFamily: font, fontWeight: 800, fontSize: 'clamp(2rem,3.5vw,2.8rem)', color: '#1a1a2e', lineHeight: 1.2, margin: '0 0 16px' }}>
-              Got Questions?<br/><span style={{ color: '#156dbf' }}>We've Got Answers.</span>
+        <div style={{ display: 'flex', gap: 80, alignItems: 'flex-start', maxWidth: 1150, margin: '0 auto' }}>
+          {/* Steps list with Figma-style number + connecting line */}
+          <div style={{ flex: 1 }}>
+            {[
+              {
+                num: '1', title: 'Build a Profile That Stands Out',
+                desc: 'Register and upload your credentials. We verify your licences and qualifications so you can connect with confidence.',
+              },
+              {
+                num: '2', title: 'Find Your Perfect Industry Match',
+                desc: 'Our smart dashboard connects skilled tradies with employers and links students to the right training programs.',
+              },
+              {
+                num: '3', title: 'Sign, Enrol, and Start',
+                desc: 'Once matched, accept your employer sponsorship or enrol in your course. Tradie App handles the paperwork.',
+              },
+            ].map((step, i) => (
+              <div key={i} style={{ display: 'flex', gap: 0, marginBottom: i < 2 ? 0 : 0 }}>
+                {/* Number column with Figma line+dot assets */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 180, flexShrink: 0 }}>
+                  <span style={{
+                    fontFamily: font, fontWeight: 800, fontSize: 149.637,
+                    color: blue, lineHeight: 1.01,
+                    letterSpacing: '-0.7147px',
+                    display: 'block',
+                    marginLeft: i === 1 ? 38 : i === 2 ? -44 : -27,
+                  }}>{step.num}</span>
+                  {i < 2 && (
+                    <div style={{ position: 'relative', width: 88.873, height: 120 }}>
+                      <img src={imgStepsLine} alt="" style={{ position: 'absolute', left: -1.26, top: 0, width: '102.52%', height: '100%' }} />
+                      <img src={imgStepsDot} alt="" style={{
+                        position: 'absolute',
+                        top: i === 0 ? 126.07 - 149.637 : 10,
+                        left: i === 0 ? 97.27 - 86.46 : 87.52,
+                        width: 31.267, height: 31.267,
+                      }} />
+                    </div>
+                  )}
+                </div>
+                {/* Step text */}
+                <div style={{ paddingTop: 20, flex: 1 }}>
+                  <h3 style={{
+                    fontFamily: font, fontWeight: 700, fontSize: 26,
+                    color: dark, margin: '0 0 12px', letterSpacing: '-0.2px',
+                  }}>{step.title}</h3>
+                  <p style={{ fontFamily: font, fontWeight: 500, fontSize: 16, color: text2, lineHeight: 1.65, margin: 0 }}>
+                    {step.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <button onClick={() => navigate('/register')} style={{
+              marginTop: 48, height: 52, padding: '0 32px',
+              background: blue, color: '#fff', border: 'none', borderRadius: 28,
+              fontFamily: font, fontWeight: 700, fontSize: 16, cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(21,109,191,0.35)',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#0d5da0'}
+            onMouseLeave={e => e.currentTarget.style.background = blue}
+            >Get Started Now →</button>
+          </div>
+
+          {/* Steps illustration — node 1:731, full SVG */}
+          <div style={{ flexShrink: 0, width: 460 }}>
+            <img src={imgStepsIllus} alt="Steps" style={{ width: '100%', display: 'block' }} />
+          </div>
+        </div>
+      </section>
+
+      {/* ════════ FAQ — exact Figma layout ════════
+          Left: FAQ list width=745.887px  |  Right: illustration  */}
+      <section style={{ background: '#f8faff', padding: '80px 66px' }}>
+        <div style={{ display: 'flex', gap: 80, alignItems: 'flex-start', maxWidth: 1310, margin: '0 auto' }}>
+
+          {/* Left — FAQ list */}
+          <div style={{ flex: '0 0 745.887px' }}>
+            <h2 style={{
+              fontFamily: font, fontWeight: 800, fontSize: 48,
+              color: blue, margin: '0 0 8px',
+              letterSpacing: '-0.3px', lineHeight: 1.01,
+            }}>
+              Got Questions?<br />We've Got Answers.
             </h2>
-            <p style={{ fontFamily: font, fontSize: 16, color: '#6a7380', margin: '0 0 40px', lineHeight: 1.7, maxWidth: 460 }}>
-              Find quick answers to common inquiries and learn how we help tradies, employers, and trainers connect safely and efficiently across Australia.
+            <p style={{
+              fontFamily: font, fontWeight: 500, fontSize: 16,
+              color: text2, lineHeight: 1.6,
+              margin: '0 0 36px', maxWidth: 460,
+            }}>
+              Find answers to the most common questions about visa sponsorship, trade verification, and how the platform works.
             </p>
-            <div>
-              {FAQS.map(({ q, a }) => (
-                <FaqItem key={q} q={q} a={a} />
+            <div style={{ paddingLeft: 7.05, paddingTop: 89.62 * 0.15 }}>
+              {FAQS.map((faq, i) => (
+                <FaqItem key={i} q={faq.q} a={faq.a} last={i === FAQS.length - 1} />
               ))}
             </div>
           </div>
 
-          {/* Right — illustration */}
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img
-              src={imgFaqIllus} alt="FAQ illustration"
-              style={{ width: 420, height: 412, maxWidth: '100%', display: 'block', objectFit: 'contain' }}
-            />
+          {/* Right — illustration (undraw_about-me + faq illus) */}
+          <div style={{ flex: 1, paddingTop: 20, display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <img src={imgAboutMe} alt="About" style={{ width: '100%', display: 'block' }} />
+            <img src={imgFaqIllus} alt="Support" style={{ width: '100%', display: 'block' }} />
           </div>
         </div>
       </section>
 
-      {/* ══ CTA BANNER ══ */}
-      <section style={{ padding: '80px 66px', background: '#fff' }}>
+      {/* ════════ BOTTOM CTA BANNER ════════
+          Figma node 1:859 — 547.931×482.094px card + 712.217×700.234px illustration  */}
+      <section style={{ background: '#fff', padding: '60px 66px 80px' }}>
         <div style={{
-          maxWidth: 1308, margin: '0 auto',
-          backgroundImage: radialGrad, backgroundSize: 'cover',
-          borderRadius: 34, padding: '60px 80px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: 40, flexWrap: 'wrap', position: 'relative', overflow: 'hidden',
+          maxWidth: 1200, margin: '0 auto',
+          position: 'relative', overflow: 'hidden',
+          borderRadius: 37.338,
+          display: 'flex', alignItems: 'center',
+          minHeight: 482,
         }}>
-          <div style={{ position: 'absolute', inset: 0, borderRadius: 34, pointerEvents: 'none' }}/>
-          <div style={{ position: 'relative', zIndex: 2, flex: 1, minWidth: 300 }}>
-            <h2 style={{ fontFamily: font, fontWeight: 700, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', color: '#fff', lineHeight: 1.2, margin: '0 0 16px' }}>
-              Ready to Transform Your Trade Career?
-            </h2>
-            <p style={{ fontFamily: font, fontWeight: 400, fontSize: 18, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, margin: '0 0 36px', maxWidth: 420 }}>
-              Join Australia's leading network of verified trades, top employers, and RTO trainers.
-            </p>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              {/* FIX: stays as /register — role picker handles the rest */}
-              <button
-                onClick={() => navigate('/register')}
-                style={{
-                  background: '#fff', color: '#156dbf', border: 'none', borderRadius: 32,
-                  padding: '14px 36px', fontFamily: font, fontWeight: 700, fontSize: 16,
-                  cursor: 'pointer', transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f0f7ff'}
-                onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-              >
-                Join for Free
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                style={{
-                  background: 'transparent', color: '#fff',
-                  border: '1.5px solid rgba(255,255,255,0.7)',
-                  borderRadius: 32, padding: '14px 36px', fontFamily: font,
-                  fontWeight: 600, fontSize: 16, cursor: 'pointer', transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                Login
-              </button>
-            </div>
+          {/* Gradient card bg (Figma radial — same palette) */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: radialBg,
+            borderRadius: 37.338,
+          }} />
+
+          {/* White blob decorations */}
+          {[
+            { w:31.877, h:98.575, t:'79%', l:'23%', br:93 },
+            { w:21.915, h:67.77,  t:'88%', l:'52%', br:93 },
+            { w:31.877, h:98.575, t:'5%',  l:'53%', br:93 },
+            { w:36.369, h:113.978,t:'49%', l:'13%', br:93 },
+            { w:97.845, h:308.047,t:'56%', l:'13%', br:112 },
+          ].map((b,i) => (
+            <div key={i} style={{
+              position:'absolute', background:'#fff', borderRadius:b.br,
+              width:b.w, height:b.h, top:b.t, left:b.l, opacity:0.1, pointerEvents:'none',
+            }}/>
+          ))}
+
+          {/* Illustration left — node 1:868 (712.217×700.234) */}
+          <div style={{
+            position: 'absolute', left: 0, top: 0,
+            width: 712.217, height: '100%',
+            zIndex: 0,
+          }}>
+            <img src={imgFaqIllus} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'left center' }} />
           </div>
-          <div style={{ position: 'relative', zIndex: 2, flexShrink: 0 }}>
-            <img
-              src={imgHero} alt="Trade workers"
-              style={{ width: 520, height: 240, maxWidth: '100%', display: 'block', objectFit: 'contain', objectPosition: 'center' }}
-            />
+
+          {/* Text content right */}
+          <div style={{
+            marginLeft: 'auto', width: 520,
+            position: 'relative', zIndex: 1,
+            padding: '60px 60px 60px 0',
+          }}>
+            <h2 style={{
+              fontFamily: font, fontWeight: 800, fontSize: 42,
+              color: '#fff', margin: '0 0 16px',
+              letterSpacing: '-0.3px', lineHeight: 1.2,
+            }}>
+              Build Your Future<br />with Tradie App
+            </h2>
+            <p style={{
+              fontFamily: font, fontWeight: 500, fontSize: 17,
+              color: 'rgba(255,255,255,0.88)', lineHeight: 1.6,
+              margin: '0 0 32px', maxWidth: 420,
+            }}>
+              Join thousands of skilled tradespeople and employers already using Tradie Migration to connect, verify, and grow.
+            </p>
+            <div style={{ display: 'flex', gap: 16 }}>
+              <button onClick={() => navigate('/register?role=candidate')} style={{
+                height: 52, padding: '0 28px', background: '#fff', color: blue,
+                border: 'none', borderRadius: 28,
+                fontFamily: font, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#eaf2fc'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+              >Find Jobs →</button>
+              <button onClick={() => navigate('/register?role=employer')} style={{
+                height: 52, padding: '0 28px',
+                background: 'rgba(255,255,255,0.15)',
+                color: '#fff',
+                border: '1.5px solid rgba(255,255,255,0.5)', borderRadius: 28,
+                fontFamily: font, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+              >Hire Talent →</button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ══ FOOTER ══ */}
-      <footer style={{ background: '#fff', padding: '40px 66px 0', borderTop: '1px solid #f0f0f4' }}>
-        <div style={{ maxWidth: 1308, margin: '0 auto' }}>
+      {/* ════════ FOOTER ════════ */}
+      <footer style={{
+        background: '#fff',
+        borderTop: '1px solid #e5e7eb',
+        padding: '36px 66px 24px',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', marginBottom: 24,
+        }}>
+          <span onClick={() => navigate('/')} style={{
+            fontFamily: fontMohave, fontWeight: 600, fontSize: 28, cursor: 'pointer',
+          }}>
+            <span style={{ color: orange }}>T</span>
+            <span style={{ color: blue }}>radie Migration</span>
+          </span>
 
-          {/* Top row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 32, flexWrap: 'wrap', gap: 24 }}>
-            <span style={{ fontFamily: fontMohave, fontWeight: 600, fontSize: 28, cursor: 'pointer' }} onClick={() => navigate('/')}>
-              <span style={{ color: '#f26f37' }}>T</span>
-              <span style={{ color: '#156dbf' }}>radie Migration</span>
-            </span>
-            <nav style={{ display: 'flex', gap: 48 }}>
-              {['Find Jobs', 'Hire Talent', 'About', 'Contact'].map(l => (
-                <a key={l} href="#" style={{ fontFamily: font, fontWeight: 400, fontSize: 16, color: '#343434', textDecoration: 'none' }}>{l}</a>
-              ))}
-            </nav>
-            <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-              {/* Twitter */}
-              <a href="#" style={{ color: '#343434', display: 'block' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/></svg>
-              </a>
-              {/* Facebook */}
-              <a href="#" style={{ color: '#343434', display: 'block' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 3H4a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h8.615v-6.96h-2.338v-2.725h2.338v-2c0-2.325 1.42-3.592 3.5-3.592.699-.002 1.399.034 2.095.107v2.42h-1.435c-1.128 0-1.348.538-1.348 1.325v1.74h2.697l-.35 2.725h-2.348V21H20a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z"/></svg>
-              </a>
-              {/* Instagram */}
-              <a href="#" style={{ color: '#343434', display: 'block' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-              </a>
-              {/* LinkedIn */}
-              <a href="#" style={{ color: '#343434', display: 'block' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
-              </a>
-            </div>
+          <div style={{ display: 'flex', gap: 40 }}>
+            {['Find Jobs','Hire Talent','About','Contact'].map(l => (
+              <a key={l} href="#" style={{ fontFamily: font, fontSize: 15, color: text2, textDecoration: 'none' }}
+                onMouseEnter={e => e.currentTarget.style.color = blue}
+                onMouseLeave={e => e.currentTarget.style.color = text2}
+              >{l}</a>
+            ))}
           </div>
 
-          {/* Divider */}
-          <div style={{ height: 1, background: '#f0f0f4', margin: '0 0 24px' }}/>
-
-          {/* Bottom row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 32, flexWrap: 'wrap', gap: 16 }}>
-            <p style={{ fontFamily: font, fontSize: 14, color: '#9ca3af', margin: 0 }}>
-              © {new Date().getFullYear()} Tradie Migration. All rights reserved.
-            </p>
-            <div style={{ display: 'flex', gap: 32 }}>
-              {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(l => (
-                <a key={l} href="#" style={{ fontFamily: font, fontSize: 14, color: '#9ca3af', textDecoration: 'none' }}>{l}</a>
-              ))}
-            </div>
+          <div style={{ display: 'flex', gap: 20 }}>
+            {[
+              { d:'M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z' },
+              { d:'M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z' },
+              { d:'M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zm1.5-4.87h.01M7.5 20.5h9a5 5 0 005-5v-9a5 5 0 00-5-5h-9a5 5 0 00-5 5v9a5 5 0 005 5z' },
+              { d:'M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22' },
+            ].map(({ d }, i) => (
+              <a key={i} href="#" style={{ color: text2, display: 'flex' }}
+                onMouseEnter={e => e.currentTarget.style.color = blue}
+                onMouseLeave={e => e.currentTarget.style.color = text2}
+              >
+                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={d}/>
+                </svg>
+              </a>
+            ))}
           </div>
+        </div>
 
+        <div style={{
+          borderTop: '1px solid #e5e7eb', paddingTop: 18,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <span style={{ fontFamily: font, fontSize: 13, color: text2 }}>
+            © Copyright Tradie Migration 2026. All Rights Reserved
+          </span>
+          <div style={{ display: 'flex', gap: 24 }}>
+            {['Privacy Policy','Terms & Conditions'].map(l => (
+              <a key={l} href="#" style={{ fontFamily: font, fontSize: 13, color: text2, textDecoration: 'none' }}
+                onMouseEnter={e => e.currentTarget.style.color = blue}
+                onMouseLeave={e => e.currentTarget.style.color = text2}
+              >{l}</a>
+            ))}
+          </div>
         </div>
       </footer>
 

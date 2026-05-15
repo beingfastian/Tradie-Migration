@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CompanyLayout } from './CompanyLayout'
-import { getToken, getMe, searchCandidates, submitEoiAsEmployer, ragSearch, listJobs } from '../../services/api'
+import { getToken, getMe, getMyCompany, searchCandidates, submitEoiAsEmployer, ragSearch, listJobs, inviteCandidate } from '../../services/api'
 
 const font = "'Urbanist', sans-serif"
 
@@ -492,21 +492,41 @@ export function CompanyFindCandidates() {
   useEffect(() => {
     const token = getToken()
     if (!token) { setLoading(false); return }
-    getMe(token)
-      .then(u => {
+
+    async function loadData() {
+      try {
+        const u = await getMe(token)
         setUser(u)
-        return Promise.all([
-          searchCandidates({ published: true }, token),
-          listJobs({ status: 'Hiring' }, token),
-        ])
-      })
-      .then(([candData, jobData]) => {
-        const list = Array.isArray(candData) ? candData : (candData.items || [])
-        setCandidates(list)
-        setActiveJobs(Array.isArray(jobData) ? jobData : [])
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+      } catch { setLoading(false); return }
+
+      // Get employer's company ID first so we can filter jobs to their own postings
+      let companyId = null
+      try {
+        const co = await getMyCompany(token)
+        companyId = co?.id || null
+      } catch { /* company not found — jobs dropdown will be empty */ }
+
+      // Load candidates and jobs independently so one failure doesn't block the other
+      const jobParams = { status: 'Hiring', ...(companyId ? { employer_company_id: companyId } : {}) }
+      const [candResult, jobResult] = await Promise.allSettled([
+        searchCandidates({ published: true }, token),
+        listJobs(jobParams, token),
+      ])
+
+      if (candResult.status === 'fulfilled') {
+        const data = candResult.value
+        setCandidates(Array.isArray(data) ? data : (data.items || []))
+      }
+
+      if (jobResult.status === 'fulfilled') {
+        const data = jobResult.value
+        setActiveJobs(Array.isArray(data) ? data : (data.items || []))
+      }
+
+      setLoading(false)
+    }
+
+    loadData()
   }, [])
 
   /* ── RAG search handler — called on Enter or search button click ── */
@@ -596,7 +616,21 @@ export function CompanyFindCandidates() {
         <InviteModal
           activeJobs={activeJobs}
           onClose={() => setShowInvite(false)}
-          onSend={data => { alert(`Invitation sent to ${data.email}`); setShowInvite(false) }}
+          onSend={async (data) => {
+            if (!data.job)   { alert('Please select a job posting.');      return }
+            if (!data.email) { alert('Please enter the candidate email.'); return }
+            const token = getToken()
+            try {
+              const res = await inviteCandidate(
+                { job_id: data.job, candidate_email: data.email, message: data.note || '' },
+                token,
+              )
+              alert(res.message || `Invitation sent to ${data.email}!`)
+              setShowInvite(false)
+            } catch (err) {
+              alert(err.detail || err.message || 'Failed to send invitation. Please try again.')
+            }
+          }}
         />
       )}
 

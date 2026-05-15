@@ -31,7 +31,7 @@ from backend.api.routes import (
     documents,
     migration_agents,
     jobs,
-    dev_login,
+    # dev_login,  # detached — do not push to production
 )
 
 
@@ -88,7 +88,7 @@ app.include_router(rag.router,                prefix="/rag",       tags=["RAG / 
 app.include_router(documents.router,          prefix="/documents", tags=["Document Management"])
 app.include_router(migration_agents.router,   prefix="/agents",    tags=["Migration Agents"])
 app.include_router(jobs.router,               prefix="/jobs",      tags=["Job Postings"])
-app.include_router(dev_login.router,          prefix="/auth",      tags=["Dev Tools"])
+# app.include_router(dev_login.router,          prefix="/auth",      tags=["Dev Tools"])  # detached
 
 
 # ── Health Check ───────────────────────────────────────────────────────────────

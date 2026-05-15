@@ -290,3 +290,60 @@ async def delete_job(
     await db.delete(job)
     await db.commit()
     return None
+
+
+# ── Invite candidate to a job ─────────────────────────────────────────────────
+
+class InviteRequest(BaseModel):
+    job_id: str
+    candidate_email: str
+    message: str = ""
+
+
+@router.post("/invite", status_code=200)
+async def invite_candidate(
+    payload: InviteRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles("employer")),
+):
+    """Employer invites a candidate (by email) to apply for one of their jobs."""
+    # Find company — no approval check needed just to send an invitation email
+    co_result = await db.execute(
+        select(EmployerCompany).where(EmployerCompany.owner_user_id == current_user.id)
+    )
+    company = co_result.scalar_one_or_none()
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found. Please register your company first.")
+
+    try:
+        job_uuid = uuid.UUID(payload.job_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="job_id must be a valid UUID")
+
+    # Job just needs to belong to this employer's company
+    result = await db.execute(
+        select(JobPosting).where(
+            and_(JobPosting.id == job_uuid, JobPosting.employer_company_id == company.id)
+        )
+    )
+    job = result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job posting not found or you don't own it")
+
+    from backend.utils.email_service import send_job_invitation_email
+    sent = await send_job_invitation_email(
+        to_email=payload.candidate_email,
+        candidate_name="",
+        job_title=job.title,
+        company_name=company.company_name,
+        message=payload.message,
+    )
+
+    return {
+        "sent": sent,
+        "message": (
+            f"Invitation sent to {payload.candidate_email}."
+            if sent else
+            "Invitation recorded but email delivery failed. Check backend logs."
+        ),
+    }

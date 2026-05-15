@@ -88,6 +88,66 @@ async def send_otp_email(to_email: str, otp: str) -> bool:
     return sent
 
 
+async def send_job_invitation_email(
+    to_email: str,
+    candidate_name: str,
+    job_title: str,
+    company_name: str,
+    message: str,
+    job_url: str = "",
+) -> bool:
+    """Send a job invitation email from an employer to a candidate."""
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    apply_link = job_url or f"{frontend_url}/worker/jobs"
+
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;
+                padding: 32px; background: #f9fafb; border-radius: 8px;">
+      <h2 style="color: #0f172a; margin-bottom: 4px;">You've been invited to apply!</h2>
+      <p style="color: #475569; font-size: 14px; margin-bottom: 24px;">
+        <strong>{company_name}</strong> thinks you'd be a great fit for a role on their team.
+      </p>
+
+      <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:20px 24px; margin-bottom:24px;">
+        <div style="font-size:13px; color:#64748b; margin-bottom:4px;">Role</div>
+        <div style="font-size:18px; font-weight:700; color:#0f172a; margin-bottom:16px;">{job_title}</div>
+        <div style="font-size:13px; color:#64748b; margin-bottom:4px;">Message from {company_name}</div>
+        <div style="font-size:14px; color:#334155; line-height:1.6;">{message or "We came across your profile and think you'd be a great fit for our team. Let's chat!"}</div>
+      </div>
+
+      <a href="{apply_link}"
+         style="display:inline-block; background:#156dbf; color:#fff; padding:14px 28px;
+                border-radius:8px; text-decoration:none; font-weight:600; font-size:15px;">
+        View Job &amp; Apply
+      </a>
+
+      <p style="color:#94a3b8; font-size:12px; margin-top:28px;">
+        You received this because your profile is active on Tradie Migration App.
+        If you're not interested, you can ignore this email.
+      </p>
+    </div>
+    """
+    msg = _build_email(
+        to_email,
+        f"You've been invited to apply — {job_title} at {company_name}",
+        html_body,
+    )
+    sent = await _dispatch(msg)
+    if sent:
+        _logger.info("Job invitation sent to %s for job '%s'", to_email, job_title)
+    else:
+        _logger.warning(
+            "\n"
+            "╔══════════════════════════════════════════════════════╗\n"
+            "║  JOB INVITATION EMAIL FAILED — DEV FALLBACK          ║\n"
+            "║  To    : %-43s ║\n"
+            "║  Job   : %-43s ║\n"
+            "╚══════════════════════════════════════════════════════╝",
+            to_email, job_title,
+        )
+    return sent
+
+
 async def send_password_reset_email(to_email: str, otp: str) -> bool:
     """Send a 6-digit password-reset OTP via Gmail SMTP."""
     html_body = f"""

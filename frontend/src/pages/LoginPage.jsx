@@ -67,7 +67,25 @@ export function LoginPage() {
   const [errors,  setErrors]  = useState({})
   const [apiErr,  setApiErr]  = useState('')
   const [loading, setLoading] = useState(false)
-  const [devLoading, setDevLoading] = useState('')
+  const [devLoading,  setDevLoading]  = useState('')
+  const [testEmail,   setTestEmail]   = useState('')
+  const [testResult,  setTestResult]  = useState(null)
+  const [testLoading, setTestLoading] = useState(false)
+
+  async function handleTestEmail() {
+    if (!testEmail) return
+    setTestLoading(true)
+    setTestResult(null)
+    try {
+      const res  = await fetch(`${API_BASE}/auth/dev-test-email?to=${encodeURIComponent(testEmail)}`)
+      const data = await res.json()
+      setTestResult(data)
+    } catch (err) {
+      setTestResult({ sent: false, message: err.message })
+    } finally {
+      setTestLoading(false)
+    }
+  }
 
   async function handleDevLogin(role, redirect) {
     setDevLoading(role)
@@ -361,6 +379,54 @@ export function LoginPage() {
                   {devLoading === role ? 'Loading…' : label}
                 </button>
               ))}
+            </div>
+
+            {/* ── Test Email ── */}
+            <div style={{ marginTop: 16, borderTop: '1px dashed #f59e0b', paddingTop: 14 }}>
+              <div style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 8 }}>
+                📧 Test Email (SMTP check)
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="email"
+                  placeholder="Enter email to test OTP send"
+                  value={testEmail}
+                  onChange={e => { setTestEmail(e.target.value); setTestResult(null) }}
+                  style={{
+                    flex: 1, height: 38, padding: '0 12px',
+                    border: '1.5px solid #f59e0b', borderRadius: 8,
+                    fontFamily: font, fontSize: 13, outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={handleTestEmail}
+                  disabled={testLoading || !testEmail}
+                  style={{
+                    height: 38, padding: '0 14px',
+                    background: testLoading ? '#9ca3af' : '#f59e0b',
+                    color: '#fff', border: 'none', borderRadius: 8,
+                    fontFamily: font, fontSize: 13, fontWeight: 700,
+                    cursor: testLoading || !testEmail ? 'not-allowed' : 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {testLoading ? 'Sending…' : 'Send Test OTP'}
+                </button>
+              </div>
+              {testResult && (
+                <div style={{
+                  marginTop: 8, padding: '10px 12px', borderRadius: 8, fontSize: 12,
+                  fontFamily: font, lineHeight: 1.5,
+                  background: testResult.sent ? '#dcfce7' : '#fee2e2',
+                  border: `1px solid ${testResult.sent ? '#86efac' : '#fca5a5'}`,
+                  color: testResult.sent ? '#166534' : '#b91c1c',
+                }}>
+                  {testResult.sent ? '✅' : '❌'} {testResult.message}
+                  {testResult.sent && testResult.otp && (
+                    <span style={{ marginLeft: 8, fontWeight: 700 }}>OTP: {testResult.otp}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
