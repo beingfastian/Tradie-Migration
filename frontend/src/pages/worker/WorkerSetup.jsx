@@ -11,6 +11,10 @@ import {
 } from '../../services/api'
 import { MOCK_USER, MOCK_PROFILE } from './mockData'
 
+// Local assets
+import wdEllipseRing from '../../assets/worker-dashboard/wd-ellipse-ring.png'
+import wdAvatar2     from '../../assets/worker-dashboard/wd-avatar2.png'
+
 const font = "'Urbanist', sans-serif"
 
 const COUNTRIES = [
@@ -185,22 +189,23 @@ function MultiSelect({ placeholder, selected, onChange, options }) {
 
 function PhotoUpload({ photo, onPhoto, step }) {
   const fileRef = useRef(null)
-  const size = 180, stroke = 10
+  const size = 300, stroke = 12
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
   const pcts = [0.30, 0.65, 0.90]
   const offset = circ - (pcts[step - 1] || 0.30) * circ
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-      <p style={{ fontFamily:font, fontSize:14, fontWeight:600, color:'#343434', margin:0 }}>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14, width:300, flexShrink:0 }}>
+      <p style={{ fontFamily:font, fontSize:15, fontWeight:700, color:'#343434', margin:0, alignSelf:'flex-start' }}>
         Upload Profile Picture
       </p>
       <div
         style={{ position:'relative', width:size, height:size, cursor:'pointer' }}
         onClick={() => fileRef.current?.click()}
       >
-        <svg width={size} height={size} style={{ transform:'rotate(-90deg)', position:'absolute', inset:0 }}>
+        {/* Progress ring */}
+        <svg width={size} height={size} style={{ transform:'rotate(-90deg)', position:'absolute', inset:0, zIndex:2 }}>
           <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e0dff0" strokeWidth={stroke}/>
           <circle cx={size/2} cy={size/2} r={r} fill="none"
             stroke="#5379f4" strokeWidth={stroke}
@@ -209,17 +214,37 @@ function PhotoUpload({ photo, onPhoto, step }) {
             style={{ transition:'stroke-dashoffset 0.6s ease' }}
           />
         </svg>
+        {/* Avatar circle */}
         <div style={{
-          position:'absolute', top:stroke+8, left:stroke+8, right:stroke+8, bottom:stroke+8,
-          borderRadius:'50%', background:'#f0f0f5',
-          border:'2px dashed #b0b8d0',
-          display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden',
+          position:'absolute', top:stroke+10, left:stroke+10,
+          right:stroke+10, bottom:stroke+10,
+          borderRadius:'50%', overflow:'hidden', zIndex:1,
         }}>
           {photo
             ? <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
-            : <span style={{ fontSize:32, color:'#9ca3af', fontWeight:300 }}>+</span>
+            : <img src={wdEllipseRing} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
           }
         </div>
+        {/* + add button */}
+        {!photo && (
+          <div style={{
+            position:'absolute', bottom:stroke+10, right:stroke+10,
+            width:52, height:52, borderRadius:'50%',
+            background:'#5379f4', boxShadow:'0 4px 12px rgba(83,121,244,0.4)',
+            display:'flex', alignItems:'center', justifyContent:'center', zIndex:3,
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+        )}
+      </div>
+      {/* Progress label */}
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <div style={{ flex:1, height:6, background:'#e0dff0', borderRadius:6, width:120, overflow:'hidden' }}>
+          <div style={{ width:`${pcts[step-1]*100}%`, height:'100%', background:'#5379f4', borderRadius:6, transition:'width 0.6s ease' }}/>
+        </div>
+        <span style={{ fontFamily:font, fontSize:13, fontWeight:700, color:'#5379f4' }}>{Math.round(pcts[step-1]*100)}%</span>
       </div>
       <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }}
         onChange={e => { const f = e.target.files[0]; if (f) onPhoto(URL.createObjectURL(f)) }}

@@ -1,22 +1,23 @@
 /**
- * WorkerHome — Figma node 1:1316 (file Ud0NnDoXtD1Rd5t4EaAlBT)
- * All assets from Figma API. Inline styles only.
+ * WorkerHome — Career Dashboard (Figma node 1-1316, file TBMfzE63R7DuhAN61xzpiZ)
+ * All assets stored permanently in frontend/src/assets/worker-dashboard/
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { WorkerLayout } from './WorkerLayout'
 import { getToken, getMe } from '../../services/api'
 
-const font = "'Urbanist', sans-serif"
+// ── Local permanent assets ──────────────────────────────────────────────────
+import wdHeroBg      from '../../assets/worker-dashboard/wd-hero-bg.png'
+import wdHeroIllus   from '../../assets/worker-dashboard/wd-hero-illus.png'
+import wdEllipseRing from '../../assets/worker-dashboard/wd-ellipse-ring.png'
+import wdDonut       from '../../assets/worker-dashboard/wd-donut.png'
+import wdMailbox     from '../../assets/worker-dashboard/wd-mailbox.png'
+import wdDeco1       from '../../assets/worker-dashboard/wd-deco1.png'
+import wdDeco2       from '../../assets/worker-dashboard/wd-deco2.png'
+import wdAvatar2     from '../../assets/worker-dashboard/wd-avatar2.png'
 
-/* ─── FIGMA ASSETS — node 1:1316 ─── */
-const imgHeroBg      = 'https://www.figma.com/api/mcp/asset/40b21323-f8dc-4e68-bc84-c3aefb5c8e47'
-const imgHeroIllus   = 'https://www.figma.com/api/mcp/asset/d62d6f2d-5da6-4c5f-af7e-0a6cd04d039b'
-const imgEllipseRing = 'https://www.figma.com/api/mcp/asset/588a81d2-5ad7-478b-9b45-553dcd224ac2'
-const imgDonutChart  = 'https://www.figma.com/api/mcp/asset/708ed41c-5a42-42dd-a4a8-81591192dd2a'
-const imgMailbox     = 'https://www.figma.com/api/mcp/asset/85ad9baa-8664-48c3-b9de-144771f05ead'
-const imgDeco1       = 'https://www.figma.com/api/mcp/asset/4880e809-4c7d-424c-908d-70e86aded273'
-const imgDeco2       = 'https://www.figma.com/api/mcp/asset/e83216cb-4ab5-4574-8fb1-355704316079'
+const font = "'Urbanist', sans-serif"
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -53,10 +54,10 @@ export function WorkerHome() {
 
       {/* ── Hero Banner ── */}
       <div style={{
-        position:'relative', borderRadius:50, overflow:'hidden',
+        position:'relative', borderRadius:32, overflow:'hidden',
         height:220, marginBottom:28, flexShrink:0,
       }}>
-        <img src={imgHeroBg} alt=""
+        <img src={wdHeroBg} alt=""
           style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
 
         <div style={{
@@ -65,14 +66,14 @@ export function WorkerHome() {
           zIndex:2, maxWidth:'60%',
         }}>
           <h1 style={{
-            fontFamily:font, fontWeight:700, fontSize:28, lineHeight:1.3,
+            fontFamily:font, fontWeight:700, fontSize:28, lineHeight:1.4,
             color:'#403c8b', margin:'0 0 14px',
           }}>
             {getGreeting()},{' '}
             <span style={{ color:'#f26f37' }}>{firstName}</span>! 🚀
           </h1>
           <p style={{
-            fontFamily:font, fontWeight:600, fontSize:18, lineHeight:1.5,
+            fontFamily:font, fontWeight:600, fontSize:17, lineHeight:1.5,
             color:'#1d15a7', margin:0,
           }}>
             Your profile is{' '}
@@ -81,11 +82,11 @@ export function WorkerHome() {
           </p>
         </div>
 
-        <img src={imgHeroIllus} alt=""
+        <img src={wdHeroIllus} alt=""
           style={{
             position:'absolute', right:40, top:'50%',
             transform:'translateY(-50%)',
-            height:200, width:'auto', display:'block', zIndex:2,
+            height:196, width:'auto', display:'block', zIndex:2,
           }}/>
       </div>
 
@@ -94,51 +95,61 @@ export function WorkerHome() {
 
         {/* LEFT — profile card */}
         <div style={{
-          flex:'0 0 55%',
-          background:'#fff', borderRadius:16, padding:'28px 24px',
+          flex:'0 0 360px',
+          background:'#fff', borderRadius:20, padding:'32px 28px',
           boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
-          display:'flex', flexDirection:'column', alignItems:'center', gap:14,
+          display:'flex', flexDirection:'column', alignItems:'center', gap:16,
           position:'relative', overflow:'hidden',
         }}>
-          <img src={imgDeco1} alt="" style={{ position:'absolute', left:28, top:'42%', width:55, height:'auto', opacity:0.85, transform:'rotate(6deg)', pointerEvents:'none' }}/>
-          <img src={imgDeco2} alt="" style={{ position:'absolute', left:155, top:'56%', width:55, height:'auto', opacity:0.85, transform:'rotate(-164deg)', pointerEvents:'none' }}/>
+          {/* Decorative blobs */}
+          <img src={wdDeco1} alt="" style={{
+            position:'absolute', left:20, top:'38%',
+            width:52, height:'auto', opacity:0.8, transform:'rotate(6deg)', pointerEvents:'none',
+          }}/>
+          <img src={wdDeco2} alt="" style={{
+            position:'absolute', right:20, bottom:'25%',
+            width:52, height:'auto', opacity:0.8, transform:'rotate(-160deg)', pointerEvents:'none',
+          }}/>
 
-          {/* Avatar ring + donut */}
-          <div style={{ position:'relative', width:180, height:180, flexShrink:0, marginTop:8 }}>
-            <img src={imgEllipseRing} alt=""
-              style={{ width:180, height:180, display:'block', borderRadius:'50%', objectFit:'cover' }}/>
-            <img src={imgDonutChart} alt=""
+          {/* Avatar ring + donut progress */}
+          <div style={{ position:'relative', width:190, height:190, flexShrink:0, marginTop:8 }}>
+            {/* Ellipse ring (background circle/avatar) */}
+            <img src={wdEllipseRing} alt=""
+              style={{ width:190, height:190, display:'block', borderRadius:'50%', objectFit:'cover' }}/>
+            {/* Donut progress overlay */}
+            <img src={wdDonut} alt=""
               style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }}/>
+            {/* 75% label */}
             <div style={{
-              position:'absolute', bottom:4, left:'50%', transform:'translateX(-50%)',
+              position:'absolute', bottom:6, left:'50%', transform:'translateX(-50%)',
               background:'#f26f37', color:'#fff', borderRadius:16,
-              padding:'4px 14px', fontFamily:font, fontWeight:600, fontSize:14,
+              padding:'4px 16px', fontFamily:font, fontWeight:700, fontSize:14,
               whiteSpace:'nowrap', boxShadow:'0 2px 8px rgba(242,111,55,0.35)',
             }}>75%</div>
           </div>
 
-          {/* Purple badges */}
+          {/* Skill badges */}
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'center' }}>
-            <span style={{ background:'#403c8b', color:'#f1fdfd', borderRadius:13, padding:'5px 16px', fontFamily:font, fontWeight:600, fontSize:13 }}>
-              English: B2
-            </span>
-            <span style={{ background:'#403c8b', color:'#f1fdfd', borderRadius:13, padding:'5px 16px', fontFamily:font, fontWeight:600, fontSize:13 }}>
-              5+ Years Exp
-            </span>
+            {['English: B2', '5+ Years Exp'].map(tag => (
+              <span key={tag} style={{
+                background:'#403c8b', color:'#f1fdfd', borderRadius:13,
+                padding:'5px 16px', fontFamily:font, fontWeight:600, fontSize:13,
+              }}>{tag}</span>
+            ))}
           </div>
 
           {/* Name + trade */}
           <div style={{ textAlign:'center' }}>
             <p style={{ fontFamily:font, fontWeight:700, fontSize:22, color:'#1e1e1e', margin:'0 0 4px' }}>{fullName}</p>
             <p style={{ fontFamily:font, fontWeight:500, fontSize:14, color:'#6a7380', margin:0, lineHeight:1.5 }}>
-              Licensed Electrician (or selected trade).
+              Licensed Electrician
             </p>
           </div>
 
           <button onClick={() => navigate('/worker/profile')} style={{
             width:'100%', height:53, background:'#156dbf', color:'#fff',
             border:'none', borderRadius:12, cursor:'pointer',
-            fontFamily:font, fontWeight:600, fontSize:16,
+            fontFamily:font, fontWeight:700, fontSize:16,
             boxShadow:'0 4px 12px rgba(21,109,191,0.22)',
             transition:'background 0.15s', marginTop:'auto',
           }}
@@ -149,48 +160,58 @@ export function WorkerHome() {
         </div>
 
         {/* RIGHT column */}
-        <div style={{ flex:1, display:'flex', flexDirection:'column', gap:20 }}>
+        <div style={{ flex:1, display:'flex', flexDirection:'column', gap:20, minWidth:0 }}>
 
           {/* My Documents card */}
           <div style={{
-            flex:1, background:'#fff', borderRadius:16, padding:'28px 24px',
+            flex:1, background:'#fff', borderRadius:20, padding:'28px 28px',
             boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
             display:'flex', flexDirection:'column', gap:16,
           }}>
             <div>
               <h3 style={{ fontFamily:font, fontWeight:700, fontSize:22, color:'#1e1e1e', margin:'0 0 4px' }}>My Documents</h3>
-              <p style={{ fontFamily:font, fontWeight:500, fontSize:16, color:'#6a7380', margin:0 }}>3/8 Documents Uploaded</p>
+              <p style={{ fontFamily:font, fontWeight:500, fontSize:15, color:'#6a7380', margin:0 }}>3/8 Documents Uploaded</p>
             </div>
             {/* Progress bar — 3/8 ≈ 37.5% */}
-            <div style={{ background:'#cccccc', borderRadius:48, height:15, overflow:'hidden' }}>
+            <div style={{ background:'#e0dff0', borderRadius:48, height:14, overflow:'hidden' }}>
               <div style={{ width:'37.5%', height:'100%', background:'#5379f4', borderRadius:48, transition:'width 0.6s ease' }}/>
             </div>
             <button onClick={() => navigate('/worker/documents')} style={{
-              width:'100%', height:53, background:'transparent',
-              border:'1px solid #f26f37', borderRadius:12, cursor:'pointer',
-              fontFamily:font, fontWeight:600, fontSize:16, color:'#f26f37',
+              width:'100%', height:50, background:'transparent',
+              border:'1.5px solid #f26f37', borderRadius:12, cursor:'pointer',
+              fontFamily:font, fontWeight:700, fontSize:15, color:'#f26f37',
               transition:'background 0.15s', marginTop:'auto',
             }}
               onMouseEnter={e => e.currentTarget.style.background='#fff5f0'}
               onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-              Save
+              Upload Documents
             </button>
           </div>
 
           {/* EOI waiting card */}
           <div style={{
-            flex:1, background:'#fff', borderRadius:16, padding:'28px 24px',
+            flex:1, background:'#fff', borderRadius:20, padding:'28px 28px',
             boxShadow:'0 2px 16px rgba(0,0,0,0.06)',
             display:'flex', flexDirection:'column', alignItems:'center',
             justifyContent:'center', gap:12,
           }}>
-            <img src={imgMailbox} alt="mailbox" style={{ width:140, height:'auto', display:'block' }}/>
+            <img src={wdMailbox} alt="mailbox" style={{ width:130, height:'auto', display:'block' }}/>
             <p style={{
-              fontFamily:font, fontWeight:500, fontSize:16, color:'#6a7380',
-              textAlign:'center', margin:0, lineHeight:1.5, maxWidth:300,
+              fontFamily:font, fontWeight:600, fontSize:15, color:'#6a7380',
+              textAlign:'center', margin:0, lineHeight:1.5, maxWidth:280,
             }}>
               Waiting for your first Expression of Interest (EOI).
             </p>
+            <button onClick={() => navigate('/worker/eois')} style={{
+              height:44, padding:'0 28px', background:'transparent',
+              border:'1.5px solid #5379f4', borderRadius:12, cursor:'pointer',
+              fontFamily:font, fontWeight:700, fontSize:14, color:'#5379f4',
+              transition:'background 0.15s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background='#eef2ff'}
+              onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+              View EOIs
+            </button>
           </div>
 
         </div>
