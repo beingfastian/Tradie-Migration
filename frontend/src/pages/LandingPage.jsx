@@ -74,47 +74,52 @@ const FAQS = [
 function FaqItem({ q, a, last }) {
   const [open, setOpen] = useState(false)
   return (
-    <div style={{ width: 641 }}>
+    <div style={{
+      width: '100%',
+      borderBottom: last ? 'none' : '1px solid #dedede',
+    }}>
       <div
         onClick={() => setOpen(p => !p)}
         style={{
           display: 'flex', alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16.936px 0',
+          padding: '18px 0',
           cursor: 'pointer',
+          gap: 16,
         }}
       >
         <span style={{
-          fontFamily: font, fontWeight: 700, fontSize: 16.936,
-          color: text1, lineHeight: 1.3, flex: 1, paddingRight: 16,
+          fontFamily: font, fontWeight: 700, fontSize: 16,
+          color: text1, lineHeight: 1.4, flex: 1,
         }}>{q}</span>
 
-        {/* Exact Figma icon: circle bg + plus/minus */}
-        <div style={{ position: 'relative', width: 25.404, height: 25.404, flexShrink: 0 }}>
-          <img src={open ? imgFaqDotOpen : imgFaqDotClose} alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-          <img src={open ? imgFaqMinus : imgFaqPlus} alt=""
-            style={{
-              position: 'absolute',
-              top: 9.91, left: 9.91,
-              width: 5.589, height: 5.589,
-            }} />
+        {/* Figma icon: circle bg + plus/minus */}
+        <div style={{
+          flexShrink: 0,
+          width: 26, height: 26,
+          borderRadius: '50%',
+          background: open ? '#585484' : '#f3f1fd',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background 0.2s',
+        }}>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            {open
+              ? <line x1="1" y1="5" x2="9" y2="5" stroke={open ? '#fff' : '#585484'} strokeWidth="1.8" strokeLinecap="round"/>
+              : <>
+                  <line x1="5" y1="1" x2="5" y2="9" stroke="#585484" strokeWidth="1.8" strokeLinecap="round"/>
+                  <line x1="1" y1="5" x2="9" y2="5" stroke="#585484" strokeWidth="1.8" strokeLinecap="round"/>
+                </>
+            }
+          </svg>
         </div>
       </div>
 
       {open && (
         <p style={{
-          fontFamily: font, fontWeight: 500, fontSize: 12.702,
-          color: text2, lineHeight: 1.3, margin: '0 0 12.702px',
-          width: 469,
+          fontFamily: font, fontWeight: 500, fontSize: 14,
+          color: text2, lineHeight: 1.6, margin: '0 0 16px',
+          maxWidth: 520,
         }}>{a}</p>
-      )}
-
-      {!last && (
-        <div style={{ position: 'relative', width: 641, height: 0 }}>
-          <img src={imgFaqDivider} alt=""
-            style={{ position: 'absolute', top: -1.41, left: 0, width: '100%' }} />
-        </div>
       )}
     </div>
   )
@@ -351,22 +356,18 @@ export function LandingPage() {
       <section style={{
         position: 'relative',
         background: radialBg,
-        padding: '80px 66px 0',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 40,
+        padding: '90px 66px 0',
         overflow: 'hidden',
-        minHeight: 680,
+        minHeight: 640,
       }}>
-        {/* Background column lines */}
+        {/* Subtle decorative bottom wave */}
         <img src={imgHeroBg} alt="" style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%',
-          objectFit: 'cover', pointerEvents: 'none', opacity: 0.35,
+          position: 'absolute', bottom: 0, left: 0,
+          width: '55%', pointerEvents: 'none', opacity: 0.12,
         }} />
 
         {/* Text column */}
-        <div style={{ flex: '0 0 580px', position: 'relative', zIndex: 1, paddingTop: 16 }}>
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 580, paddingBottom: 80 }}>
           <h1 style={{
             fontFamily: font, fontWeight: 800, fontSize: 52,
             color: dark, margin: '0 0 20px',
@@ -419,16 +420,14 @@ export function LandingPage() {
           </p>
         </div>
 
-        {/* Hero illustration — exact position from Figma node 1:219 */}
+        {/* Hero illustration — anchored to bottom-right per Figma */}
         <div style={{
-          position: 'relative', zIndex: 1,
-          flex: 1,
-          display: 'flex', alignItems: 'flex-end',
-          marginBottom: 0,
+          position: 'absolute', zIndex: 1,
+          right: 0, bottom: 0,
+          width: '52%',
         }}>
           <img src={imgHeroIllus} alt="Tradie workers" style={{
-            width: '100%', maxWidth: 680,
-            display: 'block', marginLeft: 'auto',
+            width: '100%', display: 'block',
           }} />
         </div>
       </section>
@@ -608,17 +607,17 @@ export function LandingPage() {
             }}>
               Find answers to the most common questions about visa sponsorship, trade verification, and how the platform works.
             </p>
-            <div style={{ paddingLeft: 7.05, paddingTop: 89.62 * 0.15 }}>
+            <div style={{ paddingTop: 12, maxWidth: 641 }}>
               {FAQS.map((faq, i) => (
                 <FaqItem key={i} q={faq.q} a={faq.a} last={i === FAQS.length - 1} />
               ))}
             </div>
           </div>
 
-          {/* Right — illustration (undraw_about-me + faq illus) */}
-          <div style={{ flex: 1, paddingTop: 20, display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <img src={imgAboutMe} alt="About" style={{ width: '100%', display: 'block' }} />
+          {/* Right — illustrations */}
+          <div style={{ flex: 1, paddingTop: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
             <img src={imgFaqIllus} alt="Support" style={{ width: '100%', display: 'block' }} />
+            <img src={imgAboutMe} alt="About" style={{ width: '100%', display: 'block' }} />
           </div>
         </div>
       </section>
@@ -654,13 +653,13 @@ export function LandingPage() {
             }}/>
           ))}
 
-          {/* Illustration left — node 1:868 (712.217×700.234) */}
+          {/* Illustration left — node 1:868 */}
           <div style={{
             position: 'absolute', left: 0, top: 0,
-            width: 712.217, height: '100%',
+            width: '55%', height: '100%',
             zIndex: 0,
           }}>
-            <img src={imgFaqIllus} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'left center' }} />
+            <img src={imgAboutMe} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'left bottom' }} />
           </div>
 
           {/* Text content right */}
