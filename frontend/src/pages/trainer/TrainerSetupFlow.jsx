@@ -1,272 +1,235 @@
 /**
- * TrainerSetupFlow — 3-step training provider profile setup.
- * Step 1 (1-3504): Tell us about your Institution
- * Step 2 (1-4015): What do you teach?
- * Step 3 (1-4512): Provider Overview
+ * TrainerSetupFlow — Figma nodes 1-3501, 1-4012, 1-4509
+ * 3-step provider registration form
  */
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TrainerLayout } from './TrainerLayout'
-import { getToken, getMe, createTrainingProvider, updateTrainingProvider, getTrainingProviders } from '../../services/api'
-import { MOCK_TRAINER_USER, MOCK_PROVIDER } from './trainerMockData'
+
+import trDeco1       from '../../assets/trainer-dashboard/tr-deco1.png'
+import trDeco2       from '../../assets/trainer-dashboard/tr-deco2.png'
+import trSetupEllipse from '../../assets/trainer-dashboard/tr-setup-ellipse.png'
+import trSetupAdd    from '../../assets/trainer-dashboard/tr-setup-add.svg'
+import trSetupProgress from '../../assets/trainer-dashboard/tr-setup-progress.png'
 
 const font = "'Urbanist', sans-serif"
 
-const AU_LOCATIONS = [
-  'Sydney, NSW','Parramatta, NSW','Newcastle, NSW','Wollongong, NSW',
-  'Melbourne, VIC','Geelong, VIC','Brisbane, QLD','Gold Coast, QLD',
-  'Perth, WA','Adelaide, SA','Darwin, NT','Canberra, ACT','Hobart, TAS',
-  'Cairns, QLD','Townsville, QLD','Ballarat, VIC','Bendigo, VIC',
+const STEPS = [
+  { n:1, label:'Institution Details' },
+  { n:2, label:'Training Categories' },
+  { n:3, label:'Provider Overview' },
 ]
 
-const YEARS_OPTIONS = ['Less than 1','1–2','3–5','5–10','10+','20+']
+const LOCATIONS = ['Sydney, NSW','Melbourne, VIC','Brisbane, QLD','Perth, WA','Adelaide, SA','Hobart, TAS','Darwin, NT','Canberra, ACT']
+const SECTORS   = ['Electrical & Electrotechnology','Plumbing & Services','Construction & Infrastructure','HVAC & Refrigeration','Automotive','Mining & Resources','General Trade']
+const CRICOS    = ['Yes – CRICOS Registered','No – Domestic Only']
+const ACCRED    = ['Certificate III','Certificate IV','Diploma','Advanced Diploma','Graduate Certificate','Graduate Diploma']
 
-const ACCREDITATION_TYPES = [
-  'Government Funded','Private RTO','TAFE','University',
-  'Enterprise RTO','Community College','Online Provider',
-]
+function StepDots({ step }) {
+  return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:0, marginBottom:32 }}>
+      {STEPS.map((s, i) => {
+        const done   = s.n < step
+        const active = s.n === step
+        return (
+          <div key={s.n} style={{ display:'flex', alignItems:'center' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
+              <div style={{
+                width:36, height:36, borderRadius:'50%',
+                background: done ? '#129578' : active ? '#156dbf' : '#e0dff0',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                fontFamily:font, fontWeight:700, fontSize:15,
+                color: (done || active) ? '#fff' : '#9ca3af',
+              }}>
+                {done ? '✓' : s.n}
+              </div>
+              <span style={{ fontFamily:font, fontSize:12, fontWeight:600, color: active ? '#156dbf' : '#9ca3af', whiteSpace:'nowrap' }}>
+                {s.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div style={{ width:80, height:2, background: done ? '#129578' : '#e0dff0', margin:'0 8px', marginBottom:24 }}/>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
-const CAMPUS_OPTIONS = [
-  'Sydney, NSW','Melbourne, VIC','Brisbane, QLD','Perth, WA',
-  'Adelaide, SA','Canberra, ACT','Darwin, NT','Hobart, TAS',
-  'Online Only','Multiple Campuses',
-]
-
-const TRAINING_SECTORS = [
-  'Electrical & Energy','Plumbing & Gas','Construction & Civil',
-  'HVAC & Refrigeration','Mining & Resources','Automotive',
-  'Manufacturing & Engineering','Information Technology',
-  'Business & Finance','Health & Community Services',
-]
-
-/* ─── Shared UI ─── */
 function Field({ label, children }) {
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-      <label style={{ fontFamily:font, fontSize:14, fontWeight:600, color:'#343434' }}>{label}</label>
+    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+      <label style={{ fontFamily:font, fontWeight:600, fontSize:15, color:'#343434' }}>{label}</label>
       {children}
     </div>
   )
 }
-function TInput({ placeholder, value, onChange }) {
-  const [f,setF]=useState(false)
-  return <input placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)} onFocus={()=>setF(true)} onBlur={()=>setF(false)}
-    style={{ height:48, borderRadius:10, border:`1.5px solid ${f?'#5379f4':'#d0d5dd'}`, padding:'0 16px', fontFamily:font, fontSize:15, color:'#343434', outline:'none', width:'100%', boxSizing:'border-box', background:'#fff' }}/>
-}
-function TSelect({ placeholder, value, onChange, options }) {
-  const [f,setF]=useState(false)
-  return (
-    <div style={{ position:'relative' }}>
-      <select value={value} onChange={e=>onChange(e.target.value)} onFocus={()=>setF(true)} onBlur={()=>setF(false)}
-        style={{ height:48, borderRadius:10, border:`1.5px solid ${f?'#5379f4':'#d0d5dd'}`, padding:'0 40px 0 16px', fontFamily:font, fontSize:15, color:value?'#343434':'#9ca3af', outline:'none', width:'100%', background:'#fff', appearance:'none', cursor:'pointer', boxSizing:'border-box' }}>
-        <option value="">{placeholder}</option>
-        {options.map(o=><option key={o} value={o}>{o}</option>)}
-      </select>
-      <svg style={{ position:'absolute', right:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-  )
-}
-function MultiSelectDropdown({ placeholder, selected, onChange, options }) {
-  const [open,setOpen]=useState(false)
-  const ref=useRef(null)
-  useEffect(()=>{
-    function h(e){ if(ref.current&&!ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown',h); return ()=>document.removeEventListener('mousedown',h)
-  },[])
-  function toggle(opt){ onChange(selected.includes(opt)?selected.filter(s=>s!==opt):[...selected,opt]) }
-  return (
-    <div ref={ref} style={{ position:'relative' }}>
-      <div onClick={()=>setOpen(v=>!v)} style={{ minHeight:48, borderRadius:10, border:`1.5px solid ${open?'#5379f4':'#d0d5dd'}`, padding:'8px 40px 8px 16px', fontFamily:font, fontSize:15, color:selected.length?'#343434':'#9ca3af', background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', flexWrap:'wrap', gap:6, boxSizing:'border-box' }}>
-        {selected.length===0?placeholder:selected.map(s=>(
-          <span key={s} style={{ background:'#e8ecff', color:'#5379f4', borderRadius:6, padding:'2px 8px', fontSize:13, fontWeight:600 }}>{s}</span>
-        ))}
-      </div>
-      <svg style={{ position:'absolute', right:14, top:16, pointerEvents:'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-      {open&&(
-        <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, right:0, background:'#fff', border:'1.5px solid #d0d5dd', borderRadius:10, zIndex:50, maxHeight:200, overflowY:'auto', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
-          {options.map(opt=>{
-            const sel=selected.includes(opt)
-            return (
-              <div key={opt} onClick={()=>toggle(opt)} style={{ padding:'10px 16px', fontFamily:font, fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', gap:10, background:sel?'#f3f1fd':'transparent', color:sel?'#5379f4':'#343434' }}>
-                <div style={{ width:16, height:16, borderRadius:4, border:`2px solid ${sel?'#5379f4':'#d0d5dd'}`, background:sel?'#5379f4':'transparent', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  {sel&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>}
-                </div>
-                {opt}
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-function PhotoUpload({ photo, onPhoto, step }) {
-  const ref=useRef(null)
-  const size=180,stroke=10,r=(size-stroke)/2,circ=2*Math.PI*r
-  const offsets=[0.30,0.65,0.90]
-  const offset=circ-(offsets[step-1]||0.3)*circ
-  return (
-    <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-      <p style={{ fontFamily:font, fontSize:14, fontWeight:600, color:'#343434', margin:0 }}>Upload Profile Picture</p>
-      <div style={{ position:'relative', width:size, height:size, cursor:'pointer' }} onClick={()=>ref.current?.click()}>
-        <svg width={size} height={size} style={{ transform:'rotate(-90deg)', position:'absolute', inset:0 }}>
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e0dff0" strokeWidth={stroke}/>
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#5379f4" strokeWidth={stroke} strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" style={{ transition:'stroke-dashoffset 0.6s ease' }}/>
-        </svg>
-        <div style={{ position:'absolute', top:stroke+8, left:stroke+8, right:stroke+8, bottom:stroke+8, borderRadius:'50%', background:'#f0f0f5', border:'2px dashed #b0b8d0', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
-          {photo?<img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>:<span style={{ fontSize:32, color:'#9ca3af' }}>+</span>}
-        </div>
-      </div>
-      <input ref={ref} type="file" accept="image/*" style={{ display:'none' }} onChange={e=>{ const f=e.target.files[0]; if(f) onPhoto(URL.createObjectURL(f)) }}/>
-    </div>
-  )
+
+const inputStyle = {
+  height:52, border:'1.5px solid #d0d5dd', borderRadius:12,
+  padding:'0 16px', fontFamily:font, fontSize:15, color:'#343434',
+  outline:'none', background:'#fff', width:'100%', boxSizing:'border-box',
 }
 
-/* ═══════════════════════════════════════ */
+const selectStyle = { ...inputStyle, cursor:'pointer', appearance:'none', backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%236a7380\' stroke-width=\'2\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")', backgroundRepeat:'no-repeat', backgroundPosition:'right 16px center', paddingRight:44 }
+
 export function TrainerSetupFlow() {
-  const navigate=useNavigate()
-  const [user,setUser]=useState(null)
-  const [provider,setProvider]=useState(null)
-  const [step,setStep]=useState(1)
-  const [saving,setSaving]=useState(false)
-  const [err,setErr]=useState('')
-  const [photo,setPhoto]=useState(null)
-  const [hasProvider,setHasProvider]=useState(false)
+  const navigate = useNavigate()
+  const [step, setStep] = useState(1)
+  const [form, setForm] = useState({
+    institution_name:'', rto_code:'', campus_location:'', contact_number:'',
+    training_sector:'', cricos:'', years_education:'',
+    accreditation_type:'', secondary_locations:'', description:'',
+  })
 
-  // Step 1
-  const [institutionName,setInstitutionName]=useState('')
-  const [rtoCode,setRtoCode]=useState('')
-  const [campusLocation,setCampusLocation]=useState('')
-  const [phone,setPhone]=useState('')
-  const [phoneCode,setPhoneCode]=useState('+61')
-
-  // Step 2
-  const [trainingSector,setTrainingSector]=useState('')
-  const [cricosRegistered,setCricosRegistered]=useState('')
-  const [yearsInEdu,setYearsInEdu]=useState('')
-
-  // Step 3
-  const [accreditationType,setAccreditationType]=useState('')
-  const [secondaryCampuses,setSecondaryCampuses]=useState([])
-  const [description,setDescription]=useState('')
-
-  useEffect(()=>{
-    const token=getToken()
-    function apply(u,p){
-      setUser(u)
-      if(p){
-        setHasProvider(true); setProvider(p)
-        setInstitutionName(p.institution_name||'')
-        setRtoCode(p.rto_code||'')
-        setCampusLocation(p.main_campus_location||'')
-        setTrainingSector(p.primary_training_sector||'')
-        setCricosRegistered(p.cricos_registered?'Yes':'No')
-        setYearsInEdu(p.years_in_education||'')
-        setAccreditationType(p.accreditation_type||'')
-        setSecondaryCampuses(p.secondary_campus_locations||[])
-        setDescription(p.description||'')
-      }
-    }
-    if(!token){ apply(MOCK_TRAINER_USER, MOCK_PROVIDER); return }
-    getMe(token)
-      .then(u=>{ setUser(u); return getTrainingProviders().catch(()=>null) })
-      .then(data=>{ const p=Array.isArray(data)?data[0]:null; if(p) apply(MOCK_TRAINER_USER, p); else setUser(MOCK_TRAINER_USER) })
-      .catch(()=>apply(MOCK_TRAINER_USER, MOCK_PROVIDER))
-  },[])
-
-  async function save(next){
-    setErr('')
-    const token=getToken()
-    if(!token){ if(next==='done') navigate('/trainer/dashboard'); else setStep(next); return }
-    setSaving(true)
-    try{
-      const payload={ institution_name:institutionName, rto_code:rtoCode, main_campus_location:campusLocation, phone_number:`${phoneCode} ${phone}`.trim(), primary_training_sector:trainingSector, cricos_registered:cricosRegistered==='Yes', years_in_education:yearsInEdu, accreditation_type:accreditationType, secondary_campus_locations:secondaryCampuses, description }
-      if(hasProvider) await updateTrainingProvider(provider?.id, payload, token)
-      else{ await createTrainingProvider(payload, token); setHasProvider(true) }
-      if(next==='done') navigate('/trainer/dashboard'); else setStep(next)
-    }catch(e){ setErr(e.detail||'Failed to save.') }
-    finally{ setSaving(false) }
-  }
-
-  const titles=['Tell us about your Institution','What do you teach?','Provider Overview']
-  const subs=[
-    'Set up your provider profile to start listing courses and attracting students.',
-    'Select the industries you are accredited to provide training and assessments for.',
-    'Share your mission and describe the certifications you offer to prospective students.',
-  ]
-  const nextLabels=['Next: Training Categories','Next: Final Details','Complete Profile']
-
-  const mockProvider={ institution_name:institutionName||MOCK_PROVIDER.institution_name }
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   return (
-    <TrainerLayout user={user} provider={mockProvider}>
-      <div style={{ position:'relative', overflow:'hidden' }}>
-        {/* Blobs */}
-        <div style={{ position:'absolute', top:-30, right:-40, width:260, height:260, borderRadius:'50%', background:'rgba(240,235,210,0.55)', zIndex:0, pointerEvents:'none' }}/>
-        <div style={{ position:'absolute', bottom:-40, right:80, width:180, height:180, borderRadius:'50%', background:'rgba(200,220,245,0.4)', zIndex:0, pointerEvents:'none' }}/>
+    <div style={{ minHeight:'100vh', background:'#f6f6f9', display:'flex', alignItems:'center', justifyContent:'center', padding:'40px 20px' }}>
+      <div style={{ width:'100%', maxWidth:760, background:'#fff', borderRadius:24, boxShadow:'0 4px 32px rgba(0,0,0,0.08)', overflow:'hidden', position:'relative' }}>
 
-        <div style={{ position:'relative', zIndex:1, marginBottom:28 }}>
-          <h2 style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#1e1e1e', margin:'0 0 6px' }}>{titles[step-1]}</h2>
-          <p style={{ fontFamily:font, fontSize:15, color:'#6a7380', margin:0 }}>{subs[step-1]}</p>
-        </div>
+        {/* Decorative blobs */}
+        <img src={trDeco1} alt="" style={{ position:'absolute', left:20, top:'15%', width:52, opacity:0.7, pointerEvents:'none', transform:'rotate(6deg)' }}/>
+        <img src={trDeco2} alt="" style={{ position:'absolute', right:20, bottom:'20%', width:52, opacity:0.7, pointerEvents:'none', transform:'rotate(-160deg)' }}/>
 
-        <div style={{ position:'relative', zIndex:1, background:'#fff', borderRadius:20, padding:'36px 40px', boxShadow:'0 2px 16px rgba(0,0,0,0.05)' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:48, alignItems:'start' }}>
-            <PhotoUpload photo={photo} onPhoto={setPhoto} step={step}/>
+        <div style={{ padding:'48px 56px' }}>
 
-            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-              {step===1&&(
-                <>
-                  <Field label="Institution Name"><TInput placeholder="e.g. Sydney Trade College" value={institutionName} onChange={setInstitutionName}/></Field>
-                  <Field label="RTO Registration Code"><TInput placeholder="Enter 5-digit RTO code (e.g. 12345)" value={rtoCode} onChange={setRtoCode}/></Field>
-                  <Field label="Main Campus Location"><TSelect placeholder="Street, Suburb, State (e.g. Parramatta, NSW)" value={campusLocation} onChange={setCampusLocation} options={AU_LOCATIONS}/></Field>
-                  <Field label="Office Contact Number">
-                    <div style={{ display:'flex', gap:8 }}>
-                      <div style={{ position:'relative', width:100, flexShrink:0 }}>
-                        <select value={phoneCode} onChange={e=>setPhoneCode(e.target.value)} style={{ height:48, borderRadius:10, border:'1.5px solid #d0d5dd', padding:'0 28px 0 12px', fontFamily:font, fontSize:15, color:'#343434', background:'#fff', appearance:'none', width:'100%', cursor:'pointer', outline:'none' }}>
-                          {['+61','+1','+44','+91','+64'].map(c=><option key={c} value={c}>{c}</option>)}
-                        </select>
-                        <svg style={{ position:'absolute', right:6, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-                      </div>
-                      <TInput placeholder="Office phone number" value={phone} onChange={setPhone}/>
-                    </div>
-                  </Field>
-                </>
-              )}
-              {step===2&&(
-                <>
-                  <Field label="Primary Training Sector"><TInput placeholder="e.g. Electrical & Energy" value={trainingSector} onChange={setTrainingSector}/></Field>
-                  <Field label="CRICOS Registered?"><TSelect placeholder="Select Yes or No" value={cricosRegistered} onChange={setCricosRegistered} options={['Yes','No']}/></Field>
-                  <Field label="Years in Education"><TSelect placeholder="Select Years in Education" value={yearsInEdu} onChange={setYearsInEdu} options={YEARS_OPTIONS}/></Field>
-                </>
-              )}
-              {step===3&&(
-                <>
-                  <Field label="Accreditation Type"><TSelect placeholder="e.g. Government Funded, Private RTO, TAFE" value={accreditationType} onChange={setAccreditationType} options={ACCREDITATION_TYPES}/></Field>
-                  <Field label="Secondary Campus Locations"><MultiSelectDropdown placeholder="Additional Accreditations" selected={secondaryCampuses} onChange={setSecondaryCampuses} options={CAMPUS_OPTIONS}/></Field>
-                  <Field label="Institution Description">
-                    <textarea value={description} onChange={e=>setDescription(e.target.value)} rows={5}
-                      placeholder="Provide a brief overview of your college, facilities, and how you support international students with trade gap training..."
-                      style={{ borderRadius:10, border:'1.5px solid #d0d5dd', padding:'12px 16px', fontFamily:font, fontSize:15, color:'#343434', resize:'vertical', outline:'none', width:'100%', boxSizing:'border-box', lineHeight:1.5 }}
-                      onFocus={e=>e.target.style.border='1.5px solid #5379f4'} onBlur={e=>e.target.style.border='1.5px solid #d0d5dd'}/>
-                    <p style={{ fontFamily:font, fontSize:13, color:'#6a7380', margin:'4px 0 0' }}>This is the first thing candidates and Company will see.</p>
-                  </Field>
-                </>
-              )}
-              {err&&<p style={{ fontFamily:font, fontSize:14, color:'#e53e3e', margin:0 }}>{err}</p>}
+          {/* Logo upload group */}
+          <div style={{ display:'flex', justifyContent:'center', marginBottom:32 }}>
+            <div style={{ position:'relative', width:160, height:160 }}>
+              <img src={trSetupEllipse} alt="" style={{ width:160, height:160, borderRadius:'50%', objectFit:'cover', display:'block' }}/>
+              <img src={trSetupProgress} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }}/>
+              <div style={{
+                position:'absolute', bottom:4, right:4,
+                width:40, height:40, borderRadius:'50%',
+                background:'#156dbf', display:'flex', alignItems:'center', justifyContent:'center',
+                boxShadow:'0 2px 8px rgba(21,109,191,0.35)', cursor:'pointer',
+              }}>
+                <img src={trSetupAdd} alt="add" style={{ width:20, height:20 }}/>
+              </div>
             </div>
           </div>
 
-          <div style={{ display:'flex', justifyContent:'space-between', marginTop:36, paddingTop:24, borderTop:'1px solid #f0f0f4' }}>
-            {step>1?(
-              <button onClick={()=>setStep(s=>s-1)} style={{ height:48, padding:'0 28px', background:'transparent', border:'1.5px solid #f26f37', borderRadius:12, cursor:'pointer', fontFamily:font, fontSize:15, fontWeight:600, color:'#f26f37' }} onMouseEnter={e=>e.currentTarget.style.background='#fff5f0'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>Back</button>
-            ):(
-              <button onClick={()=>save(step)} disabled={saving} style={{ height:48, padding:'0 28px', background:'transparent', border:'1.5px solid #f26f37', borderRadius:12, cursor:'pointer', fontFamily:font, fontSize:15, fontWeight:600, color:'#f26f37', opacity:saving?0.7:1 }}>{saving?'Saving…':'Save'}</button>
-            )}
-            <button onClick={()=>{ if(step<3) save(step+1); else save('done') }} disabled={saving} style={{ height:48, padding:'0 32px', background:'#156dbf', color:'#fff', border:'none', borderRadius:12, cursor:'pointer', fontFamily:font, fontSize:15, fontWeight:600, boxShadow:'0 4px 12px rgba(21,109,191,0.25)', opacity:saving?0.7:1 }} onMouseEnter={e=>{ if(!saving) e.currentTarget.style.background='#1259a0' }} onMouseLeave={e=>{ if(!saving) e.currentTarget.style.background='#156dbf' }}>{saving?'Saving…':nextLabels[step-1]}</button>
-          </div>
+          {/* Heading */}
+          <h2 style={{ fontFamily:font, fontWeight:700, fontSize:28, color:'#1e1e1e', textAlign:'center', margin:'0 0 8px' }}>
+            {step === 1 && 'Tell us about your Institution'}
+            {step === 2 && 'What do you teach?'}
+            {step === 3 && 'Provider Overview'}
+          </h2>
+          <p style={{ fontFamily:font, fontSize:15, color:'#6a7380', textAlign:'center', margin:'0 0 28px' }}>
+            {step === 1 && 'Help students find your institution by completing your provider profile.'}
+            {step === 2 && 'Tell students about the training programs you offer.'}
+            {step === 3 && 'Add final details to complete your provider profile.'}
+          </p>
+
+          <StepDots step={step} />
+
+          {/* ── Step 1 ── */}
+          {step === 1 && (
+            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+                <Field label="Institution Name">
+                  <input style={inputStyle} placeholder="e.g. Trades Academy Australia" value={form.institution_name} onChange={e => set('institution_name', e.target.value)}/>
+                </Field>
+                <Field label="RTO Registration Code">
+                  <input style={inputStyle} placeholder="e.g. 12345" value={form.rto_code} onChange={e => set('rto_code', e.target.value)}/>
+                </Field>
+                <Field label="Main Campus Location">
+                  <select style={selectStyle} value={form.campus_location} onChange={e => set('campus_location', e.target.value)}>
+                    <option value="">Select location</option>
+                    {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </Field>
+                <Field label="Office Contact Number">
+                  <input style={inputStyle} placeholder="e.g. +61 2 9000 0000" value={form.contact_number} onChange={e => set('contact_number', e.target.value)}/>
+                </Field>
+              </div>
+              <div style={{ display:'flex', gap:16, marginTop:8 }}>
+                <button style={{
+                  flex:1, height:52, background:'#fff', border:'1.5px solid #156dbf',
+                  borderRadius:12, fontFamily:font, fontWeight:700, fontSize:16, color:'#156dbf', cursor:'pointer',
+                }}>Save</button>
+                <button onClick={() => setStep(2)} style={{
+                  flex:2, height:52, background:'#156dbf', border:'none',
+                  borderRadius:12, fontFamily:font, fontWeight:700, fontSize:16, color:'#fff', cursor:'pointer',
+                  boxShadow:'0 4px 12px rgba(21,109,191,0.22)',
+                }}>Next: Training Categories →</button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 2 ── */}
+          {step === 2 && (
+            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+                <Field label="Primary Training Sector">
+                  <select style={selectStyle} value={form.training_sector} onChange={e => set('training_sector', e.target.value)}>
+                    <option value="">Select sector</option>
+                    {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </Field>
+                <Field label="CRICOS Registered?">
+                  <select style={selectStyle} value={form.cricos} onChange={e => set('cricos', e.target.value)}>
+                    <option value="">Select</option>
+                    {CRICOS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </Field>
+                <Field label="Years in Education">
+                  <input style={inputStyle} placeholder="e.g. 10" value={form.years_education} onChange={e => set('years_education', e.target.value)}/>
+                </Field>
+              </div>
+              <div style={{ display:'flex', gap:16, marginTop:8 }}>
+                <button onClick={() => setStep(1)} style={{
+                  flex:1, height:52, background:'#fff', border:'1.5px solid #6a7380',
+                  borderRadius:12, fontFamily:font, fontWeight:700, fontSize:16, color:'#6a7380', cursor:'pointer',
+                }}>← Back</button>
+                <button onClick={() => setStep(3)} style={{
+                  flex:2, height:52, background:'#156dbf', border:'none',
+                  borderRadius:12, fontFamily:font, fontWeight:700, fontSize:16, color:'#fff', cursor:'pointer',
+                  boxShadow:'0 4px 12px rgba(21,109,191,0.22)',
+                }}>Next: Final Details →</button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 3 ── */}
+          {step === 3 && (
+            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+                <Field label="Accreditation Type">
+                  <select style={selectStyle} value={form.accreditation_type} onChange={e => set('accreditation_type', e.target.value)}>
+                    <option value="">Select type</option>
+                    {ACCRED.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </Field>
+                <Field label="Secondary Campus Locations">
+                  <input style={inputStyle} placeholder="e.g. Melbourne, Brisbane" value={form.secondary_locations} onChange={e => set('secondary_locations', e.target.value)}/>
+                </Field>
+              </div>
+              <Field label="Institution Description">
+                <textarea style={{
+                  border:'1.5px solid #d0d5dd', borderRadius:12,
+                  padding:'14px 16px', fontFamily:font, fontSize:15, color:'#343434',
+                  outline:'none', background:'#fff', width:'100%', boxSizing:'border-box',
+                  minHeight:120, resize:'vertical',
+                }} placeholder="Describe your institution, its history, and what makes it unique..." value={form.description} onChange={e => set('description', e.target.value)}/>
+              </Field>
+              <div style={{ display:'flex', gap:16, marginTop:8 }}>
+                <button onClick={() => setStep(2)} style={{
+                  flex:1, height:52, background:'#fff', border:'1.5px solid #6a7380',
+                  borderRadius:12, fontFamily:font, fontWeight:700, fontSize:16, color:'#6a7380', cursor:'pointer',
+                }}>← Back</button>
+                <button onClick={() => navigate('/trainer/dashboard')} style={{
+                  flex:2, height:52, background:'#129578', border:'none',
+                  borderRadius:12, fontFamily:font, fontWeight:700, fontSize:16, color:'#fff', cursor:'pointer',
+                  boxShadow:'0 4px 12px rgba(18,149,120,0.22)',
+                }}>✓ Complete Profile</button>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
-    </TrainerLayout>
+    </div>
   )
 }

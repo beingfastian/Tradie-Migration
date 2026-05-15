@@ -1,183 +1,208 @@
 /**
- * TrainerStudentDirectory — Student Directory with progress tracking.
- * Figma node 1-6409.
+ * TrainerStudentDirectory — Figma node 1-6406
  */
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { TrainerLayout } from './TrainerLayout'
 import { getToken, getMe } from '../../services/api'
-import { MOCK_TRAINER_USER, MOCK_PROVIDER, MOCK_STUDENTS } from './trainerMockData'
+
+import trIconFilter from '../../assets/trainer-dashboard/tr-icon-filter.svg'
+import trIconMore   from '../../assets/trainer-dashboard/tr-icon-more.svg'
+import trIconArrowLeft  from '../../assets/trainer-dashboard/tr-icon-arrow-left.svg'
+import trIconArrowRight from '../../assets/trainer-dashboard/tr-icon-arrow-right.svg'
+import trChatAvatar1 from '../../assets/trainer-dashboard/tr-chat-avatar1.png'
+import trChatAvatar2 from '../../assets/trainer-dashboard/tr-chat-avatar2.png'
 
 const font = "'Urbanist', sans-serif"
+const PAGE_SIZE = 7
 
-const STATUS_COLORS = {
-  'In Good Standing':    { bg:'#e8f5e9', color:'#129578' },
-  'In Average Standing': { bg:'#fff3e8', color:'#f26f37' },
-  'In Bad Standing':     { bg:'#fff0f0', color:'#e53e3e' },
+const TABS = ['All Students', 'Completed']
+
+const STATUS_STYLES = {
+  Active:    { bg:'#f1fdfb', color:'#129578' },
+  Completed: { bg:'#e8ecff', color:'#5379f4' },
+  'At Risk':  { bg:'#fff0f0', color:'#fb4248' },
+  Enrolled:  { bg:'#fff5e6', color:'#fdb345' },
 }
 
-const TABS = ['Active Students', 'Graduated / Past Students']
+const STUDENTS = [
+  { id:1, name:'Samuel Rivera', email:'samuel.r@email.com', flag:'🇵🇭', course:'Cert III Electrotechnology', progress:78, last_activity:'2 days ago', status:'Active', completed:false, avatar: trChatAvatar1 },
+  { id:2, name:'John Doe', email:'john.doe@email.com', flag:'🇬🇧', course:'Cert IV Electrical Engineering', progress:100, last_activity:'1 week ago', status:'Completed', completed:true, avatar: trChatAvatar2 },
+  { id:3, name:'Maria Santos', email:'maria.s@email.com', flag:'🇵🇭', course:'Cert III Plumbing', progress:45, last_activity:'Today', status:'Active', completed:false, avatar: null },
+  { id:4, name:'Ahmed Hassan', email:'ahmed.h@email.com', flag:'🇪🇬', course:'WHS White Card', progress:20, last_activity:'5 days ago', status:'At Risk', completed:false, avatar: null },
+  { id:5, name:'Priya Sharma', email:'priya.s@email.com', flag:'🇮🇳', course:'Cert III Electrotechnology', progress:92, last_activity:'Yesterday', status:'Active', completed:false, avatar: null },
+  { id:6, name:'Carlos Mendez', email:'carlos.m@email.com', flag:'🇲🇽', course:'HVAC Fundamentals', progress:100, last_activity:'2 weeks ago', status:'Completed', completed:true, avatar: null },
+]
 
-function Avatar({ name, size=36 }) {
-  const initials = (name||'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
-  const colors = ['#5379f4','#f26f37','#129578','#403c8b','#156dbf']
-  const bg = colors[(name||'').charCodeAt(0)%colors.length]
-  return <div style={{ width:size, height:size, borderRadius:'50%', background:bg, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:size*0.38, fontFamily:font, flexShrink:0 }}>{initials}</div>
-}
-
-function ProgressBar({ pct }) {
-  const color = pct >= 70 ? '#129578' : pct >= 40 ? '#f26f37' : '#e53e3e'
+function AvatarCell({ student }) {
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-      <div style={{ flex:1, background:'#e0dff0', borderRadius:6, height:8, overflow:'hidden' }}>
-        <div style={{ width:`${pct}%`, height:'100%', background:color, borderRadius:6, transition:'width 0.4s ease' }}/>
+    <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+      <div style={{
+        width:40, height:40, borderRadius:'50%', flexShrink:0, overflow:'hidden',
+        background:'#e0dff0', display:'flex', alignItems:'center', justifyContent:'center',
+      }}>
+        {student.avatar
+          ? <img src={student.avatar} alt={student.name} style={{ width:40, height:40, objectFit:'cover' }}/>
+          : <span style={{ fontFamily:font, fontWeight:700, fontSize:15, color:'#403c8b' }}>
+              {student.name.charAt(0)}
+            </span>
+        }
       </div>
-      <span style={{ fontFamily:font, fontSize:12, fontWeight:600, color, minWidth:32 }}>{pct}%</span>
+      <div style={{ minWidth:0 }}>
+        <p style={{ fontFamily:font, fontWeight:700, fontSize:14, color:'#1e1e1e', margin:'0 0 2px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+          {student.flag} {student.name}
+        </p>
+        <p style={{ fontFamily:font, fontSize:12, color:'#9ca3af', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+          {student.email}
+        </p>
+      </div>
     </div>
   )
 }
 
-function StatusDropdown({ value }) {
-  const c = STATUS_COLORS[value] || { bg:'#f0f0f4', color:'#6a7380' }
-  return (
-    <div style={{ display:'inline-flex', alignItems:'center', gap:4, background:c.bg, borderRadius:20, padding:'4px 10px 4px 12px', cursor:'pointer' }}>
-      <span style={{ fontSize:12, fontWeight:700, color:c.color, fontFamily:font, whiteSpace:'nowrap' }}>{value}</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.color} strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-  )
+function StatusBadge({ status }) {
+  const s = STATUS_STYLES[status] || STATUS_STYLES['Enrolled']
+  return <span style={{ background:s.bg, color:s.color, borderRadius:8, padding:'4px 14px', fontFamily:font, fontWeight:600, fontSize:13, whiteSpace:'nowrap' }}>{status}</span>
 }
 
 export function TrainerStudentDirectory() {
-  const navigate = useNavigate()
-  const [user, setUser]       = useState(null)
-  const [provider, setProvider] = useState(null)
-  const [students, setStudents] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab]         = useState('Active Students')
-  const [search, setSearch]   = useState('')
-  const [page, setPage]       = useState(1)
+  const [user, setUser] = useState(null)
+  const [tab, setTab]   = useState('All Students')
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     const token = getToken()
-    if (!token) { setUser(MOCK_TRAINER_USER); setProvider(MOCK_PROVIDER); setStudents(MOCK_STUDENTS); setLoading(false); return }
-    getMe(token)
-      .then(u => { setUser(u); setProvider(MOCK_PROVIDER); setStudents(MOCK_STUDENTS) })
-      .catch(() => { setUser(MOCK_TRAINER_USER); setProvider(MOCK_PROVIDER); setStudents(MOCK_STUDENTS) })
-      .finally(() => setLoading(false))
+    if (!token) return
+    getMe(token).then(u => setUser(u)).catch(() => {})
   }, [])
 
-  const filtered = students.filter(s => {
+  const filtered = STUDENTS.filter(s => {
     const q = search.toLowerCase()
-    return !q || (s.name||'').toLowerCase().includes(q) || (s.course||'').toLowerCase().includes(q)
+    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || s.course.toLowerCase().includes(q)
+    const matchTab = tab === 'All Students' ? true : s.completed
+    return matchSearch && matchTab
   })
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   return (
-    <TrainerLayout user={user} provider={provider}>
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-        <button onClick={()=>navigate('/trainer/dashboard')} style={{ background:'none', border:'none', cursor:'pointer', padding:0, color:'#6a7380', display:'flex' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
+    <TrainerLayout user={user}>
+
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
         <div>
-          <h2 style={{ fontFamily:font, fontSize:26, fontWeight:700, color:'#1e1e1e', margin:0 }}>Student Directory</h2>
-          <p style={{ fontFamily:font, fontSize:14, color:'#6a7380', margin:'4px 0 0' }}>Manage active enrollments, track student progress, and verify course completion for certification.</p>
+          <h2 style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#1e1e1e', margin:'0 0 4px' }}>
+            Student Directory
+          </h2>
+          <p style={{ fontFamily:font, fontSize:15, color:'#6a7380', margin:0 }}>
+            Track your enrolled students and their progress.
+          </p>
         </div>
+        <button style={{
+          height:44, padding:'0 20px', background:'#156dbf', border:'none',
+          borderRadius:10, fontFamily:font, fontWeight:700, fontSize:14, color:'#fff',
+          cursor:'pointer', boxShadow:'0 4px 12px rgba(21,109,191,0.22)',
+        }}>
+          Export Grades
+        </button>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display:'flex', gap:4, marginBottom:20 }}>
-        {TABS.map(t=>(
-          <button key={t} onClick={()=>setTab(t)} style={{ padding:'8px 20px', border:t===tab?'2px solid #5379f4':'2px solid transparent', borderRadius:20, cursor:'pointer', fontFamily:font, fontSize:14, fontWeight:600, background:t===tab?'#e8ecff':'#fff', color:t===tab?'#5379f4':'#6a7380', transition:'all 0.15s' }}>{t}</button>
-        ))}
-      </div>
+      <div style={{ background:'#fff', borderRadius:20, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
 
-      {/* Table card */}
-      <div style={{ background:'#fff', borderRadius:20, padding:'24px', boxShadow:'0 2px 16px rgba(0,0,0,0.05)' }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-            <span style={{ fontFamily:font, fontSize:18, fontWeight:700, color:'#1e1e1e' }}>My Courses</span>
+        {/* Tabs + controls */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'20px 28px', borderBottom:'1px solid #f0f0f4', gap:20, flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:4 }}>
+            {TABS.map(t => (
+              <button key={t} onClick={() => { setTab(t); setPage(1) }} style={{
+                padding:'9px 22px', border:'none', cursor:'pointer', borderRadius:10,
+                fontFamily:font, fontSize:14, fontWeight: t === tab ? 700 : 500,
+                background: t === tab ? '#5379f4' : '#f6f6f9',
+                color: t === tab ? '#fff' : '#6a7380',
+              }}>{t}</button>
+            ))}
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             <div style={{ display:'flex', gap:8 }}>
-              <span style={{ fontFamily:font, fontSize:13, color:'#6a7380', fontWeight:600 }}>Display</span>
-              {['Grid','List'].map(v=>(
-                <label key={v} style={{ display:'flex', alignItems:'center', gap:4, cursor:'pointer', fontFamily:font, fontSize:13, color:'#343434' }}>
-                  <input type="radio" name="stuview" defaultChecked={v==='List'} style={{ accentColor:'#5379f4' }}/> {v}
-                </label>
-              ))}
+              <button style={{ width:40, height:40, borderRadius:10, border:'1px solid #e0dff0', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                <img src={trIconFilter} alt="filter" style={{ width:20, height:20 }}/>
+              </button>
+              <button style={{ width:40, height:40, borderRadius:10, border:'1px solid #e0dff0', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                <img src={trIconMore} alt="more" style={{ width:20, height:20 }}/>
+              </button>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:10, border:'1px solid #d0d5dd', borderRadius:10, padding:'10px 16px', minWidth:280 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input placeholder="by student name, ID, or course..."
+                value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
+                style={{ border:'none', outline:'none', fontFamily:font, fontSize:14, color:'#343434', background:'transparent', flex:1 }}/>
             </div>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            {[
-              <svg key="f" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="1.8" strokeLinecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
-              <svg key="c" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="1.8" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            ].map((icon,i)=>(
-              <div key={i} style={{ width:36, height:36, borderRadius:8, border:'1px solid #d0d5dd', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>{icon}</div>
-            ))}
-            <div style={{ display:'flex', alignItems:'center', gap:8, border:'1px solid #d0d5dd', borderRadius:10, padding:'8px 14px', minWidth:220 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input placeholder="Search by student name, ID, or course..." value={search} onChange={e=>setSearch(e.target.value)} style={{ border:'none', outline:'none', fontFamily:font, fontSize:13, color:'#343434', background:'transparent', flex:1 }}/>
+        </div>
+
+        {/* Table header */}
+        <div style={{ display:'grid', gridTemplateColumns:'2fr 1.8fr 120px 140px 130px 110px', padding:'12px 28px', background:'#f8f8fc', borderBottom:'1px solid #f0f0f4' }}>
+          {['Student Name', 'Enrolled Course', 'Progress', 'Last Activity', 'Status', 'Action'].map(col => (
+            <span key={col} style={{ fontFamily:font, fontSize:13, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.04em' }}>{col}</span>
+          ))}
+        </div>
+
+        {/* Rows */}
+        {paged.map((s, i) => (
+          <div key={s.id} style={{
+            display:'grid', gridTemplateColumns:'2fr 1.8fr 120px 140px 130px 110px',
+            padding:'16px 28px', borderBottom:'1px solid #f8f8fc', alignItems:'center',
+            background: i % 2 === 0 ? '#fff' : '#fafafa', transition:'background 0.12s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background='#f3f1fd'}
+            onMouseLeave={e => e.currentTarget.style.background= i % 2 === 0 ? '#fff' : '#fafafa'}>
+            <AvatarCell student={s}/>
+            <span style={{ fontFamily:font, fontSize:14, color:'#6a7380', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.course}</span>
+            <div>
+              <span style={{ fontFamily:font, fontSize:13, fontWeight:700, color:'#1e1e1e' }}>{s.progress}%</span>
+              <div style={{ background:'#e0dff0', borderRadius:4, height:4, marginTop:4, overflow:'hidden' }}>
+                <div style={{ width:`${s.progress}%`, height:'100%', background:'#5379f4', borderRadius:4 }}/>
+              </div>
             </div>
-            <button style={{ height:36, padding:'0 14px', background:'transparent', border:'1.5px solid #d0d5dd', borderRadius:10, cursor:'pointer', fontFamily:font, fontSize:13, fontWeight:600, color:'#343434', whiteSpace:'nowrap' }}>Export Grades</button>
-            <button style={{ height:36, padding:'0 14px', background:'#156dbf', color:'#fff', border:'none', borderRadius:10, cursor:'pointer', fontFamily:font, fontSize:13, fontWeight:600, whiteSpace:'nowrap' }}
-              onMouseEnter={e=>e.currentTarget.style.background='#1259a0'} onMouseLeave={e=>e.currentTarget.style.background='#156dbf'}>
-              + Add Student
+            <span style={{ fontFamily:font, fontSize:14, color:'#6a7380' }}>{s.last_activity}</span>
+            <StatusBadge status={s.status}/>
+            <button style={{
+              height:36, padding:'0 14px', borderRadius:8, border:'1.5px solid #5379f4',
+              background:'transparent', color:'#5379f4', fontFamily:font, fontSize:13, fontWeight:600, cursor:'pointer',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background='#5379f4'; e.currentTarget.style.color='#fff' }}
+              onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#5379f4' }}>
+              View
             </button>
           </div>
-        </div>
+        ))}
 
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontFamily:font }}>
-            <thead>
-              <tr style={{ borderBottom:'2px solid #f0f0f4' }}>
-                {['Student Name','Enrolled Course','Progress','Last Activity','Status','Action'].map(h=>(
-                  <th key={h} style={{ padding:'12px 16px', textAlign:'left', fontSize:13, fontWeight:700, color:'#6a7380', whiteSpace:'nowrap' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>{h}{h!=='Action'&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>}</div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={6} style={{ padding:40, textAlign:'center', color:'#9ca3af' }}>Loading…</td></tr>
-              ) : filtered.length===0 ? (
-                <tr><td colSpan={6} style={{ padding:40, textAlign:'center', color:'#9ca3af' }}>No students found.</td></tr>
-              ) : filtered.map(s=>(
-                <tr key={s.id} style={{ borderBottom:'1px solid #f8f8fc' }} onMouseEnter={e=>e.currentTarget.style.background='#fafafa'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                  <td style={{ padding:'14px 16px' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <Avatar name={s.name}/>
-                      <div>
-                        <div style={{ fontSize:14, fontWeight:600, color:'#1e1e1e' }}>{s.name}</div>
-                        <div style={{ fontSize:12, color:'#9ca3af' }}>{s.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding:'14px 16px', fontSize:14, color:'#343434' }}>{s.course}</td>
-                  <td style={{ padding:'14px 16px', minWidth:140 }}><ProgressBar pct={s.progress}/></td>
-                  <td style={{ padding:'14px 16px', fontSize:13, color:'#6a7380', whiteSpace:'nowrap' }}>{s.last_activity}</td>
-                  <td style={{ padding:'14px 16px' }}><StatusDropdown value={s.status}/></td>
-                  <td style={{ padding:'14px 16px' }}>
-                    <div style={{ width:28, height:28, borderRadius:6, border:'1px solid #d0d5dd', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                    </div>
-                  </td>
-                </tr>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 28px', borderTop:'1px solid #f0f0f4' }}>
+            <span style={{ fontFamily:font, fontSize:13, color:'#9ca3af' }}>
+              Showing {((page-1)*PAGE_SIZE)+1}–{Math.min(page*PAGE_SIZE, filtered.length)} of {filtered.length} students
+            </span>
+            <div style={{ display:'flex', gap:6 }}>
+              <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page===1}
+                style={{ width:36, height:36, borderRadius:8, border:'1px solid #e0dff0', background:'#fff', cursor: page===1 ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity: page===1 ? 0.4 : 1 }}>
+                <img src={trIconArrowLeft} alt="" style={{ width:16, height:16 }}/>
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i+1).map(n => (
+                <button key={n} onClick={() => setPage(n)} style={{
+                  width:36, height:36, borderRadius:8, border: n===page ? 'none' : '1px solid #e0dff0',
+                  background: n===page ? '#5379f4' : '#fff', color: n===page ? '#fff' : '#6a7380',
+                  fontFamily:font, fontSize:14, fontWeight: n===page ? 700 : 500, cursor:'pointer',
+                }}>{n}</button>
               ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:20, paddingTop:16, borderTop:'1px solid #f0f0f4' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, fontFamily:font, fontSize:13, color:'#6a7380' }}>
-            <span>Rows per page</span>
-            <span style={{ fontWeight:600, color:'#343434' }}>10</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+              <button onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page===totalPages}
+                style={{ width:36, height:36, borderRadius:8, border:'1px solid #e0dff0', background:'#fff', cursor: page===totalPages ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity: page===totalPages ? 0.4 : 1 }}>
+                <img src={trIconArrowRight} alt="" style={{ width:16, height:16 }}/>
+              </button>
+            </div>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-            {['‹',1,2,3,4,'›'].map((p,i)=>(
-              <button key={i} onClick={()=>typeof p==='number'&&setPage(p)} style={{ width:32, height:32, borderRadius:8, border:'none', cursor:'pointer', fontFamily:font, fontSize:13, fontWeight:600, background:p===page?'#5379f4':'transparent', color:p===page?'#fff':'#6a7380' }}>{p}</button>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </TrainerLayout>
   )

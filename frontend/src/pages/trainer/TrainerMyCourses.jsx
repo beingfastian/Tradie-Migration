@@ -1,192 +1,213 @@
 /**
- * TrainerMyCourses — My Training Programs table.
- * Figma node 1-6073.
+ * TrainerMyCourses — Figma node 1-6070
  */
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { TrainerLayout } from './TrainerLayout'
 import { getToken, getMe } from '../../services/api'
-import { MOCK_TRAINER_USER, MOCK_PROVIDER, MOCK_COURSES } from './trainerMockData'
+
+import trIconFilter from '../../assets/trainer-dashboard/tr-icon-filter.svg'
+import trIconMore   from '../../assets/trainer-dashboard/tr-icon-more.svg'
+import trIconArrowLeft  from '../../assets/trainer-dashboard/tr-icon-arrow-left.svg'
+import trIconArrowRight from '../../assets/trainer-dashboard/tr-icon-arrow-right.svg'
 
 const font = "'Urbanist', sans-serif"
-
-const STATUS_COLORS = {
-  'Enrolling':    { bg:'#e8f5e9', color:'#129578' },
-  'Closing Soon': { bg:'#fff3e8', color:'#f26f37' },
-  'On Hold':      { bg:'#fff0f0', color:'#e53e3e' },
-  'Draft':        { bg:'#f0f0f4', color:'#6a7380' },
-}
+const PAGE_SIZE = 7
 
 const TABS = ['Published Courses', 'Drafts']
 
-function StatusBadge({ value }) {
-  const c = STATUS_COLORS[value] || { bg:'#f0f0f4', color:'#6a7380' }
-  return (
-    <div style={{ display:'inline-flex', alignItems:'center', gap:4, background:c.bg, borderRadius:20, padding:'4px 10px 4px 12px', cursor:'pointer' }}>
-      <span style={{ fontSize:12, fontWeight:700, color:c.color, fontFamily:font }}>{value}</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.color} strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
-  )
+const STATUS_STYLES = {
+  Enrolling:     { bg:'#f1fdfb', color:'#129578' },
+  'Closing Soon':{ bg:'#fff5e6', color:'#fdb345' },
+  'On Hold':     { bg:'#fff0f0', color:'#fb4248' },
+  Draft:         { bg:'#f3f1fd', color:'#403c8b' },
 }
 
-/* Create Course Modal */
-function CreateCourseModal({ onClose }) {
-  const [title, setTitle] = useState('')
-  const [delivery, setDelivery] = useState('')
-  const [intake, setIntake] = useState('')
+const FALLBACK_COURSES = [
+  { id:1, title:'Certificate III in Electrotechnology Electrician', delivery:'On-Campus · Sydney', enrolled:18, capacity:20, next_intake:'15 Nov 2026', status:'Enrolling', published:true },
+  { id:2, title:'Certificate IV in Electrical – Engineering Trade',  delivery:'Online',             enrolled:9,  capacity:15, next_intake:'10 Jan 2027', status:'Enrolling', published:true },
+  { id:3, title:'Diploma of Building & Construction',                delivery:'Blended · Melbourne', enrolled:22, capacity:25, next_intake:'1 Feb 2027',  status:'Closing Soon', published:true },
+  { id:4, title:'Certificate III in Plumbing',                       delivery:'On-Campus · Brisbane', enrolled:12, capacity:20, next_intake:'20 Mar 2027', status:'Enrolling', published:true },
+  { id:5, title:'Workplace Health & Safety – White Card',            delivery:'Online',             enrolled:50, capacity:50, next_intake:'Ongoing',     status:'On Hold', published:true },
+  { id:6, title:'HVAC Systems Fundamentals',                         delivery:'On-Campus · Perth',  enrolled:8,  capacity:12, next_intake:'5 Apr 2027',  status:'Enrolling', published:true },
+  { id:7, title:'Gas Fitting Licence Preparation',                   delivery:'On-Campus · Sydney', enrolled:6,  capacity:10, next_intake:'15 May 2027', status:'Enrolling', published:true },
+  { id:8, title:'Advanced Electrical Safety Compliance',             delivery:'Online',             enrolled:0,  capacity:20, next_intake:'TBD',         status:'Draft', published:false },
+]
+
+function StatusBadge({ status }) {
+  const s = STATUS_STYLES[status] || STATUS_STYLES['Draft']
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.35)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ background:'#fff', borderRadius:20, padding:'36px', width:480, boxShadow:'0 8px 40px rgba(0,0,0,0.15)' }}>
-        <h3 style={{ fontFamily:font, fontSize:20, fontWeight:700, color:'#1e1e1e', margin:'0 0 24px' }}>Create New Course</h3>
-        <div style={{ display:'flex', flexDirection:'column', gap:16, marginBottom:28 }}>
-          {[
-            { label:'Course Title', value:title, onChange:setTitle, placeholder:'e.g. Cert III Electrotechnology' },
-            { label:'Delivery Mode', value:delivery, onChange:setDelivery, placeholder:'e.g. On-Campus (Sydney)' },
-            { label:'Next Intake Date', value:intake, onChange:setIntake, placeholder:'e.g. 15 Nov 2026' },
-          ].map(f => (
-            <div key={f.label}>
-              <label style={{ fontFamily:font, fontSize:13, fontWeight:600, color:'#343434', display:'block', marginBottom:6 }}>{f.label}</label>
-              <input value={f.value} onChange={e=>f.onChange(e.target.value)} placeholder={f.placeholder}
-                style={{ height:44, borderRadius:10, border:'1.5px solid #d0d5dd', padding:'0 14px', fontFamily:font, fontSize:14, color:'#343434', outline:'none', width:'100%', boxSizing:'border-box' }}/>
-            </div>
-          ))}
-        </div>
-        <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
-          <button onClick={onClose} style={{ height:44, padding:'0 24px', background:'transparent', border:'1.5px solid #d0d5dd', borderRadius:10, cursor:'pointer', fontFamily:font, fontSize:14, fontWeight:600, color:'#6a7380' }}>Cancel</button>
-          <button onClick={onClose} style={{ height:44, padding:'0 24px', background:'#156dbf', color:'#fff', border:'none', borderRadius:10, cursor:'pointer', fontFamily:font, fontSize:14, fontWeight:600 }}>Create Course</button>
-        </div>
-      </div>
-    </div>
+    <span style={{
+      background:s.bg, color:s.color, borderRadius:8,
+      padding:'4px 14px', fontFamily:font, fontWeight:600, fontSize:13, whiteSpace:'nowrap',
+    }}>{status}</span>
   )
 }
 
 export function TrainerMyCourses() {
-  const navigate = useNavigate()
-  const [user, setUser]       = useState(null)
-  const [provider, setProvider] = useState(null)
-  const [courses, setCourses] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab]         = useState('Published Courses')
-  const [search, setSearch]   = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [page, setPage]       = useState(1)
+  const [user, setUser] = useState(null)
+  const [tab, setTab]   = useState('Published Courses')
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     const token = getToken()
-    if (!token) { setUser(MOCK_TRAINER_USER); setProvider(MOCK_PROVIDER); setCourses(MOCK_COURSES); setLoading(false); return }
-    getMe(token)
-      .then(u => { setUser(u); setProvider(MOCK_PROVIDER); setCourses(MOCK_COURSES) })
-      .catch(() => { setUser(MOCK_TRAINER_USER); setProvider(MOCK_PROVIDER); setCourses(MOCK_COURSES) })
-      .finally(() => setLoading(false))
+    if (!token) return
+    getMe(token).then(u => setUser(u)).catch(() => {})
   }, [])
 
-  const filtered = courses.filter(c => {
+  const filtered = FALLBACK_COURSES.filter(c => {
     const q = search.toLowerCase()
-    return !q || (c.title||'').toLowerCase().includes(q) || (c.delivery||'').toLowerCase().includes(q)
+    const matchSearch = !q || c.title.toLowerCase().includes(q) || c.delivery.toLowerCase().includes(q)
+    const matchTab = tab === 'Published Courses' ? c.published : !c.published
+    return matchSearch && matchTab
   })
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   return (
-    <TrainerLayout user={user} provider={provider}>
-      {showModal && <CreateCourseModal onClose={()=>setShowModal(false)}/>}
+    <TrainerLayout user={user}>
 
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
-        <button onClick={()=>navigate('/trainer/dashboard')} style={{ background:'none', border:'none', cursor:'pointer', padding:0, color:'#6a7380', display:'flex' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
         <div>
-          <h2 style={{ fontFamily:font, fontSize:26, fontWeight:700, color:'#1e1e1e', margin:0 }}>My Training Programs</h2>
-          <p style={{ fontFamily:font, fontSize:14, color:'#6a7380', margin:'4px 0 0' }}>Manage your course catalog, track student enrollments, and update training schedules.</p>
+          <h2 style={{ fontFamily:font, fontSize:28, fontWeight:700, color:'#1e1e1e', margin:'0 0 4px' }}>
+            My Training Programs
+          </h2>
+          <p style={{ fontFamily:font, fontSize:15, color:'#6a7380', margin:0 }}>
+            Manage your published courses and draft programs.
+          </p>
         </div>
+        <button style={{
+          height:44, padding:'0 20px', background:'#156dbf', border:'none',
+          borderRadius:10, fontFamily:font, fontWeight:700, fontSize:14, color:'#fff',
+          cursor:'pointer', display:'flex', alignItems:'center', gap:8,
+          boxShadow:'0 4px 12px rgba(21,109,191,0.22)',
+        }}>
+          <span style={{ fontSize:18 }}>+</span> Create Course
+        </button>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display:'flex', gap:4, marginBottom:20 }}>
-        {TABS.map(t => (
-          <button key={t} onClick={()=>setTab(t)} style={{ padding:'8px 20px', border:t===tab?'2px solid #5379f4':'2px solid transparent', borderRadius:20, cursor:'pointer', fontFamily:font, fontSize:14, fontWeight:600, background:t===tab?'#e8ecff':'#fff', color:t===tab?'#5379f4':'#6a7380', transition:'all 0.15s' }}>{t}</button>
-        ))}
-      </div>
+      <div style={{ background:'#fff', borderRadius:20, boxShadow:'0 2px 16px rgba(0,0,0,0.05)', overflow:'hidden' }}>
 
-      {/* Table card */}
-      <div style={{ background:'#fff', borderRadius:20, padding:'24px', boxShadow:'0 2px 16px rgba(0,0,0,0.05)' }}>
-        {/* Toolbar */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-            <span style={{ fontFamily:font, fontSize:18, fontWeight:700, color:'#1e1e1e' }}>My Courses</span>
+        {/* Tabs + controls */}
+        <div style={{
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          padding:'20px 28px', borderBottom:'1px solid #f0f0f4', gap:20, flexWrap:'wrap',
+        }}>
+          <div style={{ display:'flex', gap:4 }}>
+            {TABS.map(t => (
+              <button key={t} onClick={() => { setTab(t); setPage(1) }} style={{
+                padding:'9px 22px', border:'none', cursor:'pointer', borderRadius:10,
+                fontFamily:font, fontSize:14, fontWeight: t === tab ? 700 : 500,
+                background: t === tab ? '#5379f4' : '#f6f6f9',
+                color: t === tab ? '#fff' : '#6a7380',
+              }}>{t}</button>
+            ))}
+          </div>
+
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             <div style={{ display:'flex', gap:8 }}>
-              <span style={{ fontFamily:font, fontSize:13, color:'#6a7380', fontWeight:600 }}>Display</span>
-              {['Grid','List'].map(v=>(
-                <label key={v} style={{ display:'flex', alignItems:'center', gap:4, cursor:'pointer', fontFamily:font, fontSize:13, color:'#343434' }}>
-                  <input type="radio" name="courseview" defaultChecked={v==='List'} style={{ accentColor:'#5379f4' }}/> {v}
-                </label>
-              ))}
+              <button style={{ width:40, height:40, borderRadius:10, border:'1px solid #e0dff0', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                <img src={trIconFilter} alt="filter" style={{ width:20, height:20 }}/>
+              </button>
+              <button style={{ width:40, height:40, borderRadius:10, border:'1px solid #e0dff0', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                <img src={trIconMore} alt="more" style={{ width:20, height:20 }}/>
+              </button>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:10, border:'1px solid #d0d5dd', borderRadius:10, padding:'10px 16px', minWidth:280 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input placeholder="by course name, category, or code..."
+                value={search} onChange={e => { setSearch(e.target.value); setPage(1) }}
+                style={{ border:'none', outline:'none', fontFamily:font, fontSize:14, color:'#343434', background:'transparent', flex:1 }}/>
             </div>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            {[
-              <svg key="f" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="1.8" strokeLinecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
-              <svg key="c" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="1.8" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            ].map((icon,i)=>(
-              <div key={i} style={{ width:36, height:36, borderRadius:8, border:'1px solid #d0d5dd', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>{icon}</div>
-            ))}
-            <div style={{ display:'flex', alignItems:'center', gap:8, border:'1px solid #d0d5dd', borderRadius:10, padding:'8px 14px', minWidth:220 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input placeholder="Search by course name, category, or code..." value={search} onChange={e=>setSearch(e.target.value)} style={{ border:'none', outline:'none', fontFamily:font, fontSize:13, color:'#343434', background:'transparent', flex:1 }}/>
+        </div>
+
+        {/* Table header */}
+        <div style={{
+          display:'grid', gridTemplateColumns:'2.2fr 1.2fr 120px 160px 140px 120px',
+          padding:'12px 28px', background:'#f8f8fc', borderBottom:'1px solid #f0f0f4',
+        }}>
+          {['Job Title', 'Delivery Mode', 'Enrollment', 'Next Intake', 'Status', 'Action'].map(col => (
+            <span key={col} style={{ fontFamily:font, fontSize:13, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.04em' }}>
+              {col}
+            </span>
+          ))}
+        </div>
+
+        {/* Rows */}
+        {paged.map((c, i) => (
+          <div key={c.id} style={{
+            display:'grid', gridTemplateColumns:'2.2fr 1.2fr 120px 160px 140px 120px',
+            padding:'16px 28px', borderBottom:'1px solid #f8f8fc',
+            alignItems:'center', background: i % 2 === 0 ? '#fff' : '#fafafa',
+            transition:'background 0.12s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background='#f3f1fd'}
+            onMouseLeave={e => e.currentTarget.style.background= i % 2 === 0 ? '#fff' : '#fafafa'}>
+
+            <div style={{ minWidth:0 }}>
+              <p style={{ fontFamily:font, fontWeight:700, fontSize:14, color:'#1e1e1e', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                {c.title}
+              </p>
             </div>
-            <button onClick={()=>setShowModal(true)} style={{ height:36, padding:'0 16px', background:'#156dbf', color:'#fff', border:'none', borderRadius:10, cursor:'pointer', fontFamily:font, fontSize:13, fontWeight:600, whiteSpace:'nowrap' }}
-              onMouseEnter={e=>e.currentTarget.style.background='#1259a0'} onMouseLeave={e=>e.currentTarget.style.background='#156dbf'}>
-              + Create Course
+
+            <span style={{ fontFamily:font, fontSize:14, color:'#6a7380', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              {c.delivery}
+            </span>
+
+            <div>
+              <span style={{ fontFamily:font, fontSize:14, color:'#1e1e1e', fontWeight:600 }}>
+                {c.enrolled}/{c.capacity}
+              </span>
+              <div style={{ background:'#e0dff0', borderRadius:4, height:4, marginTop:4, overflow:'hidden' }}>
+                <div style={{ width:`${Math.round(c.enrolled/c.capacity*100)}%`, height:'100%', background:'#5379f4', borderRadius:4 }}/>
+              </div>
+            </div>
+
+            <span style={{ fontFamily:font, fontSize:14, color:'#6a7380' }}>{c.next_intake}</span>
+
+            <StatusBadge status={c.status}/>
+
+            <button style={{
+              height:36, padding:'0 18px', borderRadius:8,
+              border:'1.5px solid #5379f4', background:'transparent',
+              color:'#5379f4', fontFamily:font, fontSize:13, fontWeight:600, cursor:'pointer',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background='#5379f4'; e.currentTarget.style.color='#fff' }}
+              onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#5379f4' }}>
+              Manage
             </button>
           </div>
-        </div>
-
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', fontFamily:font }}>
-            <thead>
-              <tr style={{ borderBottom:'2px solid #f0f0f4' }}>
-                {['Job Title','Delivery Mode','Enrollment','Next Intake','Status','Action'].map(h=>(
-                  <th key={h} style={{ padding:'12px 16px', textAlign:'left', fontSize:13, fontWeight:700, color:'#6a7380', whiteSpace:'nowrap' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>{h}{h!=='Action'&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>}</div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={6} style={{ padding:40, textAlign:'center', color:'#9ca3af' }}>Loading…</td></tr>
-              ) : filtered.length===0 ? (
-                <tr><td colSpan={6} style={{ padding:40, textAlign:'center', color:'#9ca3af' }}>No courses found.</td></tr>
-              ) : filtered.map(c=>(
-                <tr key={c.id} style={{ borderBottom:'1px solid #f8f8fc' }} onMouseEnter={e=>e.currentTarget.style.background='#fafafa'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                  <td style={{ padding:'14px 16px', fontSize:14, fontWeight:600, color:'#1e1e1e' }}>{c.title}</td>
-                  <td style={{ padding:'14px 16px', fontSize:14, color:'#343434' }}>{c.delivery}</td>
-                  <td style={{ padding:'14px 16px', fontSize:14, color:'#343434' }}>{c.enrollment}</td>
-                  <td style={{ padding:'14px 16px', fontSize:14, color:'#343434' }}>{c.next_intake}</td>
-                  <td style={{ padding:'14px 16px' }}><StatusBadge value={c.status}/></td>
-                  <td style={{ padding:'14px 16px' }}>
-                    <div style={{ width:28, height:28, borderRadius:6, border:'1px solid #d0d5dd', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        ))}
 
         {/* Pagination */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:20, paddingTop:16, borderTop:'1px solid #f0f0f4' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, fontFamily:font, fontSize:13, color:'#6a7380' }}>
-            <span>Rows per page</span>
-            <span style={{ fontWeight:600, color:'#343434' }}>10</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6a7380" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+        {totalPages > 1 && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 28px', borderTop:'1px solid #f0f0f4' }}>
+            <span style={{ fontFamily:font, fontSize:13, color:'#9ca3af' }}>
+              Showing {((page-1)*PAGE_SIZE)+1}–{Math.min(page*PAGE_SIZE, filtered.length)} of {filtered.length} courses
+            </span>
+            <div style={{ display:'flex', gap:6 }}>
+              <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}
+                style={{ width:36, height:36, borderRadius:8, border:'1px solid #e0dff0', background:'#fff', cursor: page===1 ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity: page===1 ? 0.4 : 1 }}>
+                <img src={trIconArrowLeft} alt="prev" style={{ width:16, height:16 }}/>
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i+1).map(n => (
+                <button key={n} onClick={() => setPage(n)} style={{
+                  width:36, height:36, borderRadius:8, border: n === page ? 'none' : '1px solid #e0dff0',
+                  background: n === page ? '#5379f4' : '#fff', color: n === page ? '#fff' : '#6a7380',
+                  fontFamily:font, fontSize:14, fontWeight: n === page ? 700 : 500, cursor:'pointer',
+                }}>{n}</button>
+              ))}
+              <button onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}
+                style={{ width:36, height:36, borderRadius:8, border:'1px solid #e0dff0', background:'#fff', cursor: page===totalPages ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity: page===totalPages ? 0.4 : 1 }}>
+                <img src={trIconArrowRight} alt="next" style={{ width:16, height:16 }}/>
+              </button>
+            </div>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-            {['‹',1,2,3,4,'›'].map((p,i)=>(
-              <button key={i} onClick={()=>typeof p==='number'&&setPage(p)} style={{ width:32, height:32, borderRadius:8, border:'none', cursor:'pointer', fontFamily:font, fontSize:13, fontWeight:600, background:p===page?'#5379f4':'transparent', color:p===page?'#fff':'#6a7380' }}>{p}</button>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </TrainerLayout>
   )
