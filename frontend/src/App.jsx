@@ -8,7 +8,9 @@ import { RegisterPage }       from './pages/RegisterPage'
 import { OtpPage }            from './pages/OtpPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { OAuthCallbackPage }  from './pages/OAuthCallbackPage'
-import { ColorPalette }       from './pages/ColorPalette'
+import { ColorPalette }             from './pages/ColorPalette'
+import { EmployerOnboardingPage }  from './pages/EmployerOnboardingPage'
+import { CandidateOnboardingPage } from './pages/CandidateOnboardingPage'
 
 // ── Worker / Candidate pages ──────────────────────────────────────────────────
 import { WorkerSetup }      from './pages/worker/WorkerSetup'
@@ -60,6 +62,16 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
       <Route path="/palette"        element={<ColorPalette />} />
+      <Route path="/onboarding/employer"  element={
+        <ProtectedRoute roles={EMPLOYER}>
+          <EmployerOnboardingPage />
+        </ProtectedRoute>
+      }/>
+      <Route path="/onboarding/candidate" element={
+        <ProtectedRoute roles={CANDIDATE}>
+          <CandidateOnboardingPage />
+        </ProtectedRoute>
+      }/>
 
       {/* ── WORKER / CANDIDATE ── */}
       <Route path="/worker/dashboard" element={
