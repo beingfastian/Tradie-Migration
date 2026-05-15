@@ -20,8 +20,11 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { register, saveToken } from '../services/api'
 import illusRegister from '../assets/illus-register.svg'
-import iconGoogle   from '../assets/icon-google.svg'
-import iconLinkedin from '../assets/icon-linkedin.svg'
+import illusHiring   from '../assets/illus-hiring.svg'
+import illusTrain    from '../assets/illus-train.svg'
+import illusWork     from '../assets/illus-work.svg'
+import iconGoogle    from '../assets/icon-google.svg'
+import iconLinkedin  from '../assets/icon-linkedin.svg'
 
 const font     = "'Urbanist', sans-serif"
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -44,6 +47,8 @@ const ROLES = [
     color: '#156dbf',
     bg:    '#f0f7ff',
     border:'#c7dff7',
+    illus: illusWork,
+    cardLabel: 'I want to work',
   },
   {
     key:   'employer',
@@ -53,6 +58,8 @@ const ROLES = [
     color: '#0d7377',
     bg:    '#f0faf9',
     border:'#b2dfdb',
+    illus: illusHiring,
+    cardLabel: 'I want to hire',
   },
   {
     key:   'training_provider',
@@ -62,9 +69,12 @@ const ROLES = [
     color: '#7c3aed',
     bg:    '#f5f3ff',
     border:'#ddd6fe',
+    illus: illusTrain,
+    cardLabel: 'I want to train',
   },
 ]
 
+/* ── Eye icons ── */
 const EyeOpen = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -77,6 +87,26 @@ const EyeOff = () => (
     <line x1="1" y1="1" x2="23" y2="23"/>
   </svg>
 )
+
+/* ── Shared background decorations ── */
+function BgDecorations() {
+  return (
+    <>
+      <div style={{ position: 'absolute', top: -30, right: -30, width: 200, height: 180, background: '#b8d4f0', borderRadius: '80% 20% 80% 20%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 60, right: 60, width: 120, height: 110, background: '#c8e6a0', borderRadius: '20% 80% 20% 80%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: -30, left: -30, width: 200, height: 180, background: '#a0d8b0', borderRadius: '20% 80% 20% 80%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 60, left: 60, width: 120, height: 100, background: '#d4e8a0', borderRadius: '80% 20% 80% 20%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 120, left: 80, width: 5, height: 5, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 200, right: 200, width: 4, height: 4, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 180, right: 120, width: 5, height: 5, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 100, left: 200, width: 4, height: 4, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 80, right: 300, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 300, left: 40, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 250, right: 60, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 80, left: 300, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+    </>
+  )
+}
 
 export function RegisterPage() {
   const navigate  = useNavigate()
@@ -96,8 +126,6 @@ export function RegisterPage() {
 
   function set(f, v) { setForm(p => ({ ...p, [f]: v })); setError('') }
   function selectRole(r) { setRole(r); setStep(2) }
-
-  const selectedRoleConfig = ROLES.find(r => r.key === role)
 
   // FIX: OAuth buttons pass the selected role to the backend
   function handleGoogleOAuth()   { window.location.href = `${API_BASE}/auth/google?role=${role || 'candidate'}` }
@@ -128,213 +156,259 @@ export function RegisterPage() {
     }
   }
 
-  const ssoBtnStyle = {
-    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    height: 44, borderRadius: 10, border: '1.5px solid #d0dbf0', background: '#fff',
-    fontFamily: font, fontSize: 13, fontWeight: 600, color: '#343434',
-    cursor: 'pointer', transition: 'all 0.15s',
+  const inputStyle = {
+    height: 50, padding: '0 16px',
+    border: '1px solid #e2e2e2', borderRadius: 10, background: '#fff',
+    fontFamily: font, fontSize: 14, color: '#1a1a1a',
+    outline: 'none', boxSizing: 'border-box', width: '100%',
   }
 
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', fontFamily: font, background: 'linear-gradient(135deg, #f0f4ff 0%, #fafafa 100%)' }}>
+  const labelStyle = {
+    fontFamily: font, fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 6, display: 'block',
+  }
 
-      {/* ── Left panel ── */}
-      <div style={{
-        width: 420, flexShrink: 0,
-        background: 'linear-gradient(160deg, #0d2340 0%, #156dbf 100%)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', padding: '48px 36px', gap: 28,
-      }}>
+  /* ── STEP 1 — Role cards ── */
+  if (step === 1) return (
+    <div style={{
+      position: 'relative', overflow: 'hidden', minHeight: '100vh',
+      background: '#f8f8f8', fontFamily: font,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px',
+    }}>
+      <BgDecorations />
+      <div style={{ position: 'relative', zIndex: 1, maxWidth: 900, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 48 }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#fff', marginBottom: 8 }}>Tradie Migration</div>
-          <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-            Australia's platform for<br/>skilled trades migration
-          </div>
+          <h1 style={{ fontFamily: font, fontSize: 32, fontWeight: 700, color: '#1a1a1a', margin: '0 0 12px', lineHeight: 1.3 }}>
+            Join as a Professional
+          </h1>
+          <p style={{ fontFamily: font, fontSize: 16, color: '#888', margin: 0, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>
+            Join our global ecosystem to connect with top-tier talent, expert trainers, and world-class opportunities.
+          </p>
         </div>
-        <img src={illusRegister} alt="" style={{ width: '100%', maxWidth: 300, objectFit: 'contain' }}/>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-          {[
-            { icon: '✅', text: 'Verified candidate profiles' },
-            { icon: '🔍', text: 'AI-powered document search' },
-            { icon: '✈️', text: '482 visa sponsorship support' },
-          ].map(({ icon, text }) => (
-            <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 14px' }}>
-              <span style={{ fontSize: 16 }}>{icon}</span>
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 500 }}>{text}</span>
+
+        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+          {ROLES.map(r => (
+            <div
+              key={r.key}
+              onClick={() => selectRole(r.key)}
+              style={{
+                background: '#fff', borderRadius: 16, padding: 24,
+                border: '2px solid transparent', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+                width: 240, transition: 'border-color 0.18s, box-shadow 0.18s',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#4169e1'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(65,105,225,0.15)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)' }}
+            >
+              <div style={{ width: 180, height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src={r.illus} alt={r.cardLabel} style={{ width: '100%', height: '100%', objectFit: 'contain' }}/>
+              </div>
+              <span style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: '#1a1a1a', textAlign: 'center' }}>
+                {r.cardLabel}
+              </span>
             </div>
           ))}
         </div>
+
+        <p style={{ fontFamily: font, fontSize: 14, color: '#888', margin: 0 }}>
+          Already have an account?{' '}
+          <Link to="/login" style={{ color: '#4169e1', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
+        </p>
+      </div>
+    </div>
+  )
+
+  /* ── STEP 2 — Registration form ── */
+  return (
+    <div style={{
+      position: 'relative', overflow: 'hidden', height: '100vh',
+      background: '#f8f8f8', fontFamily: font,
+      display: 'flex', alignItems: 'stretch',
+    }}>
+      <BgDecorations />
+
+      {/* Left illustration */}
+      <div style={{
+        width: '40%', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '48px 36px', position: 'relative', zIndex: 1,
+      }}>
+        <img src={illusRegister} alt="Register illustration" style={{ width: '100%', maxWidth: 420, maxHeight: '75vh', objectFit: 'contain' }}/>
       </div>
 
-      {/* ── Right panel ── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 32px', overflowY: 'auto' }}>
-        <div style={{ width: '100%', maxWidth: 480 }}>
-
-          {/* ═══ STEP 1 — Role Selector ═══ */}
-          {step === 1 && (
-            <div>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1a1a2e', margin: '0 0 8px' }}>Create your account</h1>
-              <p style={{ fontSize: 15, color: '#6a7380', margin: '0 0 32px' }}>First, tell us who you are.</p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {ROLES.map(r => (
-                  <button key={r.key} onClick={() => selectRole(r.key)} style={{
-                    display: 'flex', alignItems: 'center', gap: 16, padding: '18px 20px',
-                    borderRadius: 14, border: `2px solid ${r.border}`, background: r.bg,
-                    cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
-                  }}
-                    onMouseEnter={e => { e.currentTarget.style.border = `2px solid ${r.color}`; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                    onMouseLeave={e => { e.currentTarget.style.border = `2px solid ${r.border}`; e.currentTarget.style.transform = 'none' }}
-                  >
-                    <div style={{ width: 52, height: 52, borderRadius: 12, flexShrink: 0, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-                      {r.icon}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: r.color, marginBottom: 2 }}>{r.label}</div>
-                      <div style={{ fontSize: 13, color: '#6a7380', lineHeight: 1.4 }}>{r.sub}</div>
-                    </div>
-                    <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={r.color} strokeWidth="2.5">
-                      <polyline points="9 18 15 12 9 6"/>
-                    </svg>
-                  </button>
-                ))}
+      {/* Right form */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '40px 32px', overflowY: 'auto', position: 'relative', zIndex: 1,
+      }}>
+        <div style={{
+          background: '#dce8f5', borderRadius: 20, padding: 36,
+          maxWidth: 380, width: '100%',
+          boxShadow: '0 4px 24px rgba(65,105,225,0.08)',
+        }}>
+          {/* Back button + role badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <button
+              onClick={() => { setStep(1); setError('') }}
+              style={{
+                background: 'none', border: '1.5px solid #c8d8ec', borderRadius: 8,
+                padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#888',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            {ROLES.find(r => r.key === role) && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: ROLES.find(r => r.key === role).bg,
+                border: `1.5px solid ${ROLES.find(r => r.key === role).border}`,
+                borderRadius: 20, padding: '4px 12px',
+              }}>
+                <span style={{ fontSize: 13 }}>{ROLES.find(r => r.key === role).icon}</span>
+                <span style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: ROLES.find(r => r.key === role).color }}>
+                  {ROLES.find(r => r.key === role).label}
+                </span>
               </div>
-              <p style={{ textAlign: 'center', marginTop: 28, fontSize: 14, color: '#6a7380' }}>
-                Already have an account?{' '}
-                <Link to="/login" style={{ color: '#5379f4', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
-              </p>
+            )}
+          </div>
+
+          <h1 style={{ fontFamily: font, fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: '0 0 8px' }}>
+            Join as a Professional
+          </h1>
+          <p style={{ fontFamily: font, fontSize: 13, color: '#888', margin: '0 0 20px', lineHeight: 1.5 }}>
+            Join our global ecosystem to connect with top-tier talent, expert trainers, and world-class opportunities.
+          </p>
+
+          {error && (
+            <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 14 }}>
+              {error}
             </div>
           )}
 
-          {/* ═══ STEP 2 — Form + SSO ═══ */}
-          {step === 2 && (
+          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Email */}
             <div>
-              {/* Back + role badge */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                <button onClick={() => { setStep(1); setError('') }} style={{
-                  background: 'none', border: '1.5px solid #e0dff0', borderRadius: 8,
-                  padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#6a7380',
-                }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                {selectedRoleConfig && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: selectedRoleConfig.bg, border: `1.5px solid ${selectedRoleConfig.border}`, borderRadius: 20, padding: '5px 14px' }}>
-                    <span style={{ fontSize: 14 }}>{selectedRoleConfig.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: selectedRoleConfig.color }}>{selectedRoleConfig.label}</span>
-                  </div>
-                )}
-              </div>
+              <label style={labelStyle}>Email address</label>
+              <input
+                type="email" placeholder="Enter your email" value={form.email}
+                onChange={e => set('email', e.target.value)}
+                style={inputStyle}
+                onFocus={e => e.target.style.borderColor = '#4169e1'}
+                onBlur={e => e.target.style.borderColor = '#e2e2e2'}
+              />
+            </div>
 
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1a1a2e', margin: '0 0 6px' }}>Create your account</h1>
-              <p style={{ fontSize: 14, color: '#6a7380', margin: '0 0 20px' }}>
-                Already have an account?{' '}
-                <Link to="/login" style={{ color: '#5379f4', fontWeight: 600, textDecoration: 'none' }}>Sign in</Link>
-              </p>
-
-              {/* ── SSO buttons — FIX: pass selected role ── */}
-              <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-                <button type="button" style={ssoBtnStyle} onClick={handleGoogleOAuth}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#4285f4'; e.currentTarget.style.background = '#f8f9ff' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#d0dbf0'; e.currentTarget.style.background = '#fff' }}
-                >
-                  <img src={iconGoogle} alt="Google" style={{ width: 18, height: 18 }}/>
-                  Google
-                </button>
-                <button type="button" style={ssoBtnStyle} onClick={handleLinkedInOAuth}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#0a66c2'; e.currentTarget.style.background = '#f0f7ff' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#d0dbf0'; e.currentTarget.style.background = '#fff' }}
-                >
-                  <img src={iconLinkedin} alt="LinkedIn" style={{ width: 18, height: 18 }}/>
-                  LinkedIn
+            {/* Password */}
+            <div>
+              <label style={labelStyle}>Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  placeholder="Min 8 chars, 1 uppercase, 1 number"
+                  value={form.password} onChange={e => set('password', e.target.value)}
+                  style={{ ...inputStyle, paddingRight: 44 }}
+                  onFocus={e => e.target.style.borderColor = '#4169e1'}
+                  onBlur={e => e.target.style.borderColor = '#e2e2e2'}
+                />
+                <button type="button" onClick={() => setShowPw(p => !p)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0, display: 'flex' }}>
+                  {showPw ? <EyeOff/> : <EyeOpen/>}
                 </button>
               </div>
+            </div>
 
-              {/* Divider */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{ flex: 1, height: 1, background: '#e0dff0' }}/>
-                <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>or register with email</span>
-                <div style={{ flex: 1, height: 1, background: '#e0dff0' }}/>
+            {/* Confirm Password */}
+            <div>
+              <label style={labelStyle}>Confirm Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showCpw ? 'text' : 'password'}
+                  placeholder="Re-enter your password"
+                  value={form.confirmPassword} onChange={e => set('confirmPassword', e.target.value)}
+                  style={{ ...inputStyle, paddingRight: 44 }}
+                  onFocus={e => e.target.style.borderColor = '#4169e1'}
+                  onBlur={e => e.target.style.borderColor = '#e2e2e2'}
+                />
+                <button type="button" onClick={() => setShowCpw(p => !p)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0, display: 'flex' }}>
+                  {showCpw ? <EyeOff/> : <EyeOpen/>}
+                </button>
               </div>
+            </div>
 
-              {error && (
-                <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', borderRadius: 8, padding: '10px 14px', fontSize: 14, marginBottom: 14 }}>
-                  {error}
-                </div>
-              )}
+            {/* Terms */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
+              <input
+                type="checkbox" checked={form.terms}
+                onChange={e => set('terms', e.target.checked)}
+                style={{ marginTop: 2, accentColor: '#4169e1', width: 15, height: 15, flexShrink: 0 }}
+              />
+              <span style={{ fontFamily: font, fontSize: 13, color: '#888', lineHeight: 1.5 }}>
+                Accepting the{' '}
+                <a href="#" style={{ color: '#4169e1', textDecoration: 'none', fontWeight: 600 }}>terms and conditions</a>.
+              </span>
+            </label>
 
-              <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-                {/* Full Name */}
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1a1a2e', marginBottom: 5 }}>Full name</label>
-                  <input type="text" placeholder="Enter your full name" value={form.name} onChange={e => set('name', e.target.value)}
-                    style={{ width: '100%', padding: '10px 13px', borderRadius: 10, border: '1.5px solid #d0dbf0', background: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#1a1a2e', fontFamily: font }}
-                    onFocus={e => e.target.style.border = '1.5px solid #5379f4'} onBlur={e => e.target.style.border = '1.5px solid #d0dbf0'}
-                  />
-                </div>
-                {/* Email */}
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1a1a2e', marginBottom: 5 }}>Email address</label>
-                  <input type="email" placeholder="Enter your email" value={form.email} onChange={e => set('email', e.target.value)}
-                    style={{ width: '100%', padding: '10px 13px', borderRadius: 10, border: '1.5px solid #d0dbf0', background: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#1a1a2e', fontFamily: font }}
-                    onFocus={e => e.target.style.border = '1.5px solid #5379f4'} onBlur={e => e.target.style.border = '1.5px solid #d0dbf0'}
-                  />
-                </div>
-                {/* Password */}
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1a1a2e', marginBottom: 5 }}>Password</label>
-                  <div style={{ position: 'relative' }}>
-                    <input type={showPw ? 'text' : 'password'} placeholder="Min 8 chars, 1 uppercase, 1 number" value={form.password} onChange={e => set('password', e.target.value)}
-                      style={{ width: '100%', padding: '10px 42px 10px 13px', borderRadius: 10, border: '1.5px solid #d0dbf0', background: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#1a1a2e', fontFamily: font }}
-                      onFocus={e => e.target.style.border = '1.5px solid #5379f4'} onBlur={e => e.target.style.border = '1.5px solid #d0dbf0'}
-                    />
-                    <button type="button" onClick={() => setShowPw(p => !p)}
-                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
-                      {showPw ? <EyeOff/> : <EyeOpen/>}
-                    </button>
-                  </div>
-                </div>
-                {/* Confirm Password */}
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1a1a2e', marginBottom: 5 }}>Confirm password</label>
-                  <div style={{ position: 'relative' }}>
-                    <input type={showCpw ? 'text' : 'password'} placeholder="Re-enter your password" value={form.confirmPassword} onChange={e => set('confirmPassword', e.target.value)}
-                      style={{ width: '100%', padding: '10px 42px 10px 13px', borderRadius: 10, border: '1.5px solid #d0dbf0', background: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#1a1a2e', fontFamily: font }}
-                      onFocus={e => e.target.style.border = '1.5px solid #5379f4'} onBlur={e => e.target.style.border = '1.5px solid #d0dbf0'}
-                    />
-                    <button type="button" onClick={() => setShowCpw(p => !p)}
-                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, display: 'flex' }}>
-                      {showCpw ? <EyeOff/> : <EyeOpen/>}
-                    </button>
-                  </div>
-                </div>
-                {/* Terms */}
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.terms} onChange={e => set('terms', e.target.checked)}
-                    style={{ marginTop: 2, accentColor: '#5379f4', width: 16, height: 16, flexShrink: 0 }}
-                  />
-                  <span style={{ fontSize: 13, color: '#6a7380', lineHeight: 1.5 }}>
-                    I agree to the <a href="#" style={{ color: '#5379f4', textDecoration: 'none', fontWeight: 600 }}>Terms of Service</a> and <a href="#" style={{ color: '#5379f4', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>
-                  </span>
-                </label>
-                {/* Submit */}
-                <button type="submit" disabled={loading} style={{
-                  width: '100%', height: 48,
-                  background: loading ? '#9ca3af' : '#5379f4',
-                  color: '#fff', border: 'none', borderRadius: 12,
-                  fontFamily: font, fontSize: 15, fontWeight: 700,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: loading ? 'none' : '0 4px 14px rgba(83,121,244,0.4)',
-                  transition: 'all 0.18s',
+            {/* Submit */}
+            <button
+              type="submit" disabled={loading}
+              style={{
+                width: '100%', height: 50,
+                background: loading ? '#9ca3af' : '#4169e1',
+                color: '#fff', border: 'none', borderRadius: 30,
+                fontFamily: font, fontSize: 15, fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'background 0.18s',
+              }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#3458c4' }}
+              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#4169e1' }}
+            >
+              {loading ? 'Creating account…' : 'Create Account'}
+            </button>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ flex: 1, height: 1, background: '#c8d8ec' }}/>
+              <span style={{ fontFamily: font, fontSize: 12, color: '#888' }}>or</span>
+              <div style={{ flex: 1, height: 1, background: '#c8d8ec' }}/>
+            </div>
+
+            {/* SSO buttons */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="button" onClick={handleLinkedInOAuth}
+                style={{
+                  flex: 1, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: 8, background: '#1a3a5c', border: 'none', borderRadius: 10,
+                  fontFamily: font, fontSize: 13, fontWeight: 600, color: '#fff',
+                  cursor: 'pointer', transition: 'opacity 0.15s',
                 }}
-                  onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#4264d6' }}
-                  onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#5379f4' }}
-                >
-                  {loading ? 'Creating account…' : 'Create Account'}
-                </button>
-              </form>
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >
+                <img src={iconLinkedin} alt="LinkedIn" style={{ width: 18, height: 18 }}/>
+                LinkedIn
+              </button>
+              <button type="button" onClick={handleGoogleOAuth}
+                style={{
+                  flex: 1, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: 8, background: '#fff', border: '1.5px solid #e2e2e2', borderRadius: 10,
+                  fontFamily: font, fontSize: 13, fontWeight: 600, color: '#1a1a1a',
+                  cursor: 'pointer', transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#4169e1'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e2e2'}
+              >
+                <img src={iconGoogle} alt="Google" style={{ width: 18, height: 18 }}/>
+                Google
+              </button>
             </div>
-          )}
 
+            <p style={{ textAlign: 'center', fontFamily: font, fontSize: 14, color: '#888', margin: 0 }}>
+              Already have an account?{' '}
+              <Link to="/login" style={{ color: '#4169e1', fontWeight: 600, textDecoration: 'none' }}>Login</Link>
+            </p>
+          </form>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 
 // ── Auth pages (public) ───────────────────────────────────────────────────────
 import { LandingPage }        from './pages/LandingPage'
+import { RoleSelectPage }     from './pages/RoleSelectPage'
 import { LoginPage }          from './pages/LoginPage'
 import { RegisterPage }       from './pages/RegisterPage'
 import { OtpPage }            from './pages/OtpPage'
@@ -52,6 +53,7 @@ function App() {
 
       {/* ── PUBLIC — no auth required ── */}
       <Route path="/"               element={<LandingPage />} />
+      <Route path="/join"           element={<RoleSelectPage />} />
       <Route path="/login"          element={<LoginPage />} />
       <Route path="/register"       element={<RegisterPage />} />
       <Route path="/verify-otp"     element={<OtpPage />} />

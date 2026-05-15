@@ -28,6 +28,14 @@ const ROLE_REDIRECT = {
   company_admin:     '/dashboard',
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+const DEV_ROLES = [
+  { role: 'candidate',         label: '👷 Worker',   color: '#156dbf', bg: '#e8f4ff', redirect: '/worker/dashboard' },
+  { role: 'employer',          label: '🏢 Employer', color: '#0d7377', bg: '#e8faf9', redirect: '/company/dashboard' },
+  { role: 'training_provider', label: '📚 Trainer',  color: '#7c3aed', bg: '#f3f0ff', redirect: '/trainer/dashboard' },
+]
+
 /* ── Eye icons ── */
 const EyeOpen = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -42,19 +50,29 @@ const EyeOff = () => (
   </svg>
 )
 
-const ssoBtnStyle = {
-  flex: 1, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center',
-  gap: 12, background: '#fff', border: '1.5px solid #e0dff0', borderRadius: 12,
-  cursor: 'pointer', transition: 'border-color 0.15s',
+/* ── Shared background decorations ── */
+function BgDecorations() {
+  return (
+    <>
+      {/* Top-right blobs */}
+      <div style={{ position: 'absolute', top: -30, right: -30, width: 200, height: 180, background: '#b8d4f0', borderRadius: '80% 20% 80% 20%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 60, right: 60, width: 120, height: 110, background: '#c8e6a0', borderRadius: '20% 80% 20% 80%', pointerEvents: 'none' }} />
+      {/* Bottom-left blobs */}
+      <div style={{ position: 'absolute', bottom: -30, left: -30, width: 200, height: 180, background: '#a0d8b0', borderRadius: '20% 80% 20% 80%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 60, left: 60, width: 120, height: 100, background: '#d4e8a0', borderRadius: '80% 20% 80% 20%', pointerEvents: 'none' }} />
+      {/* Orange filled dots */}
+      <div style={{ position: 'absolute', top: 120, left: 80,  width: 5, height: 5, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 200, right: 200, width: 4, height: 4, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 180, right: 120, width: 5, height: 5, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 100, left: 200, width: 4, height: 4, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      {/* Orange ring dots */}
+      <div style={{ position: 'absolute', top: 80,  right: 300, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 300, left: 40,   width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 250, right: 60, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 80,  left: 300, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+    </>
+  )
 }
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
-const DEV_ROLES = [
-  { role: 'candidate',         label: '👷 Worker',   color: '#156dbf', bg: '#e8f4ff', redirect: '/worker/dashboard' },
-  { role: 'employer',          label: '🏢 Employer', color: '#0d7377', bg: '#e8faf9', redirect: '/company/dashboard' },
-  { role: 'training_provider', label: '📚 Trainer',  color: '#7c3aed', bg: '#f3f0ff', redirect: '/trainer/dashboard' },
-]
 
 export function LoginPage() {
   const navigate   = useNavigate()
@@ -119,7 +137,6 @@ export function LoginPage() {
     try {
       const data = await login({ email: form.email, password: form.password })
       saveToken(data.access_token)
-      // FIX: redirect to dashboard, not setup
       navigate(ROLE_REDIRECT[data.role] || '/', { replace: true })
     } catch (err) {
       if (err.status === 403) setApiErr('Your email is not verified. Please check your inbox.')
@@ -129,307 +146,296 @@ export function LoginPage() {
     }
   }
 
+  const inputStyle = {
+    height: 50, padding: '0 16px',
+    border: '1px solid #e2e2e2',
+    borderRadius: 10, background: '#fff',
+    fontFamily: font, fontSize: 15, color: '#1a1a1a',
+    outline: 'none', boxSizing: 'border-box', width: '100%',
+  }
+
+  const labelStyle = {
+    fontFamily: font, fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 6, display: 'block',
+  }
+
   return (
     <div style={{
-      minHeight: '100vh', display: 'flex', fontFamily: font,
-      background: 'linear-gradient(135deg, #f0f4ff 0%, #fafafa 100%)',
+      position: 'relative',
+      overflow: 'hidden',
+      height: '100vh',
+      background: '#f8f8f8',
+      fontFamily: font,
+      display: 'flex',
+      alignItems: 'stretch',
     }}>
+      <BgDecorations />
 
       {/* ── Left panel (illustration) ── */}
       <div style={{
-        width: 420, flexShrink: 0,
-        background: 'linear-gradient(160deg, #0d2340 0%, #156dbf 100%)',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        padding: '48px 36px', gap: 28,
+        width: '45%',
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '48px 36px',
+        position: 'relative',
+        zIndex: 1,
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#fff', marginBottom: 8 }}>
-            Tradie Migration
-          </div>
-          <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-            Australia's platform for<br/>skilled trades migration
-          </div>
-        </div>
-        <img src={illusSignin} alt="Sign in" style={{ width: '100%', maxWidth: 300, objectFit: 'contain' }}/>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-          {[
-            { icon: '✅', text: 'Verified candidate profiles' },
-            { icon: '🔍', text: 'AI-powered document search' },
-            { icon: '✈️', text: '482 visa sponsorship support' },
-          ].map(({ icon, text }) => (
-            <div key={text} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 14px',
-            }}>
-              <span style={{ fontSize: 16 }}>{icon}</span>
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 500 }}>{text}</span>
-            </div>
-          ))}
-        </div>
+        <img
+          src={illusSignin}
+          alt="Sign in illustration"
+          style={{ width: '100%', maxWidth: 420, objectFit: 'contain' }}
+        />
       </div>
 
       {/* ── Right panel (form) ── */}
       <div style={{
-        flex: 1, display: 'flex', alignItems: 'center',
-        justifyContent: 'center', padding: '40px 32px', overflowY: 'auto',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 32px',
+        overflowY: 'auto',
+        position: 'relative',
+        zIndex: 1,
       }}>
-        <div style={{ width: '100%', maxWidth: 440 }}>
-
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#1a1a2e', margin: '0 0 6px' }}>
-            Welcome back
+        {/* Form card */}
+        <div style={{
+          background: '#dce8f5',
+          borderRadius: 20,
+          padding: 36,
+          maxWidth: 380,
+          width: '100%',
+          boxShadow: '0 4px 24px rgba(65,105,225,0.08)',
+        }}>
+          <h1 style={{ fontFamily: font, fontSize: 28, fontWeight: 700, color: '#1a1a1a', margin: '0 0 6px' }}>
+            Welcome Back
           </h1>
-          <p style={{ fontSize: 14, color: '#6a7380', margin: '0 0 28px' }}>
-            Don't have an account?{' '}
-            <Link to="/register" style={{ color: '#5379f4', fontWeight: 600, textDecoration: 'none' }}>
-              Create one
-            </Link>
+          <p style={{ fontFamily: font, fontSize: 14, color: '#888', margin: '0 0 24px', lineHeight: 1.5 }}>
+            Please login to continue to your account.
           </p>
 
-          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {successMsg && (
+            <div style={{ background: '#dcfce7', border: '1px solid #86efac', color: '#166534', borderRadius: 8, padding: '10px 14px', fontSize: 14, marginBottom: 14 }}>
+              {successMsg}
+            </div>
+          )}
+          {apiErr && (
+            <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', borderRadius: 8, padding: '10px 14px', fontSize: 14, marginBottom: 14 }}>
+              {apiErr}
+            </div>
+          )}
 
-            {/* Success / error alerts */}
-            {successMsg && (
-              <div style={{
-                background: '#dcfce7', border: '1px solid #86efac', color: '#166534',
-                borderRadius: 8, padding: '10px 14px', fontSize: 14,
-              }}>
-                {successMsg}
-              </div>
-            )}
-            {apiErr && (
-              <div style={{
-                background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c',
-                borderRadius: 8, padding: '10px 14px', fontSize: 14,
-              }}>
-                {apiErr}
-              </div>
-            )}
-
+          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Email */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 14, fontWeight: 700, color: '#343434' }}>
-                Email address
-              </label>
+            <div>
+              <label style={labelStyle}>Email address</label>
               <input
                 type="email"
                 placeholder="Enter Email"
                 value={form.email}
                 onChange={e => set('email', e.target.value)}
-                style={{
-                  height: 52, padding: '0 18px',
-                  border: `1.5px solid ${errors.email ? '#ef4444' : '#d0dbf0'}`,
-                  borderRadius: 12, background: '#fff',
-                  fontFamily: font, fontSize: 15, color: '#343434',
-                  outline: 'none', boxSizing: 'border-box', width: '100%',
-                }}
-                onFocus={e => e.target.style.boxShadow = '0 0 0 3px rgba(83,121,244,0.15)'}
-                onBlur={e  => e.target.style.boxShadow = 'none'}
+                style={{ ...inputStyle, borderColor: errors.email ? '#ef4444' : '#e2e2e2' }}
+                onFocus={e => e.target.style.borderColor = '#4169e1'}
+                onBlur={e  => e.target.style.borderColor = errors.email ? '#ef4444' : '#e2e2e2'}
               />
-              {errors.email && (
-                <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>{errors.email}</p>
-              )}
+              {errors.email && <p style={{ color: '#ef4444', fontSize: 12, margin: '4px 0 0' }}>{errors.email}</p>}
             </div>
 
             {/* Password */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={{ fontSize: 14, fontWeight: 700, color: '#343434' }}>
-                  Password
-                </label>
-                <Link
-                  to="/forgot-password"
-                  style={{ fontSize: 13, color: '#5379f4', textDecoration: 'none', fontWeight: 600 }}
-                >
-                  Forgot password?
-                </Link>
-              </div>
+            <div>
+              <label style={labelStyle}>Password</label>
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPw ? 'text' : 'password'}
                   placeholder="Enter Password"
                   value={form.password}
                   onChange={e => set('password', e.target.value)}
-                  style={{
-                    height: 52, padding: `0 48px 0 18px`,
-                    border: `1.5px solid ${errors.password ? '#ef4444' : '#d0dbf0'}`,
-                    borderRadius: 12, background: '#fff',
-                    fontFamily: font, fontSize: 15, color: '#343434',
-                    outline: 'none', boxSizing: 'border-box', width: '100%',
-                  }}
-                  onFocus={e => e.target.style.boxShadow = '0 0 0 3px rgba(83,121,244,0.15)'}
-                  onBlur={e  => e.target.style.boxShadow = 'none'}
+                  style={{ ...inputStyle, paddingRight: 46, borderColor: errors.password ? '#ef4444' : '#e2e2e2' }}
+                  onFocus={e => e.target.style.borderColor = '#4169e1'}
+                  onBlur={e  => e.target.style.borderColor = errors.password ? '#ef4444' : '#e2e2e2'}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(p => !p)}
-                  style={{
-                    position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: '#9ca3af', padding: 0, display: 'flex',
-                  }}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#888', padding: 0, display: 'flex' }}
                 >
                   {showPw ? <EyeOff/> : <EyeOpen/>}
                 </button>
               </div>
-              {errors.password && (
-                <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>{errors.password}</p>
-              )}
+              {errors.password && <p style={{ color: '#ef4444', fontSize: 12, margin: '4px 0 0' }}>{errors.password}</p>}
             </div>
 
-            {/* Remember me */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={keepMe}
-                onChange={e => setKeepMe(e.target.checked)}
-                style={{ accentColor: '#5379f4', width: 16, height: 16 }}
-              />
-              <span style={{ fontSize: 14, color: '#6a7380' }}>Keep me signed in</span>
-            </label>
+            {/* Keep me + Forgot */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: font, fontSize: 13, color: '#1a1a1a' }}>
+                <input
+                  type="checkbox"
+                  checked={keepMe}
+                  onChange={e => setKeepMe(e.target.checked)}
+                  style={{ accentColor: '#4169e1', width: 15, height: 15 }}
+                />
+                Keep me logged in
+              </label>
+              <Link to="/forgot-password" style={{ fontFamily: font, fontSize: 13, color: '#4169e1', textDecoration: 'none', fontWeight: 600 }}>
+                Forgot Password?
+              </Link>
+            </div>
 
-            {/* Submit */}
+            {/* Login button */}
             <button
               type="submit"
               disabled={loading}
               style={{
-                width: '100%', height: 52,
-                background: loading ? '#9ca3af' : '#5379f4',
-                color: '#fff', border: 'none', borderRadius: 12,
+                width: '100%', height: 50,
+                background: loading ? '#9ca3af' : '#4169e1',
+                color: '#fff', border: 'none', borderRadius: 30,
                 fontFamily: font, fontSize: 16, fontWeight: 700,
                 cursor: loading ? 'not-allowed' : 'pointer',
-                boxShadow: loading ? 'none' : '0 4px 14px rgba(83,121,244,0.4)',
-                transition: 'all 0.18s',
+                transition: 'background 0.18s',
               }}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#4264d6' }}
-              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#5379f4' }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#3458c4' }}
+              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#4169e1' }}
             >
-              {loading ? 'Signing in…' : 'Sign In'}
+              {loading ? 'Signing in…' : 'Login'}
             </button>
 
             {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, height: 1, background: '#e0dff0' }}/>
-              <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 600 }}>or</span>
-              <div style={{ flex: 1, height: 1, background: '#e0dff0' }}/>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ flex: 1, height: 1, background: '#c8d8ec' }}/>
+              <span style={{ fontFamily: font, fontSize: 13, color: '#888' }}>or</span>
+              <div style={{ flex: 1, height: 1, background: '#c8d8ec' }}/>
             </div>
 
             {/* SSO buttons */}
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                type="button"
-                style={ssoBtnStyle}
-                onClick={() => { window.location.href = 'http://localhost:8000/auth/linkedin' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#0a66c2'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = '#e0dff0'}
-              >
-                <img src={iconLinkedin} alt="LinkedIn" style={{ width: 22, height: 22 }}/>
-                <span style={{ fontFamily: font, fontSize: 14, fontWeight: 600, color: '#403c8b' }}>
-                  LinkedIn
-                </span>
-              </button>
-              <button
-                type="button"
-                style={ssoBtnStyle}
-                onClick={() => { window.location.href = 'http://localhost:8000/auth/google' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#4285f4'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = '#e0dff0'}
-              >
-                <img src={iconGoogle} alt="Google" style={{ width: 22, height: 22 }}/>
-                <span style={{ fontFamily: font, fontSize: 14, fontWeight: 600, color: '#403c8b' }}>
-                  Google
-                </span>
-              </button>
-            </div>
-
-          </form>
-
-          {/* ── DEV QUICK LOGIN — remove before production ── */}
-          <div style={{
-            marginTop: 32, padding: '20px 24px',
-            background: '#fffbeb', border: '1.5px dashed #f59e0b',
-            borderRadius: 16,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <span style={{ fontSize: 16 }}>⚡</span>
-              <span style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: '#92400e' }}>
-                Dev Quick Login
-              </span>
-              <span style={{ fontFamily: font, fontSize: 11, color: '#b45309', marginLeft: 4 }}>
-                (testing only — remove before production)
-              </span>
-            </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              {DEV_ROLES.map(({ role, label, color, bg, redirect }) => (
-                <button
-                  key={role}
-                  onClick={() => handleDevLogin(role, redirect)}
-                  disabled={devLoading === role}
-                  style={{
-                    flex: 1, height: 44, border: `1.5px solid ${color}`,
-                    borderRadius: 10, background: devLoading === role ? '#f3f4f6' : bg,
-                    fontFamily: font, fontSize: 13, fontWeight: 700,
-                    color: devLoading === role ? '#9ca3af' : color,
-                    cursor: devLoading === role ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => { if (devLoading !== role) e.currentTarget.style.background = color; e.currentTarget.style.color = '#fff' }}
-                  onMouseLeave={e => { if (devLoading !== role) e.currentTarget.style.background = bg; e.currentTarget.style.color = color }}
-                >
-                  {devLoading === role ? 'Loading…' : label}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => { window.location.href = `${API_BASE}/auth/linkedin` }}
+                style={{
+                  flex: 1, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: 8, background: '#1a3a5c', border: 'none', borderRadius: 10,
+                  fontFamily: font, fontSize: 13, fontWeight: 600, color: '#fff',
+                  cursor: 'pointer', transition: 'opacity 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >
+                <img src={iconLinkedin} alt="LinkedIn" style={{ width: 18, height: 18 }}/>
+                LinkedIn
+              </button>
+              <button
+                type="button"
+                onClick={() => { window.location.href = `${API_BASE}/auth/google` }}
+                style={{
+                  flex: 1, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: 8, background: '#fff', border: '1.5px solid #e2e2e2', borderRadius: 10,
+                  fontFamily: font, fontSize: 13, fontWeight: 600, color: '#1a1a1a',
+                  cursor: 'pointer', transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#4169e1'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e2e2'}
+              >
+                <img src={iconGoogle} alt="Google" style={{ width: 18, height: 18 }}/>
+                Google
+              </button>
             </div>
 
-            {/* ── Test Email ── */}
-            <div style={{ marginTop: 16, borderTop: '1px dashed #f59e0b', paddingTop: 14 }}>
-              <div style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: '#92400e', marginBottom: 8 }}>
-                📧 Test Email (SMTP check)
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="email"
-                  placeholder="Enter email to test OTP send"
-                  value={testEmail}
-                  onChange={e => { setTestEmail(e.target.value); setTestResult(null) }}
-                  style={{
-                    flex: 1, height: 38, padding: '0 12px',
-                    border: '1.5px solid #f59e0b', borderRadius: 8,
-                    fontFamily: font, fontSize: 13, outline: 'none',
-                  }}
-                />
-                <button
-                  onClick={handleTestEmail}
-                  disabled={testLoading || !testEmail}
-                  style={{
-                    height: 38, padding: '0 14px',
-                    background: testLoading ? '#9ca3af' : '#f59e0b',
-                    color: '#fff', border: 'none', borderRadius: 8,
-                    fontFamily: font, fontSize: 13, fontWeight: 700,
-                    cursor: testLoading || !testEmail ? 'not-allowed' : 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {testLoading ? 'Sending…' : 'Send Test OTP'}
-                </button>
-              </div>
-              {testResult && (
-                <div style={{
-                  marginTop: 8, padding: '10px 12px', borderRadius: 8, fontSize: 12,
-                  fontFamily: font, lineHeight: 1.5,
-                  background: testResult.sent ? '#dcfce7' : '#fee2e2',
-                  border: `1px solid ${testResult.sent ? '#86efac' : '#fca5a5'}`,
-                  color: testResult.sent ? '#166534' : '#b91c1c',
-                }}>
-                  {testResult.sent ? '✅' : '❌'} {testResult.message}
-                  {testResult.sent && testResult.otp && (
-                    <span style={{ marginLeft: 8, fontWeight: 700 }}>OTP: {testResult.otp}</span>
-                  )}
-                </div>
-              )}
-            </div>
+            {/* Sign up link */}
+            <p style={{ textAlign: 'center', fontFamily: font, fontSize: 14, color: '#888', margin: 0 }}>
+              Need an account?{' '}
+              <Link to="/join" style={{ color: '#4169e1', fontWeight: 600, textDecoration: 'none' }}>
+                Create One
+              </Link>
+            </p>
+          </form>
+        </div>
+
+        {/* ── DEV QUICK LOGIN — remove before production ── */}
+        <div style={{
+          marginTop: 24,
+          padding: '16px 20px',
+          background: '#fffbeb',
+          border: '1.5px dashed #f59e0b',
+          borderRadius: 14,
+          maxWidth: 380,
+          width: '100%',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: 14 }}>⚡</span>
+            <span style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: '#92400e' }}>Dev Quick Login</span>
+            <span style={{ fontFamily: font, fontSize: 10, color: '#b45309', marginLeft: 4 }}>(testing only)</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {DEV_ROLES.map(({ role, label, color, bg, redirect }) => (
+              <button
+                key={role}
+                onClick={() => handleDevLogin(role, redirect)}
+                disabled={devLoading === role}
+                style={{
+                  flex: 1, height: 38, border: `1.5px solid ${color}`,
+                  borderRadius: 8, background: devLoading === role ? '#f3f4f6' : bg,
+                  fontFamily: font, fontSize: 11, fontWeight: 700,
+                  color: devLoading === role ? '#9ca3af' : color,
+                  cursor: devLoading === role ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { if (devLoading !== role) { e.currentTarget.style.background = color; e.currentTarget.style.color = '#fff' }}}
+                onMouseLeave={e => { if (devLoading !== role) { e.currentTarget.style.background = bg; e.currentTarget.style.color = color }}}
+              >
+                {devLoading === role ? 'Loading…' : label}
+              </button>
+            ))}
           </div>
 
+          {/* ── Test Email ── */}
+          <div style={{ marginTop: 14, borderTop: '1px dashed #f59e0b', paddingTop: 12 }}>
+            <div style={{ fontFamily: font, fontSize: 11, fontWeight: 700, color: '#92400e', marginBottom: 7 }}>
+              📧 Test Email (SMTP check)
+            </div>
+            <div style={{ display: 'flex', gap: 7 }}>
+              <input
+                type="email"
+                placeholder="Enter email to test OTP send"
+                value={testEmail}
+                onChange={e => { setTestEmail(e.target.value); setTestResult(null) }}
+                style={{
+                  flex: 1, height: 34, padding: '0 10px',
+                  border: '1.5px solid #f59e0b', borderRadius: 7,
+                  fontFamily: font, fontSize: 12, outline: 'none',
+                }}
+              />
+              <button
+                onClick={handleTestEmail}
+                disabled={testLoading || !testEmail}
+                style={{
+                  height: 34, padding: '0 12px',
+                  background: testLoading ? '#9ca3af' : '#f59e0b',
+                  color: '#fff', border: 'none', borderRadius: 7,
+                  fontFamily: font, fontSize: 11, fontWeight: 700,
+                  cursor: testLoading || !testEmail ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {testLoading ? 'Sending…' : 'Send Test OTP'}
+              </button>
+            </div>
+            {testResult && (
+              <div style={{
+                marginTop: 7, padding: '8px 10px', borderRadius: 7, fontSize: 11,
+                fontFamily: font, lineHeight: 1.5,
+                background: testResult.sent ? '#dcfce7' : '#fee2e2',
+                border: `1px solid ${testResult.sent ? '#86efac' : '#fca5a5'}`,
+                color: testResult.sent ? '#166534' : '#b91c1c',
+              }}>
+                {testResult.sent ? '✅' : '❌'} {testResult.message}
+                {testResult.sent && testResult.otp && (
+                  <span style={{ marginLeft: 7, fontWeight: 700 }}>OTP: {testResult.otp}</span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

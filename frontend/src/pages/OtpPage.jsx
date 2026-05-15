@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { verifyOtp, resendOtp, saveToken } from '../services/api'
-import illusVerifyEmail from '../assets/illus-verify-email.svg'
+import illusOtp from '../assets/illus-otp.svg'
 
 const ROLE_REDIRECT = {
   candidate:         '/setup/worker/1',
@@ -13,6 +13,26 @@ const ROLE_REDIRECT = {
 }
 
 const font = "'Urbanist', sans-serif"
+
+/* ── Shared background decorations ── */
+function BgDecorations() {
+  return (
+    <>
+      <div style={{ position: 'absolute', top: -30, right: -30, width: 200, height: 180, background: '#b8d4f0', borderRadius: '80% 20% 80% 20%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 60, right: 60, width: 120, height: 110, background: '#c8e6a0', borderRadius: '20% 80% 20% 80%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: -30, left: -30, width: 200, height: 180, background: '#a0d8b0', borderRadius: '20% 80% 20% 80%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 60, left: 60, width: 120, height: 100, background: '#d4e8a0', borderRadius: '80% 20% 80% 20%', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 120, left: 80, width: 5, height: 5, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 200, right: 200, width: 4, height: 4, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 180, right: 120, width: 5, height: 5, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 100, left: 200, width: 4, height: 4, borderRadius: '50%', background: '#f26f37', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 80, right: 300, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 300, left: 40, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 250, right: 60, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: 80, left: 300, width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #f26f37', background: 'transparent', pointerEvents: 'none' }} />
+    </>
+  )
+}
 
 export function OtpPage() {
   const navigate = useNavigate()
@@ -56,59 +76,45 @@ export function OtpPage() {
 
   return (
     <div style={{
-      background: '#fbfbfb', minHeight: '100vh',
-      position: 'relative', overflow: 'hidden', fontFamily: font,
+      position: 'relative', overflow: 'hidden', height: '100vh',
+      background: '#f8f8f8', fontFamily: font,
+      display: 'flex', alignItems: 'stretch',
     }}>
-      <div style={{
-        position: 'absolute', inset: 0,
-        display: 'flex', justifyContent: 'center',
-        pointerEvents: 'none', overflow: 'hidden', zIndex: 0,
-      }}>
-        <div style={{ position: 'relative', width: '100%', maxWidth: 1440, flexShrink: 0 }}>
-          <div style={{ position: 'absolute', left: -131, top: -255, width: 1700, height: 1495 }}>
-            <img src={illusVerifyEmail} alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'fill', display: 'block' }} />
-          </div>
-        </div>
-      </div>
+      <BgDecorations />
 
+      {/* Left: form card */}
       <div style={{
-        position: 'relative', zIndex: 2, minHeight: '100vh',
-        display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
-        padding: '2rem 0 2rem max(5%, calc(50% - 720px + 178px))',
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '48px 36px', position: 'relative', zIndex: 1, overflowY: 'auto',
       }}>
         <div style={{
-          width: 551, maxWidth: '90vw',
-          background: 'rgba(230,241,255,0.94)',
-          backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)',
-          borderRadius: 16, padding: 32,
-          display: 'flex', flexDirection: 'column', gap: 32,
+          background: '#dce8f5', borderRadius: 20, padding: 36,
+          maxWidth: 380, width: '100%',
+          boxShadow: '0 4px 24px rgba(65,105,225,0.08)',
         }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:8, textAlign:'center' }}>
-            <p style={{ fontFamily:font, fontSize:34, fontWeight:700, color:'#343434', margin:0, lineHeight:1.3 }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <h1 style={{ fontFamily: font, fontSize: 24, fontWeight: 700, color: '#1a1a1a', margin: '0 0 10px' }}>
               Verify Email
-            </p>
-            <p style={{ fontFamily:font, fontSize:18, fontWeight:500, color:'#6a7380', margin:0, lineHeight:1.4 }}>
-              We have sent a verification code to your inbox. Please enter it
-              below to secure your account and continue.
+            </h1>
+            <p style={{ fontFamily: font, fontSize: 13, color: '#888', margin: 0, lineHeight: 1.6 }}>
+              We've sent a verification code to your inbox. Please enter it below to secure your account and continue.
             </p>
             {email && (
-              <p style={{ fontFamily:font, fontSize:16, fontWeight:700, color:'#343434', margin:0 }}>
+              <p style={{ fontFamily: font, fontSize: 14, fontWeight: 600, color: '#4169e1', margin: '8px 0 0' }}>
                 {email}
               </p>
             )}
           </div>
 
-          <form onSubmit={handleSubmit} noValidate style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {error && (
-              <div style={{ background:'#fee2e2', border:'1px solid #fca5a5', color:'#b91c1c',
-                borderRadius:8, padding:'0.55rem 0.8rem', fontSize:14, fontFamily:font }}>
+              <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', borderRadius: 8, padding: '10px 14px', fontSize: 13, fontFamily: font }}>
                 {error}
               </div>
             )}
 
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              <label style={{ fontFamily:font, fontSize:16, fontWeight:700, color:'#343434', lineHeight:1.3 }}>
+            <div>
+              <label style={{ fontFamily: font, fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 6, display: 'block' }}>
                 Code
               </label>
               <input
@@ -116,50 +122,64 @@ export function OtpPage() {
                 maxLength={6} value={code}
                 onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setError('') }}
                 style={{
-                  height:56, padding:'16px 20px',
-                  border:'1px solid #6a7380', borderRadius:12, background:'#fff',
-                  fontFamily:font, fontSize:16, fontWeight:400, color:'#343434',
-                  outline:'none', boxSizing:'border-box', width:'100%', lineHeight:1.3,
+                  height: 50, padding: '0 16px',
+                  border: '1px solid #e2e2e2', borderRadius: 10, background: '#fff',
+                  fontFamily: font, fontSize: 16, color: '#1a1a1a',
+                  outline: 'none', boxSizing: 'border-box', width: '100%',
+                  letterSpacing: '0.15em',
                 }}
-                onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #5379f4' }}
-                onBlur={e  => { e.target.style.boxShadow = 'none' }}
+                onFocus={e => e.target.style.borderColor = '#4169e1'}
+                onBlur={e  => e.target.style.borderColor = '#e2e2e2'}
               />
             </div>
 
-            <button type="submit" disabled={loading}
+            <button
+              type="submit" disabled={loading}
               style={{
-                width:'100%', height:53, background:'#5379f4', color:'#fff',
-                border:'none', borderRadius:12,
-                fontFamily:font, fontSize:16, fontWeight:600, lineHeight:1.3,
+                width: '100%', height: 50,
+                background: loading ? '#9ca3af' : '#4169e1',
+                color: '#fff', border: 'none', borderRadius: 30,
+                fontFamily: font, fontSize: 15, fontWeight: 700,
                 cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.75 : 1,
-                boxShadow:'0 4px 13.6px 0 #97b6fd', transition:'background 0.18s',
+                transition: 'background 0.18s',
               }}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#4264d6' }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#5379f4' }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#3458c4' }}
+              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#4169e1' }}
             >
               {loading ? 'Verifying…' : 'Verify & Continue'}
             </button>
 
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <button type="button" onClick={handleResend}
+            <div style={{ textAlign: 'center' }}>
+              <button
+                type="button" onClick={handleResend}
                 disabled={resendLoading || countdown > 0}
                 style={{
-                  background:'none', border:'none',
-                  fontFamily:font, fontSize:16, fontWeight:600,
-                  color:'#403c8b', textDecoration:'underline',
+                  background: 'none', border: 'none',
+                  fontFamily: font, fontSize: 14, fontWeight: 600,
+                  color: '#4169e1', textDecoration: 'underline',
                   cursor: (resendLoading || countdown > 0) ? 'not-allowed' : 'pointer',
                   opacity: (resendLoading || countdown > 0) ? 0.5 : 1,
-                  padding:0, lineHeight:1.3, transition:'color 0.18s',
+                  padding: 0,
                 }}
-                onMouseEnter={e => { if (!resendLoading && !countdown) e.currentTarget.style.color='#5379f4' }}
-                onMouseLeave={e => { e.currentTarget.style.color = '#403c8b' }}
               >
                 {countdown > 0 ? `Resend code (${countdown}s)` : resendLoading ? 'Sending…' : 'Resend code'}
               </button>
             </div>
           </form>
         </div>
+      </div>
+
+      {/* Right: illustration */}
+      <div style={{
+        width: '45%', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '48px 36px', position: 'relative', zIndex: 1,
+      }}>
+        <img
+          src={illusOtp}
+          alt="Email verification"
+          style={{ width: '100%', maxWidth: 420, maxHeight: '75vh', objectFit: 'contain' }}
+        />
       </div>
     </div>
   )
