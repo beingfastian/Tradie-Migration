@@ -11,6 +11,7 @@ import { OAuthCallbackPage }  from './pages/OAuthCallbackPage'
 import { ColorPalette }             from './pages/ColorPalette'
 import { EmployerOnboardingPage }  from './pages/EmployerOnboardingPage'
 import { CandidateOnboardingPage } from './pages/CandidateOnboardingPage'
+import { TrainerOnboardingPage }   from './pages/TrainerOnboardingPage'
 
 // ── Worker / Candidate pages ──────────────────────────────────────────────────
 import { WorkerSetup }      from './pages/worker/WorkerSetup'
@@ -70,6 +71,11 @@ function App() {
       <Route path="/onboarding/candidate" element={
         <ProtectedRoute roles={CANDIDATE}>
           <CandidateOnboardingPage />
+        </ProtectedRoute>
+      }/>
+      <Route path="/onboarding/trainer" element={
+        <ProtectedRoute roles={TRAINER}>
+          <TrainerOnboardingPage />
         </ProtectedRoute>
       }/>
 
