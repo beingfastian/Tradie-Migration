@@ -43,6 +43,29 @@ DEV_USERS = {
 ALLOWED_ROLES = set(DEV_USERS.keys())
 
 
+@router.get("/dev-test-email")
+async def dev_test_email(
+    to: str = Query(..., description="Email address to send a test OTP to"),
+):
+    """DEV ONLY — Send a test OTP email to verify SMTP is configured correctly."""
+    if os.getenv("SKIP_EMAIL_VERIFICATION", "false").lower() != "true":
+        raise HTTPException(
+            status_code=403,
+            detail="Dev test email is only available when SKIP_EMAIL_VERIFICATION=true in .env",
+        )
+
+    from backend.utils.email_service import generate_otp, send_otp_email
+    otp = generate_otp()
+    sent = await send_otp_email(to, otp)
+
+    return {
+        "sent":    sent,
+        "to":      to,
+        "otp":     otp,
+        "message": f"Test OTP {otp} {'sent successfully to' if sent else 'FAILED — check backend logs for'} {to}",
+    }
+
+
 @router.get("/dev-login")
 async def dev_login(
     role: str = Query(..., description="candidate | employer | training_provider"),
