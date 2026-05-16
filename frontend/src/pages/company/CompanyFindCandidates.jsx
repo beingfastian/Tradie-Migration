@@ -1043,16 +1043,15 @@ export function CompanyFindCandidates() {
                       )}
 
                       <td style={{ padding:'14px 12px' }}>
-                        <button style={{
-                          width:32, height:32, borderRadius:8, border:'1.5px solid #e0dff0',
-                          background:'#fff', cursor:'pointer',
-                          display:'flex', alignItems:'center', justifyContent:'center',
-                        }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#6a7380">
-                            <circle cx="12" cy="5" r="1.5"/>
-                            <circle cx="12" cy="12" r="1.5"/>
-                            <circle cx="12" cy="19" r="1.5"/>
-                          </svg>
+                        <button onClick={() => navigate(`/company/candidates/${c.id}`)} style={{
+                          height:34, padding:'0 14px', borderRadius:8, border:'1.5px solid #5379f4',
+                          background:'transparent', cursor:'pointer',
+                          fontFamily:font, fontSize:13, fontWeight:600, color:'#5379f4',
+                          display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap',
+                        }}
+                          onMouseEnter={e => { e.currentTarget.style.background='#5379f4'; e.currentTarget.style.color='#fff' }}
+                          onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='#5379f4' }}>
+                          View
                         </button>
                       </td>
                     </tr>

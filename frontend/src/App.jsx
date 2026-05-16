@@ -22,11 +22,12 @@ import { WorkerCourses }    from './pages/worker/WorkerCourses'
 import { WorkerJobs }       from './pages/worker/WorkerJobs'
 
 // ── Company / Employer pages ──────────────────────────────────────────────────
-import { CompanySetupFlow }      from './pages/company/CompanySetupFlow'
-import { CompanyHome }           from './pages/company/CompanyHome'
-import { CompanyFindCandidates } from './pages/company/CompanyFindCandidates'
-import { CompanyActiveJobs }     from './pages/company/CompanyActiveJobs'
-import { CompanySentEOIs }       from './pages/company/CompanySentEOIs'
+import { CompanySetupFlow }          from './pages/company/CompanySetupFlow'
+import { CompanyHome }               from './pages/company/CompanyHome'
+import { CompanyFindCandidates }     from './pages/company/CompanyFindCandidates'
+import { CompanyActiveJobs }         from './pages/company/CompanyActiveJobs'
+import { CompanySentEOIs }           from './pages/company/CompanySentEOIs'
+import { CompanyCandidateProfile }   from './pages/company/CompanyCandidateProfile'
 
 // ── Training Provider pages ───────────────────────────────────────────────────
 import { TrainerSetupFlow }           from './pages/trainer/TrainerSetupFlow'
@@ -142,6 +143,11 @@ function App() {
       <Route path="/company/eois" element={
         <ProtectedRoute roles={EMPLOYER}>
           <CompanySentEOIs />
+        </ProtectedRoute>
+      }/>
+      <Route path="/company/candidates/:id" element={
+        <ProtectedRoute roles={[...EMPLOYER, ...ADMIN]}>
+          <CompanyCandidateProfile />
         </ProtectedRoute>
       }/>
 
