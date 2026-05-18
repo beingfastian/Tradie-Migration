@@ -25,6 +25,10 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import httpx
+from dotenv import load_dotenv
+
+# Re-read .env on every (re)load so env changes don't require full process restart
+load_dotenv(override=True)
 
 from backend.db.setup import get_db
 from backend.db.models.models import User, ConsentRecord
@@ -40,7 +44,7 @@ LINKEDIN_CLIENT_ID     = os.getenv("LINKEDIN_CLIENT_ID", "")
 LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "")
 
 # Where OAuth providers send the code back to (this backend)
-OAUTH_REDIRECT_BASE = os.getenv("OAUTH_REDIRECT_BASE", "http://localhost:8000")
+OAUTH_REDIRECT_BASE = os.getenv("OAUTH_REDIRECT_BASE", "http://localhost:8001")
 
 # Where the frontend lives (to redirect after login)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
