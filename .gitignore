@@ -1,15 +1,13 @@
 # Environment variables
 .env
-backend/.env
 .env.local
 .env.*.local
 
 # Python caches
 __pycache__/
-**/__pycache__/
 *.py[cod]
 *$py.class
-*.pyo
+.pytest_cache/
 
 # Virtual environments
 .venv/
@@ -29,6 +27,7 @@ ENV/
 logs/
 
 # Uploaded files (local dev storage)
+Backend/uploads/
 uploads/
 
 # Claude Code internal files
@@ -38,11 +37,10 @@ uploads/
 tmp_*.py
 =*
 
-# Node modules (frontend)
+# Node / build output
 node_modules/
-frontend/node_modules/
-frontend/dist/
-frontend/build/
+dist/
+build/
 
 # OS
 .DS_Store
